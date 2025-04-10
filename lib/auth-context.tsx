@@ -31,12 +31,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  console.log("session", session);
 
   useEffect(() => {
     const getSession = async () => {
       const { data, error } = await supabase.auth.getSession()
-      console.log("data", data);
       if (data.session) {
         setUser(data.session.user)
         setSession(data.session)

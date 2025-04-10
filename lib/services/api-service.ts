@@ -8,84 +8,89 @@ interface ApiOptions {
   requiresAuth?: boolean;
 }
 
-/**
- * Centralized API service for making HTTP requests to your backend API
- * 
- * @param endpoint - The API endpoint to call (e.g., '/api/calendar')
- * @param options - Request options including method, data, and auth requirements
- * @returns The response data or throws an error
- */
-export const apiService = async (endpoint: string, options: ApiOptions) => {
-  const { method, data, requiresAuth = true } = options;
-  
-  // Build request configuration
-  const config: RequestInit = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
+const buildHeaders = async (requiresAuth: boolean) => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
   };
 
-  // Add request body for non-GET requests
-  if (data && method !== 'GET') {
-    config.body = JSON.stringify(data);
-  }
-
-  // For GET requests with query params, append them to the URL
-  let url = endpoint;
-  if (method === 'GET' && data) {
-    const params = new URLSearchParams();
-    Object.entries(data).forEach(([key, value]) => {
-      params.append(key, String(value));
-    });
-    url = `${endpoint}?${params.toString()}`;
-  }
-
-  try {
-    // Make the API request
-    const response = await fetch(url, config);
+  if (requiresAuth) {
+    const { data, error } = await supabase.auth.getUser();
     
-    // Handle authentication errors
-    if (response.status === 401 && requiresAuth) {
-      // Check if we still have a valid session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // If no session, redirect to login
+    if (error) {
+      console.error('Auth error:', error);
+      window.location.href = '/login';
+      throw new Error('Authentication required');
+    }
+    
+    if (data.user) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session?.access_token) {
+        headers['Authorization'] = `Bearer ${sessionData.session.access_token}`;
+      } else {
         window.location.href = '/login';
         throw new Error('Authentication required');
       }
+    } else {
+      window.location.href = '/login';
+      throw new Error('Authentication required');
     }
+  }
+
+  return headers;
+};
+
+export const apiService = async (endpoint: string, { method, data, requiresAuth = true }: ApiOptions) => {
+  try {
+    const headers = await buildHeaders(requiresAuth);
+
+    let url = endpoint;
+    const config: RequestInit = {
+      method,
+      headers,
+    };
+
+    if (method === 'GET' && data) {
+      const params = new URLSearchParams();
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, String(value));
+        }
+      });
+      const queryString = params.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    } else if (data) {
+      config.body = JSON.stringify(data);
+    }
+
+    const response = await fetch(url, config);
     
-    // Parse the response
-    const responseData = await response.json();
-    
-    // Handle API errors
     if (!response.ok) {
-      throw new Error(responseData.error || 'An error occurred');
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `API error: ${response.status}`);
     }
     
-    return responseData;
+    return response.json();
   } catch (error) {
     console.error('API request failed:', error);
     throw error;
   }
 };
 
-// Helper methods for common HTTP verbs
 export const api = {
-  get: (endpoint: string, params?: any, requiresAuth = true) => 
-    apiService(endpoint, { method: 'GET', data: params, requiresAuth }),
-    
-  post: (endpoint: string, data?: any, requiresAuth = true) => 
-    apiService(endpoint, { method: 'POST', data, requiresAuth }),
-    
-  put: (endpoint: string, data?: any, requiresAuth = true) => 
-    apiService(endpoint, { method: 'PUT', data, requiresAuth }),
-    
-  delete: (endpoint: string, data?: any, requiresAuth = true) => 
-    apiService(endpoint, { method: 'DELETE', data, requiresAuth }),
-    
-  patch: (endpoint: string, data?: any, requiresAuth = true) => 
-    apiService(endpoint, { method: 'PATCH', data, requiresAuth }),
-}; 
+  get: <T>(endpoint: string, params?: any, requiresAuth = true) =>
+    apiService(endpoint, { method: 'GET', data: params, requiresAuth }) as Promise<T>,
+
+  post: <T>(endpoint: string, data?: any, requiresAuth = true) =>
+    apiService(endpoint, { method: 'POST', data, requiresAuth }) as Promise<T>,
+
+  put: <T>(endpoint: string, data?: any, requiresAuth = true) =>
+    apiService(endpoint, { method: 'PUT', data, requiresAuth }) as Promise<T>,
+
+  delete: <T>(endpoint: string, data?: any, requiresAuth = true) =>
+    apiService(endpoint, { method: 'DELETE', data, requiresAuth }) as Promise<T>,
+
+  patch: <T>(endpoint: string, data?: any, requiresAuth = true) =>
+    apiService(endpoint, { method: 'PATCH', data, requiresAuth }) as Promise<T>,
+};

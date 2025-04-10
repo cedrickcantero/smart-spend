@@ -17,10 +17,8 @@ export default function LoginPage() {
   const { toast } = useToast()
   const { signIn, user } = useAuth()
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
-  const [email, setEmail] = React.useState<string>("demo@example.com")
-  const [password, setPassword] = React.useState<string>("password")
-  console.log("user", user);
-
+  const [email, setEmail] = React.useState<string>("")
+  const [password, setPassword] = React.useState<string>("")
   // If user is already logged in, redirect to dashboard
   React.useEffect(() => {
     if (user) {
@@ -114,11 +112,7 @@ export default function LoginPage() {
               Sign up
             </Link>
           </div>
-          <div className="mt-4 text-center text-xs text-muted-foreground">
-            <p>Demo credentials:</p>
-            <p>Email: demo@example.com</p>
-            <p>Password: password</p>
-          </div>
+
         </CardFooter>
       </Card>
     </div>

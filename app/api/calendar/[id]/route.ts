@@ -1,80 +1,70 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateCalendarEvent, deleteCalendarEvent } from '@/lib/services/calendar-service';
-import { supabase } from '@/lib/server/supabase/client';
+import { calendarService } from '@/lib/services/calendar-service';
 import { getAuthenticatedUserId } from '@/lib/server/auth';
-import { createSupabaseServerClient } from '@/lib/server/supabase/server';
-import { UpdateCalendarEvent } from '@/types/supabase';
+import { createClient } from '@/lib/supabase/server';
 
-// Function to verify ownership of the event
-async function verifyOwnership(eventId: string, userId: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('calendar_events')
-    .select('user_id')
-    .eq('id', eventId)
-    .single();
-
-  if (error || !data) {
-    return false;
-  }
-
-  return data.user_id === userId;
-}
-
-// PUT endpoint to update a calendar event
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Event ID is required' }, { status: 400 });
+    }
+
     const userId = await getAuthenticatedUserId(request);
-    
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    // Verify that the user owns this event
-    const isOwner = await verifyOwnership(id, userId);
+
+    const supabase = await createClient();
+    const isOwner = await calendarService.verifyOwnership(id, userId, supabase);
     if (!isOwner) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
-    
+
     const body = await request.json();
+    const updatedEvent = await calendarService.updateCalendarEvent(id, body, supabase);
     
-    // Prevent changing the user_id
-    delete body.user_id;
-    
-    const updatedEvent = await updateCalendarEvent(id, body);
     return NextResponse.json({ event: updatedEvent });
   } catch (error) {
-    console.error(`Error in PUT /api/calendar/${params.id}:`, error);
+    console.error('Error updating calendar event:', error);
     return NextResponse.json({ error: 'Failed to update calendar event' }, { status: 500 });
   }
 }
-
-// DELETE endpoint to delete a calendar event
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
-    const userId = await getAuthenticatedUserId(request);
+    const { id } = await context.params;
     
+    if (!id) {
+      return NextResponse.json({ error: 'Event ID is required' }, { status: 400 });
+    }
+    
+    // Get authenticated user ID
+    const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // Verify that the user owns this event
-    const isOwner = await verifyOwnership(id, userId);
+    // Create Supabase client
+    const supabase = await createClient();
+    
+    // Verify ownership
+    const isOwner = await calendarService.verifyOwnership(id, userId, supabase);
     if (!isOwner) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
-    await deleteCalendarEvent(id);
+    // Delete event
+    await calendarService.deleteCalendarEvent(id, supabase);
     return NextResponse.json({ message: 'Event deleted successfully' });
   } catch (error) {
-    console.error(`Error in DELETE /api/calendar/${params.id}:`, error);
+    console.error('Error deleting calendar event:', error);
     return NextResponse.json({ error: 'Failed to delete calendar event' }, { status: 500 });
   }
-} 
+}

@@ -12,7 +12,6 @@ export default function Home() {
     const fetchSession = async () => {
       try {
         const session = await checkSession();
-        console.log("session", session);
         if (session && session.user) {
           router.push("/dashboard");
         } else {

@@ -1,42 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calendarService } from '@/lib/services/calendar-service';
-import { handleRequest } from '@/lib/server/handleRequest';
 import { DBCalendarEventInsert } from '@/types/supabase';
+import { getAuthenticatedUserId } from '@/lib/server/auth';
+import { createClient } from '@/lib/supabase/server';
 
 // GET endpoint to fetch calendar events
 export async function GET(request: NextRequest) {
-  return handleRequest(request, async ({ user, supabase }) => {
-    const searchParams = request.nextUrl.searchParams;
-    const date = searchParams.get('date');
-
-    console.log("user", user);
-    
-    // If date parameter is provided, fetch events for that date
-    if (date) {
-      return calendarService.getCalendarEventsForDate(date, user.id, supabase);
+  try {
+    // Get authenticated user ID
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Create Supabase client
+    const supabase = await createClient();
     
-    // Otherwise fetch all events
-    return calendarService.getCalendarEvents(user.id, supabase);
-  });
+    // Get date parameter
+    const date = request.nextUrl.searchParams.get('date');
+    
+    // Fetch events
+    const events = date 
+      ? await calendarService.getCalendarEventsForDate(date, userId, supabase)
+      : await calendarService.getCalendarEvents(userId, supabase);
+    
+    return NextResponse.json(events);
+  } catch (error) {
+    console.error('Error fetching calendar events:', error);
+    return NextResponse.json({ error: 'Failed to fetch calendar events' }, { status: 500 });
+  }
 }
 
 // POST endpoint to create a new calendar event
 export async function POST(request: NextRequest) {
-  return handleRequest(request, async ({ request, user, supabase }) => {
+  try {
+    // Get authenticated user ID
+    const userId = await getAuthenticatedUserId(request);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // Create Supabase client
+    const supabase = await createClient();
+    
+    // Parse request body
     const body = await request.json();
     
     // Validate required fields
-    if (!body.title || !body.date || !body.amount || !body.category) {
-      throw new Error('Missing required fields: title, date, amount, and category are required');
+    const requiredFields = ['title', 'date', 'amount', 'category'];
+    const missingFields = requiredFields.filter(field => !body[field]);
+    
+    if (missingFields.length > 0) {
+      return NextResponse.json({ 
+        error: `Missing required fields: ${missingFields.join(', ')}` 
+      }, { status: 400 });
     }
     
     // Add user_id to the event
     const event: DBCalendarEventInsert = {
       ...body,
-      user_id: user.id,
+      user_id: userId,
     };
     
-    return calendarService.createCalendarEvent(event, supabase);
-  });
+    // Create event
+    const result = await calendarService.createCalendarEvent(event, supabase);
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Error creating calendar event:', error);
+    return NextResponse.json({ error: 'Failed to create calendar event' }, { status: 500 });
+  }
 }

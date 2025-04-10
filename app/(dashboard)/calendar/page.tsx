@@ -1,16 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CalendarIcon, ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { CalendarIcon, ChevronLeft, ChevronRight, Edit, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AddEventModal } from "@/components/add-event-modal"
+import { AddEventModal } from "@/components/calendar/modals/add-event-modal"
 import { useAuth } from "@/lib/auth-context"
 import { CalendarService } from "@/app/api/calendar/service"
 import { DBCalendarEvent } from "@/types/supabase"
-
+import { EditEventModal } from "@/components/calendar/modals/edit-event-modal"
 
 export default function CalendarPage() {
   const today = new Date()
@@ -21,23 +21,25 @@ export default function CalendarPage() {
   const [addEventOpen, setAddEventOpen] = useState(false)
   const [calendarEvents, setCalendarEvents] = useState<DBCalendarEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [editEventOpen, setEditEventOpen] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<DBCalendarEvent | null>(null)
   const { user } = useAuth()
-  useEffect(() => {
-    const fetchEvents = async () => {
-      if (!user) return
-      
-      try {
-        setIsLoading(true)
-        const response = await CalendarService.getCalendarEvents()
-        setCalendarEvents(response)
-      } catch (error) {
-        console.error('Error fetching calendar events:', error)
-        setCalendarEvents([])
-      } finally {
-        setIsLoading(false)
-      }
-    }
+
+  const fetchEvents = async () => {
+    if (!user) return
     
+    try {
+      setIsLoading(true)
+      const response = await CalendarService.getCalendarEvents()
+      setCalendarEvents(response)
+    } catch (error) {
+      console.error('Error fetching calendar events:', error)
+      setCalendarEvents([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+  useEffect(() => {
     fetchEvents()
   }, [user])
 
@@ -56,35 +58,27 @@ export default function CalendarPage() {
     "Other": "bg-gray-500"
   }
 
-  
-  // Helper function to get days in month
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate()
   }
 
-  // Helper function to get day of week (0-6) for first day of month
   const getFirstDayOfMonth = (year: number, month: number) => {
     return new Date(year, month, 1).getDay()
   }
 
-  // Helper function to get events for a specific date
   const getEventsForDate = (dateString: string, events: DBCalendarEvent[]) => {
     return events.filter((event) => event.date === dateString)
   }
 
-  // Get calendar data
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
   const firstDayOfMonth = getFirstDayOfMonth(currentYear, currentMonth)
 
-  // Generate calendar days
   const calendarDays = []
 
-  // Add empty cells for days before the first day of the month
   for (let i = 0; i < firstDayOfMonth; i++) {
     calendarDays.push({ day: null, isCurrentMonth: false })
   }
 
-  // Add days of the current month
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(currentYear, currentMonth, day)
     const dateString = date.toISOString().split("T")[0]
@@ -99,7 +93,6 @@ export default function CalendarPage() {
     })
   }
 
-  // Navigate to previous month
   const goToPreviousMonth = () => {
     if (currentMonth === 0) {
       setCurrentMonth(11)
@@ -109,7 +102,6 @@ export default function CalendarPage() {
     }
   }
 
-  // Navigate to next month
   const goToNextMonth = () => {
     if (currentMonth === 11) {
       setCurrentMonth(0)
@@ -119,29 +111,40 @@ export default function CalendarPage() {
     }
   }
 
-  // Get month name
   const monthName = new Date(currentYear, currentMonth).toLocaleString("default", { month: "long" })
 
-  // Get selected date events
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate, calendarEvents) : []
 
-  // Handle event creation
-  const handleEventAdded = async (newEvent: DBCalendarEvent) => {
-    setCalendarEvents([...calendarEvents, newEvent])
+  const handleEventAdded = async () => {
+    setAddEventOpen(true)
   }
 
-  // Handle event deletion
+  const handleEventUpdated = async (event: DBCalendarEvent) => {
+    const latestEvent = calendarEvents.find(e => e.id === event.id);
+    if (latestEvent) {
+      setSelectedEvent(latestEvent);
+      setEditEventOpen(true);
+    } else {
+      console.error('Event not found:', event.id);
+    }
+  }
+
+  const handleEditModalClose = (open: boolean) => {
+    setEditEventOpen(open);
+    if (!open) {
+      setSelectedEvent(null);
+    }
+  }
+
   const handleEventDeleted = async (id: string) => {
     try {
       await CalendarService.deleteCalendarEvent(id)
       setCalendarEvents(calendarEvents.filter(event => event.id !== id))
       
-      // If the deleted event was on the selected date, update the selected date events
       if (selectedDate) {
         const updatedEvents = getEventsForDate(selectedDate, calendarEvents.filter(event => event.id !== id))
         if (updatedEvents.length === 0) {
-          // Optionally clear selection if no more events
-          // setSelectedDate(null);
+          setSelectedDate(null)
         }
       }
     } catch (error) {
@@ -165,8 +168,7 @@ export default function CalendarPage() {
                 <SelectItem value="day">Day</SelectItem>
               </SelectContent>
             </Select>
-
-            <Button className="gap-1" onClick={() => setAddEventOpen(true)}>
+            <Button className="gap-1" onClick={handleEventAdded}>
               <Plus className="h-4 w-4" />
               Add Event
             </Button>
@@ -286,7 +288,7 @@ export default function CalendarPage() {
                     <CalendarIcon className="h-12 w-12 mb-2" />
                     <h3 className="font-medium">No expenses for this date</h3>
                     <p className="text-sm mt-1">Select a different date or add a new expense</p>
-                    <Button variant="outline" className="mt-4 gap-1" onClick={() => setAddEventOpen(true)}>
+                    <Button variant="outline" className="mt-4 gap-1" onClick={handleEventAdded}>
                       <Plus className="h-4 w-4" />
                       Add Expense
                     </Button>
@@ -309,17 +311,37 @@ export default function CalendarPage() {
             <CardDescription>Scheduled expenses for the next 30 days</CardDescription>
           </CardHeader>
           <CardContent>
-            {calendarEvents.map((event) => (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                  <div className={`${categories[event.category as keyof typeof categories]} w-3 h-3 rounded-full`} />
-                  <div>
-                    <p className="font-medium">{event.title}</p>
-                    <p className="text-sm text-muted-foreground">{event.date}</p>
+            {calendarEvents
+              .filter(event => new Date(event.date) >= new Date())
+              .map((event) => (
+                <div key={event.id} className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                    <div className={`${categories[event.category as keyof typeof categories]} w-3 h-3 rounded-full`} />
+                    <div>
+                      <p className="font-medium">{event.title}</p>
+                      <p className="text-sm text-muted-foreground">{event.date}</p>
+                    </div>
                   </div>
-                </div>
-                <span className="font-medium">${event.amount?.toFixed(2) || "0.00"}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">${event.amount?.toFixed(2) || "0.00"}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-blue-500 hover:text-red-700" 
+                      onClick={() => handleEventUpdated(event)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-red-500 hover:text-red-700" 
+                      onClick={() => handleEventDeleted(event.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
               </div>
             </div>
             ))}
@@ -331,7 +353,17 @@ export default function CalendarPage() {
         onOpenChange={setAddEventOpen}
         initialDate={selectedDate ? new Date(selectedDate) : undefined}
         onEventAdded={handleEventAdded}
+        fetchEvents={fetchEvents}
       />
+      {selectedEvent && (
+        <EditEventModal
+          open={editEventOpen}
+          onOpenChange={handleEditModalClose}
+          event={selectedEvent}
+          onEventUpdated={handleEventUpdated}
+          fetchEvents={fetchEvents}
+        />
+      )}
     </>
   )
 }

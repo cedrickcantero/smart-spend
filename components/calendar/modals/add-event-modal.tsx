@@ -23,8 +23,9 @@ import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
-import { DBCalendarEvent } from "@/types/supabase"
+import { DBCalendarEvent, DBCalendarEventInsert } from "@/types/supabase"
 import { CalendarService } from "@/app/api/calendar/service"
+import { useAuth } from "@/lib/auth-context"
 
 // Mock categories - replace with real categories from your database later
 const eventCategories = [
@@ -43,9 +44,10 @@ interface AddEventModalProps {
   onOpenChange: (open: boolean) => void
   initialDate?: Date
   onEventAdded?: (event: DBCalendarEvent) => void
+  fetchEvents?: () => void
 }
 
-export function AddEventModal({ open, onOpenChange, initialDate, onEventAdded }: AddEventModalProps) {
+export function AddEventModal({ open, onOpenChange, initialDate, onEventAdded, fetchEvents }: AddEventModalProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -57,13 +59,13 @@ export function AddEventModal({ open, onOpenChange, initialDate, onEventAdded }:
   const [isRecurring, setIsRecurring] = useState(false)
   const [recurringPeriod, setRecurringPeriod] = useState("monthly")
   const [notes, setNotes] = useState("")
+  const { user } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
-      // Validate form
       if (!title || !date) {
         throw new Error("Please fill in all required fields")
       }
@@ -72,40 +74,38 @@ export function AddEventModal({ open, onOpenChange, initialDate, onEventAdded }:
         throw new Error("Please enter an amount")
       }
 
-      // Format date to ISO string and take only the date part
       const formattedDate = date.toISOString().split('T')[0];
       
-      // Get color from selected category
       const selectedCategory = eventCategories.find(cat => cat.value === category);
       const color = selectedCategory?.color || "bg-gray-500";
       
-      // Prepare event data
-      const eventData = {
+      const eventData: DBCalendarEventInsert = {
         title,
         amount: Number.parseFloat(amount),
         category,
         date: formattedDate,
         color,
-        isRecurring,
-        recurringPeriod: isRecurring ? recurringPeriod : null,
+        is_recurring: isRecurring,
+        recurring_period: isRecurring ? recurringPeriod : null,
         notes,
+        user_id: user?.id || "",
       };
 
-      // Create event using CalendarService
-      const event = await CalendarService.createCalendarEvent(eventData);
+      const event = await CalendarService.createCalendarEvent(eventData as DBCalendarEvent);
 
-      // Show success message
       toast({
         title: "Event added",
         description: `"${title}" has been added to your calendar.`,
       });
 
-      // Notify parent component about the new event
       if (onEventAdded && event) {
         onEventAdded(event as DBCalendarEvent);
       }
 
-      // Reset form and close modal
+      if (fetchEvents) {
+        fetchEvents();
+      }
+
       resetForm()
       onOpenChange(false)
     } catch (error: any) {

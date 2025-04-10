@@ -55,7 +55,6 @@ export const calendarService = {
       console.error('Error updating calendar event:', error);
       return { error: error.message };
     }
-
     return data;
   },
   async deleteCalendarEvent(id: string, supabase: SupabaseClient): Promise<{ success: boolean } | { error: string }> {
@@ -70,5 +69,18 @@ export const calendarService = {
     }
     
     return { success: true };
+  },
+  async verifyOwnership(eventId: string, userId: string, supabase: SupabaseClient): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('calendar_events')
+      .select('user_id')
+      .eq('id', eventId)
+      .single();
+  
+    if (error || !data) {
+      return false;
+    }
+  
+    return data.user_id === userId;
   }
 };
