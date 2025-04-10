@@ -26,10 +26,33 @@ import {
   SidebarProvider,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 import { UserNav } from "@/components/user-nav"
+import { sidebarItems, SidebarItem } from "@/lib/nav-items"
+import { ChevronDown, ChevronRight } from "lucide-react"
+import { SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar"
+
+import { useState } from "react"
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
+
+  const [collapsibleMenus, setCollapsibleMenus] = useState<Record<string, boolean>>({
+    Expenses: true,
+  })
+
+  const toggleMenu = (menuTitle: string) => {
+    setCollapsibleMenus(prev => ({
+      ...prev,
+      [menuTitle]: !prev[menuTitle]
+    }))
+  }
+
+  const shouldShowMenuItem = (item: SidebarItem) => {
+
+    return true;
+  }
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -51,64 +74,55 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/dashboard">
-                  <Home className="h-4 w-4" />
-                  <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/expenses">
-                  <Receipt className="h-4 w-4" />
-                  <span>Expenses</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/reports">
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Reports</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/budgets">
-                  <BadgeDollarSign className="h-4 w-4" />
-                  <span>Budgets</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/calendar">
-                  <Calendar className="h-4 w-4" />
-                  <span>Calendar</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/tax-reports">
-                  <FileText className="h-4 w-4" />
-                  <span>Tax Reports</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/categories">
-                  <Package className="h-4 w-4" />
-                  <span>Categories</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+            <SidebarMenu>
+              {sidebarItems.filter(item => shouldShowMenuItem(item)).map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  {item.submenu ? (
+                    <Collapsible open={collapsibleMenus[item.title]}>
+                      <CollapsibleTrigger asChild onClick={() => toggleMenu(item.title)}>
+                        <SidebarMenuButton>
+                          <item.icon />
+                          <span>{item.title}</span>
+                          {collapsibleMenus[item.title] ? (
+                            <ChevronDown className="ml-auto h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="ml-auto h-4 w-4" />
+                          )}
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {item.submenu.map((subitem) => (
+                            <SidebarMenuSubItem key={subitem.title}>
+                              <SidebarMenuSubButton asChild>
+                                <Link href={subitem.url}>
+                                  <subitem.icon />
+                                  <span>{subitem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    <SidebarMenuButton asChild>
+                      {item.url ? (
+                        <Link href={item.url}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      ) : (
+                        <div>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </div>
+                      )}
+                    </SidebarMenuButton>
+                  )}
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>

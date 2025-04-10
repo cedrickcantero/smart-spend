@@ -21,7 +21,7 @@ export const RecurringService = {
       },
       updateRecurringExpense: async (expense: DBRecurringBill): Promise<DBRecurringBill> => {
         try {
-          return await api.put<DBRecurringBill>("/api/recurring", expense);
+          return await api.put<DBRecurringBill>(`/api/recurring/${expense.id}`, expense);
         } catch (error) {
           console.error("Error updating recurring expense:", error);
           throw error;

@@ -18,7 +18,7 @@ export async function PUT(request: NextRequest,  context: { params: Promise<{ id
             user_id: userId
         };
 
-        const recurringExpense = await RecurringService.updateRecurringExpense(recurringExpenseWithUserId, id, supabase);
+        const recurringExpense = await RecurringService.updateRecurringExpense(id, recurringExpenseWithUserId, supabase);
         return NextResponse.json(recurringExpense);
     } catch (error) {
         console.error('Error updating recurring expense:', error);
