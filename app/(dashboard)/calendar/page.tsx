@@ -9,8 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AddEventModal } from "@/components/calendar/modals/add-event-modal"
 import { useAuth } from "@/lib/auth-context"
 import { CalendarService } from "@/app/api/calendar/service"
-import { DBCalendarEvent } from "@/types/supabase"
+import { DBCalendarEvent, DBCategory } from "@/types/supabase"
 import { EditEventModal } from "@/components/calendar/modals/edit-event-modal"
+import { CategoriesService } from "@/app/api/categories/service"
+
 
 export default function CalendarPage() {
   const today = new Date()
@@ -23,6 +25,7 @@ export default function CalendarPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [editEventOpen, setEditEventOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<DBCalendarEvent | null>(null)
+  const [categories, setCategories] = useState<DBCategory[]>([])
   const { user } = useAuth()
 
   const fetchEvents = async () => {
@@ -39,24 +42,18 @@ export default function CalendarPage() {
       setIsLoading(false)
     }
   }
+
+  const fetchCategories = async () => {
+    const response = await CategoriesService.getCategories()
+    setCategories(response)
+  }
+
+
   useEffect(() => {
-    fetchEvents()
+    Promise.all([fetchEvents(), fetchCategories()])
   }, [user])
 
-  const categories = {
-    "Education": "bg-blue-500",
-    "Food & Dining": "bg-purple-500",
-    "Shopping": "bg-pink-500",
-    "Personal": "bg-yellow-500",
-    "Health": "bg-green-500",
-    "Entertainment": "bg-gray-500",
-    "Housing": "bg-red-500",
-    "Utilities": "bg-orange-500",
-    "Transportation": "bg-teal-500",
-    "Travel": "bg-cyan-500",
-    "Groceries": "bg-lime-500",
-    "Other": "bg-gray-500"
-  }
+  console.log("categories", categories)
 
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate()
@@ -317,7 +314,7 @@ export default function CalendarPage() {
                 <div key={event.id} className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                    <div className={`${categories[event.category as keyof typeof categories]} w-3 h-3 rounded-full`} />
+                    <div className={`${event.color} w-3 h-3 rounded-full`} />
                     <div>
                       <p className="font-medium">{event.title}</p>
                       <p className="text-sm text-muted-foreground">{event.date}</p>
@@ -348,20 +345,24 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
       </div>
-      <AddEventModal
-        open={addEventOpen}
-        onOpenChange={setAddEventOpen}
-        initialDate={selectedDate ? new Date(selectedDate) : undefined}
-        onEventAdded={handleEventAdded}
-        fetchEvents={fetchEvents}
-      />
-      {selectedEvent && (
+      {categories.length > 0 && (
+        <AddEventModal
+          open={addEventOpen}
+          onOpenChange={setAddEventOpen}
+          initialDate={selectedDate ? new Date(selectedDate) : undefined}
+          onEventAdded={handleEventAdded}
+          fetchEvents={fetchEvents}
+          categories={categories}
+        />
+      )}
+      {selectedEvent && categories.length > 0 && (
         <EditEventModal
           open={editEventOpen}
           onOpenChange={handleEditModalClose}
           event={selectedEvent}
           onEventUpdated={handleEventUpdated}
           fetchEvents={fetchEvents}
+          categories={categories}
         />
       )}
     </>

@@ -8,6 +8,7 @@ import {
   Calendar,
   FileText,
   Home,
+  Package,
   Package2,
   Receipt,
   Settings,
@@ -96,6 +97,14 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                 <Link href="/tax-reports">
                   <FileText className="h-4 w-4" />
                   <span>Tax Reports</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/categories">
+                  <Package className="h-4 w-4" />
+                  <span>Categories</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

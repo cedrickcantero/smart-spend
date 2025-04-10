@@ -23,7 +23,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
-import { DBCalendarEvent, DBCalendarEventInsert } from "@/types/supabase"
+import { DBCalendarEvent, DBCalendarEventInsert, DBCategory } from "@/types/supabase"
 import { CalendarService } from "@/app/api/calendar/service"
 import { useAuth } from "@/lib/auth-context"
 
@@ -43,18 +43,17 @@ interface AddEventModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialDate?: Date
+  categories: DBCategory[]
   onEventAdded?: (event: DBCalendarEvent) => void
   fetchEvents?: () => void
 }
 
-export function AddEventModal({ open, onOpenChange, initialDate, onEventAdded, fetchEvents }: AddEventModalProps) {
+export function AddEventModal({ open, onOpenChange, initialDate, categories, onEventAdded, fetchEvents }: AddEventModalProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // Form state
   const [title, setTitle] = useState("")
   const [amount, setAmount] = useState("")
-  const [category, setCategory] = useState("expense")
+  const [category, setCategory] = useState(categories[0].id)
   const [date, setDate] = useState<Date>(initialDate || new Date())
   const [isRecurring, setIsRecurring] = useState(false)
   const [recurringPeriod, setRecurringPeriod] = useState("monthly")
@@ -76,7 +75,7 @@ export function AddEventModal({ open, onOpenChange, initialDate, onEventAdded, f
 
       const formattedDate = date.toISOString().split('T')[0];
       
-      const selectedCategory = eventCategories.find(cat => cat.value === category);
+      const selectedCategory = categories.find(cat => cat.id === category);
       const color = selectedCategory?.color || "bg-gray-500";
       
       const eventData: DBCalendarEventInsert = {
@@ -178,11 +177,11 @@ export function AddEventModal({ open, onOpenChange, initialDate, onEventAdded, f
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {eventCategories.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
                       <span className="flex items-center gap-2">
                         <span>{category.icon}</span>
-                        <span>{category.label}</span>
+                        <span>{category.name}</span>
                       </span>
                     </SelectItem>
                   ))}

@@ -21,21 +21,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
-import { DBCalendarEvent, DBCalendarEventInsert } from "@/types/supabase"
+import { DBCalendarEvent, DBCategory } from "@/types/supabase"
 import { CalendarService } from "@/app/api/calendar/service"
-
-const eventCategories = [
-  { value: "Utilities", label: "Utilities", icon: "💡", color: "bg-purple-500" },
-  { value: "Health", label: "Health", icon: "🏥", color: "bg-pink-500" },
-  { value: "Groceries", label: "Groceries", icon: "🛒", color: "bg-green-500" },
-  { value: "Entertainment", label: "Entertainment", icon: "🎬", color: "bg-yellow-500" },
-  { value: "Transportation", label: "Transportation", icon: "🚗", color: "bg-blue-500" },
-  { value: "Food & Dining", label: "Food & Dining", icon: "🍽️", color: "bg-primary" },
-  { value: "Housing", label: "Housing", icon: "🏠", color: "bg-blue-500" },
-  { value: "Shopping", label: "Shopping", icon: "🛍️", color: "bg-red-500" },
-  { value: "Expense", label: "Expense", icon: "💰", color: "bg-purple-500" },
-  { value: "Other", label: "Other", icon: "💬", color: "bg-gray-500" },
-]
 
 interface EditEventModalProps {
   open: boolean
@@ -43,9 +30,10 @@ interface EditEventModalProps {
   onOpenChange: (open: boolean) => void
   onEventUpdated?: (event: DBCalendarEvent) => void
   fetchEvents: () => void
+  categories: DBCategory[]
 }
 
-export function EditEventModal({ open, onOpenChange, onEventUpdated, event, fetchEvents }: EditEventModalProps) {
+export function EditEventModal({ open, onOpenChange, onEventUpdated, event, fetchEvents, categories }: EditEventModalProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [eventData, setEventData] = useState({
@@ -89,7 +77,7 @@ export function EditEventModal({ open, onOpenChange, onEventUpdated, event, fetc
         throw new Error("Please enter an amount");
       }
 
-      const selectedCategory = eventCategories.find(cat => cat.value === eventData.category);
+      const selectedCategory = categories.find(cat => cat.id === eventData.category);
       const color = selectedCategory?.color || "bg-gray-500";
       
       const updateEventData = {
@@ -190,11 +178,11 @@ export function EditEventModal({ open, onOpenChange, onEventUpdated, event, fetc
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {eventCategories.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
                       <span className="flex items-center gap-2">
                         <span>{category.icon}</span>
-                        <span>{category.label}</span>
+                        <span>{category.name}</span>
                       </span>
                     </SelectItem>
                   ))}
@@ -216,7 +204,21 @@ export function EditEventModal({ open, onOpenChange, onEventUpdated, event, fetc
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={eventData.date ? new Date(eventData.date) : undefined} onSelect={(date) => date && setEventData({ ...eventData, date: date.toISOString().split('T')[0] })} initialFocus />
+                  <Calendar 
+                    mode="single" 
+                    selected={eventData.date ? new Date(eventData.date) : undefined} 
+                    onSelect={(date) => {
+                      if (date) {
+                        setEventData({ ...eventData, date: date.toISOString().split('T')[0] });
+                        // Close the popover after selection
+                        const popoverTrigger = document.querySelector('[data-state="open"]');
+                        if (popoverTrigger) {
+                          (popoverTrigger as HTMLElement).click();
+                        }
+                      }
+                    }} 
+                    initialFocus 
+                  />
                 </PopoverContent>
               </Popover>
             </div>

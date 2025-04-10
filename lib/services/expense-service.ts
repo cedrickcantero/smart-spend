@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { DBExpense, DBExpenseInsert, DBExpenseUpdate } from '@/types/supabase';
 
-export const expenseService = {
+export const ExpenseService = {
   async getExpenses(userId: string, supabase: SupabaseClient): Promise<DBExpense[] | { error: string }> {
     const { data, error } = await supabase
       .from('expenses')
@@ -86,7 +86,7 @@ export const expenseService = {
     const categories: Record<string, number> = {};
     
     expenses.forEach(expense => {
-      const category = expense.category || 'Other';
+      const category = expense.category_id || 'Other';
       categories[category] = (categories[category] || 0) + (expense.amount || 0);
     });
 
