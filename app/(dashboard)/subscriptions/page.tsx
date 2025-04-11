@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Calendar, Download, Filter, Plus, Search, SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,8 +25,8 @@ import { AddSubscriptionModal } from "@/components/subscriptions/modals/add-subs
 import { EditSubscriptionModal } from "@/components/subscriptions/modals/edit-subscriptions-modal"
 import { DeleteSubscriptionModal } from "@/components/subscriptions/modals/delete-subscriptions-modal"
 
-export default function ExpensesPage() {
-
+export default function SubscriptionsPage() {
+  // State
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [categories, setCategories] = useState<DBCategory[]>([])
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
@@ -37,29 +37,108 @@ export default function ExpensesPage() {
   const [selectedSubscription, setSelectedSubscription] = useState<DBSubscription | null>(null)
   const [selectedSubscriptionToDelete, setSelectedSubscriptionToDelete] = useState<DBSubscription | null>(null)
 
-
-  const fetchSubscriptions = async () => {
-    const subscriptions = await SubscriptionsService.getSubscriptions();
-    setSubscriptions(subscriptions);
-  }
-
-  const fetchCategories = async () => {
-    const categories = await CategoriesService.getCategories();
-    setCategories(categories);
-  }
-
-
-  useEffect(() => {
-    Promise.all([ fetchSubscriptions(), fetchCategories()]);
+  // API calls with useCallback to prevent unnecessary recreations
+  const fetchSubscriptions = useCallback(async () => {
+    try {
+      const subscriptions = await SubscriptionsService.getSubscriptions();
+      setSubscriptions(subscriptions);
+    } catch (error) {
+      console.error('Error fetching subscriptions:', error);
+    }
   }, [])
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      const categories = await CategoriesService.getCategories();
+      setCategories(categories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  }, [])
 
-  const handleDeleteSubscription = (subscription: DBSubscription) => {
-    setSelectedSubscriptionToDelete(subscription)
-    setOpenDeleteSubscriptionModal(true)
-  }
+  // Initial data fetch with stable dependencies
+  useEffect(() => {
+    Promise.all([fetchSubscriptions(), fetchCategories()]);
+  }, [fetchSubscriptions, fetchCategories])
 
-  console.log("subscriptions", subscriptions)
+  // Event handlers with useCallback
+  const handleAddSubscriptionClick = useCallback(() => {
+    setOpenAddSubscriptionModal(true);
+  }, [])
+
+  const handleEditSubscription = useCallback((subscription: DBSubscription) => {
+    setSelectedSubscription(subscription);
+    setOpenEditSubscriptionModal(true);
+  }, [])
+
+  const handleDeleteSubscription = useCallback((subscription: DBSubscription) => {
+    setSelectedSubscriptionToDelete(subscription);
+    setOpenDeleteSubscriptionModal(true);
+  }, [])
+
+  const handleCategoryChange = useCallback((value: string) => {
+    setSelectedCategory(value);
+  }, [])
+
+  const handleDateRangeChange = useCallback((value: DateRange | null) => {
+    setDateRange(value);
+  }, [])
+
+  // Memoize expensive data transformations
+  const categoryOptions = useMemo(() => {
+    return categories.map((category) => ({
+      label: category.name,
+      value: category.id,
+    }));
+  }, [categories])
+
+  // Memoize table columns to prevent unnecessary recreations
+  const subscriptionColumns = useMemo(() => [
+    {
+      key: "name",
+      label: "Name",
+      type: "text" as const,
+    },
+    {
+      key: "billing_cycle",
+      label: "Billing Cycle",
+      type: "text" as const,
+    },
+    {
+      key: "payment_method",
+      label: "Payment Method",
+      type: "text" as const,
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      type: "money" as const,
+    },
+    {
+      key: "next_billing_date",
+      label: "Next Billing Date",
+      type: "date" as const,
+    },
+    {
+      key: "is_active",
+      label: "Is Active",
+      type: "boolean" as const,
+    }
+  ], [])
+
+  // Memoize actions to prevent recreations
+  const getRowActions = useMemo(() => {
+    return (row: DBSubscription) => [
+      {
+        label: "Edit",
+        onClick: () => handleEditSubscription(row),
+      },
+      {
+        label: "Delete",
+        onClick: () => handleDeleteSubscription(row),
+      }
+    ]
+  }, [handleEditSubscription, handleDeleteSubscription])
 
   return (
     <div className="flex flex-col gap-4">
@@ -84,91 +163,32 @@ export default function ExpensesPage() {
                 <div className="rounded-md border">
                   <CustomDataTable
                     data={subscriptions}
-                    columns={[
-                      {
-                        key: "name",
-                        label: "Name",
-                        type: "text",
-                      },
-                      {
-                        key: "billing_cycle",
-                        label: "Billing Cycle",
-                        type: "text",
-                        // render: (value, row) => {
-                        //   return (
-                        //     <div className="flex items-center gap-2">
-                        //       <Avatar className="h-8 w-8">
-                        //         <AvatarImage src={row.merchant_logo} />
-                        //         <AvatarFallback>{row.merchant.charAt(0)}</AvatarFallback> 
-                        //       </Avatar>
-                        //       <span className="text-xs text-muted-foreground">{row.merchant}</span>
-                        //     </div>
-                        //   )
-                        // }
-                      },
-                      {
-                        key: "payment_method",
-                        label: "Payment Method",
-                        type: "text",
-                      },
-                      {
-                        key: "amount",
-                        label: "Amount",
-                        type: "money",
-                      },
-                      {
-                        key: "next_billing_date",
-                        label: "Next Billing Date",
-                        type: "date",
-                      },
-                      {
-                        key: "is_active",
-                        label: "Is Active",
-                        type: "boolean",
-                      }
-                    ]}
-                    actions={(row) => [
-                      {
-                        label: "Edit",
-                        onClick: () => {
-                          setSelectedSubscription(row)
-                          setOpenEditSubscriptionModal(true)
-                        },
-                      },
-                      {
-                        label: "Delete",
-                        onClick: () => handleDeleteSubscription(row),
-                      }
-                    ]}
+                    columns={subscriptionColumns}
+                    actions={getRowActions}
                     title="Subscriptions"
                     searchField={{
-                      field: "merchant",
+                      field: "name",
                       type: "string",
                     }}
-                    addButton={
-                      {
-                        label: "Add Subscription",
-                        onClick: () => setOpenAddSubscriptionModal(true),
-                      }
-                    }
+                    addButton={{
+                      label: "Add Subscription",
+                      onClick: handleAddSubscriptionClick,
+                    }}
                     filters={[
                       {
                         key: "category",
                         label: "Category",
                         type: "select",
-                        options: categories.map((category) => ({
-                          label: category.name,
-                          value: category.id,
-                        })),
+                        options: categoryOptions,
                         value: selectedCategory || "",
-                        onChange: (value) => setSelectedCategory(value),
+                        onChange: handleCategoryChange,
                       },
                       {
-                        key: "date",
+                        key: "next_billing_date",
                         label: "Date",
                         type: "dateRange",
                         value: dateRange,
-                        dateRangeOnChange: (value) => setDateRange(value),
+                        dateRangeOnChange: handleDateRangeChange,
                       }
                     ]}
                     pagination={{
@@ -186,7 +206,7 @@ export default function ExpensesPage() {
         <AddSubscriptionModal 
           open={openAddSubscriptionModal} 
           onOpenChange={setOpenAddSubscriptionModal} 
-          subscriptions ={subscriptions}
+          subscriptions={subscriptions}
           fetchSubscriptions={fetchSubscriptions}
         />
       )}

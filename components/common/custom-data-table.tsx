@@ -1,6 +1,6 @@
 "use client"
 
-import React,{ useState, useEffect, useMemo } from "react"
+import React,{ useState, useEffect, useMemo, useCallback } from "react"
 import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 import {
   Table,
@@ -45,6 +45,7 @@ export interface Column {
   type?: ColumnType
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (value: any, row: any) => React.ReactNode
+  hidden?: boolean
 }
 
 export interface BaseFilter {
@@ -155,6 +156,7 @@ export function CustomDataTable({
   onSelectionChange,
 }: CustomDataTableProps) {
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({})
+  const [searchInputValues, setSearchInputValues] = useState<Record<string, string>>({})
   const [filterValues, setFilterValues] = useState<Record<string, string>>({})
   const [sortConfig, setSortConfig] = useState(initialSortConfig)
   const [currentPage, setCurrentPage] = useState(1)
@@ -168,11 +170,29 @@ export function CustomDataTable({
   const [internalSelectedRows, setInternalSelectedRows] = useState<any[]>([])
   const selectedRows = externalSelectedRows || internalSelectedRows;
   
+  // Filter out hidden columns
+  const visibleColumns = useMemo(() => {
+    return columns.filter(column => !column.hidden);
+  }, [columns]);
+  
   // Ensure searchFields is always an array
   const searchFields = useMemo(() => {
     if (!searchField) return []
     return Array.isArray(searchField) ? searchField : [searchField]
   }, [searchField])
+
+  // Debounced search handler
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSearch = useCallback(
+    // Debounce time set to 300ms
+    debounce((field: string, value: string) => {
+      setSearchQueries(prev => ({
+        ...prev,
+        [field]: value
+      }))
+    }, 300),
+    []
+  )
 
   useEffect(() => {
     const initialFilterValues: Record<string, string> = {}
@@ -188,32 +208,49 @@ export function CustomDataTable({
     if (Object.keys(searchQueries).length > 0 && searchFields.length > 0) {
       result = result.filter((item) => {
         return searchFields.every(searchField => {
-          const query = searchQueries[searchField.field]?.toLowerCase() || ''
-          if (!query) return true
-
-          const value = item[searchField.field]
-          if (value === undefined || value === null) return false
-          
+          const query = searchQueries[searchField.field]?.toLowerCase() || '';
+          if (!query) return true;
+  
+          // Support nested keys
+          const keys = searchField.field.split('.');
+          let value = item;
+          for (const key of keys) {
+            if (value === undefined || value === null) return false;
+            value = value[key];
+          }
+  
+          if (value === undefined || value === null) return false;
+  
           if (searchField.type === "number") {
             // For number fields, try to match partial numbers
-            const numValue = String(value)
-            return numValue.includes(query)
+            const numValue = String(value);
+            return numValue.includes(query);
           } else {
             // For string fields, do case-insensitive partial match
-            return String(value).toLowerCase().includes(query)
+            return String(value).toLowerCase().includes(query);
           }
-        })
-      })
+        });
+      });
     }
 
     Object.entries(filterValues).forEach(([key, value]) => {
       if (value !== "all") {
         result = result.filter((item) => {
-          if (value === "unassigned" || value === "none") {
-            return !item[key]
+          // Support nested keys for filters
+          const keys = key.split('.');
+          let itemValue = item;
+          for (const k of keys) {
+            if (itemValue === undefined || itemValue === null) return false;
+            itemValue = itemValue[k];
           }
-          return String(item[key]) === value
-        })
+          
+          if (itemValue === undefined || itemValue === null) return false;
+          
+          if (value === "unassigned" || value === "none") {
+            return !itemValue;
+          }
+          return String(itemValue) === value;
+        });
       }
     })
 
@@ -258,8 +295,18 @@ export function CustomDataTable({
 
     if (sortConfig) {
       result.sort((a, b) => {
-        const aValue = a[sortConfig.key]
-        const bValue = b[sortConfig.key]
+        // Handle nested key sorting
+        const keys = sortConfig.key.split('.');
+        let aValue = a;
+        let bValue = b;
+        
+        for (const key of keys) {
+          if (aValue === undefined || aValue === null) break;
+          aValue = aValue[key];
+          
+          if (bValue === undefined || bValue === null) break;
+          bValue = bValue[key];
+        }
 
         if (aValue < bValue) {
           return sortConfig.direction === "ascending" ? -1 : 1
@@ -292,11 +339,15 @@ export function CustomDataTable({
     setInternalSelectedRows([])
   }, [filteredData, currentPage, itemsPerPage])
 
-  const handleSearchChange = (field: string, value: string) => {
-    setSearchQueries(prev => ({
+  const handleSearchInputChange = (field: string, value: string) => {
+    // Update the input value immediately for UI responsiveness
+    setSearchInputValues(prev => ({
       ...prev,
       [field]: value
     }))
+    
+    // Debounce the actual search query update
+    debouncedSearch(field, value)
   }
 
   const handleFilterChange = (key: string, value: string) => {
@@ -388,17 +439,24 @@ export function CustomDataTable({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getCellValue = (row: any, column: Column) => {
     if (column.render) {
-      return column.render(row[column.key], row)
+      return column.render(row[column.key], row);
     }
-
-    const value = row[column.key]
-    if (value === undefined || value === null) return null
-
+  
+    // Support nested keys
+    const keys = column.key.split('.');
+    let value = row;
+    for (const key of keys) {
+      if (value === undefined || value === null) return null;
+      value = value[key];
+    }
+  
+    if (value === undefined || value === null) return null;
+  
     switch (column.type) {
       case "number":
-        return Number(value).toLocaleString()
+        return Number(value).toLocaleString();
       case "money":
-        return formatMoney(value)
+        return formatMoney(value);
       case "date":
         if (typeof value === 'number') {
           // Handle Excel date serial numbers
@@ -412,7 +470,7 @@ export function CustomDataTable({
       case "boolean":
         return value ? "Yes" : "No";
       default:
-        return value
+        return value;
     }
   }
 
@@ -470,8 +528,8 @@ export function CustomDataTable({
                       <Input
                         placeholder={`${field.placeholder || `Search by ${field.field}...`}`}
                         className="pl-8"
-                        value={searchQueries[field.field] || ''}
-                        onChange={(e) => handleSearchChange(field.field, e.target.value)}
+                        value={searchInputValues[field.field] || ''}
+                        onChange={(e) => handleSearchInputChange(field.field, e.target.value)}
                       />
                     </div>
                   ))}
@@ -564,7 +622,7 @@ export function CustomDataTable({
                   />
                 </TableHead>
               )}
-              {columns.map((column) => (
+              {visibleColumns.map((column) => (
                 <TableHead 
                   key={column.key}
                   className={column.sortable ? "cursor-pointer select-none" : ""}
@@ -586,7 +644,7 @@ export function CustomDataTable({
           <TableBody>
             {paginatedData.length === 0 ? (
               <TableRow>
-                  <TableCell colSpan={columns.length + (actions.length > 0 ? 1 : 0) + (selectable ? 1 : 0)} className="h-24 text-center">
+                  <TableCell colSpan={visibleColumns.length + (actions.length > 0 ? 1 : 0) + (selectable ? 1 : 0)} className="h-24 text-center">
                   {emptyMessage}
                 </TableCell>
               </TableRow>
@@ -609,7 +667,7 @@ export function CustomDataTable({
                       />
                     </TableCell>
                   )}
-                  {columns.map((column) => (
+                  {visibleColumns.map((column) => (
                     <TableCell key={`${rowIndex}-${column.key}`}>
                       {getCellValue(row, column)}
                     </TableCell>
@@ -715,4 +773,25 @@ export function CustomDataTable({
       </div>
     </div>
   )
+}
+
+// Helper function for debouncing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  
+  return function(...args: Parameters<T>) {
+    const later = () => {
+      timeout = null;
+      func(...args);
+    };
+    
+    if (timeout !== null) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(later, wait);
+  };
 }

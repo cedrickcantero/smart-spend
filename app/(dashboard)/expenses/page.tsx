@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Calendar, Download, Filter, Plus, Search, SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +22,7 @@ import { EditExpenseModal } from "@/components/expense/modals/edit-expense-modal
 import { DeleteExpenseModal } from "@/components/expense/modals/delete-expense-modal"
 
 export default function ExpensesPage() {
-
+  // State
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [expenses, setExpenses] = useState<DBExpense[]>([])
@@ -35,30 +35,105 @@ export default function ExpensesPage() {
   const [openDeleteExpenseModal, setOpenDeleteExpenseModal] = useState(false)
   const [selectedExpenseToDelete, setSelectedExpenseToDelete] = useState<DBExpense | null>(null)
 
-  const fetchExpenses = async () => {
-    const expenses = await ExpenseService.getExpenses();
-    setExpenses(expenses);
-  }
-
-  const fetchCategories = async () => {
-    const categories = await CategoriesService.getCategories();
-    setCategories(categories);
-  }
-
-  const fetchRecurringExpenses = async () => {
-    const recurringExpenses = await RecurringService.getRecurringExpenses();
-    setRecurringExpenses(recurringExpenses);
-  }
-
-  useEffect(() => {
-    Promise.all([fetchExpenses(), fetchCategories(), fetchRecurringExpenses()]);
+  // API calls with useCallback to prevent unnecessary recreations
+  const fetchExpenses = useCallback(async () => {
+    try {
+      const expenses = await ExpenseService.getExpenses();
+      setExpenses(expenses);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+    }
   }, [])
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      const categories = await CategoriesService.getCategories();
+      setCategories(categories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  }, [])
 
-  const handleDeleteExpense = (expense: DBExpense) => {
+  const fetchRecurringExpenses = useCallback(async () => {
+    try {
+      const recurringExpenses = await RecurringService.getRecurringExpenses();
+      setRecurringExpenses(recurringExpenses);
+    } catch (error) {
+      console.error('Error fetching recurring expenses:', error);
+    }
+  }, [])
+
+  // Initial data fetch with stable dependencies
+  useEffect(() => {
+    Promise.all([fetchExpenses(), fetchCategories(), fetchRecurringExpenses()]);
+  }, [fetchExpenses, fetchCategories, fetchRecurringExpenses])
+
+  // Event handlers with useCallback
+  const handleDeleteExpense = useCallback((expense: DBExpense) => {
     setSelectedExpenseToDelete(expense)
     setOpenDeleteExpenseModal(true)
-  }
+  }, [])
+
+  const handleCategoryChange = useCallback((value: string) => {
+    setSelectedCategory(value);
+  }, [])
+
+  const handleDateRangeChange = useCallback((value: DateRange | null) => {
+    setDateRange(value);
+  }, [])
+
+  const handleAddExpenseClick = useCallback(() => {
+    setOpenAddExpenseModal(true);
+  }, [])
+
+  const handleEditExpenseClick = useCallback((row: DBExpense) => {
+    setSelectedExpense(row);
+    setOpenEditExpenseModal(true);
+  }, [])
+
+  // Memoize expensive data transformations
+  const categoryOptions = useMemo(() => {
+    return categories.map((category) => ({
+      label: category.name,
+      value: category.id,
+    }));
+  }, [categories])
+
+  // Memoize table columns to prevent unnecessary recreations
+  const expenseColumns = useMemo(() => [
+    {
+      key: "date",
+      label: "Date",
+      type: "date" as const,
+    },
+    {
+      key: "merchant",
+      label: "Merchant",
+      type: "text" as const,
+    },
+    {
+      key: "payment_method",
+      label: "Payment Method",
+      type: "text" as const,
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      type: "money" as const,
+    }
+  ], [])
+
+  // Memoize actions to prevent recreations
+  const getRowActions = useCallback((row: DBExpense) => [
+    {
+      label: "Edit",
+      onClick: () => handleEditExpenseClick(row),
+    },
+    {
+      label: "Delete",
+      onClick: () => handleDeleteExpense(row),
+    }
+  ], [handleEditExpenseClick, handleDeleteExpense])
 
   return (
     <div className="flex flex-col gap-4">
@@ -84,81 +159,32 @@ export default function ExpensesPage() {
                 <div className="rounded-md border">
                   <CustomDataTable
                     data={expenses}
-                    columns={[
-                      {
-                        key: "date",
-                        label: "Date",
-                        type: "date",
-                      },
-                      {
-                        key: "merchant",
-                        label: "Merchant",
-                        type: "text",
-                        // render: (value, row) => {
-                        //   return (
-                        //     <div className="flex items-center gap-2">
-                        //       <Avatar className="h-8 w-8">
-                        //         <AvatarImage src={row.merchant_logo} />
-                        //         <AvatarFallback>{row.merchant.charAt(0)}</AvatarFallback> 
-                        //       </Avatar>
-                        //       <span className="text-xs text-muted-foreground">{row.merchant}</span>
-                        //     </div>
-                        //   )
-                        // }
-                      },
-                      {
-                        key: "payment_method",
-                        label: "Payment Method",
-                        type: "text",
-                      },
-                      {
-                        key: "amount",
-                        label: "Amount",
-                        type: "money",
-                      }
-                    ]}
-                    actions={(row) => [
-                      {
-                        label: "Edit",
-                        onClick: () => {
-                          setSelectedExpense(row)
-                          setOpenEditExpenseModal(true)
-                        },
-                      },
-                      {
-                        label: "Delete",
-                        onClick: () => handleDeleteExpense(row),
-                      }
-                    ]}
+                    columns={expenseColumns}
+                    actions={getRowActions}
                     title="Expenses"
                     searchField={{
                       field: "merchant",
                       type: "string",
                     }}
-                    addButton={
-                      {
-                        label: "Add Expense",
-                        onClick: () => setOpenAddExpenseModal(true),
-                      }
-                    }
+                    addButton={{
+                      label: "Add Expense",
+                      onClick: handleAddExpenseClick,
+                    }}
                     filters={[
                       {
                         key: "category",
                         label: "Category",
                         type: "select",
-                        options: categories.map((category) => ({
-                          label: category.name,
-                          value: category.id,
-                        })),
+                        options: categoryOptions,
                         value: selectedCategory || "",
-                        onChange: (value) => setSelectedCategory(value),
+                        onChange: handleCategoryChange,
                       },
                       {
                         key: "date",
                         label: "Date",
                         type: "dateRange",
                         value: dateRange,
-                        dateRangeOnChange: (value) => setDateRange(value),
+                        dateRangeOnChange: handleDateRangeChange,
                       }
                     ]}
                     pagination={{

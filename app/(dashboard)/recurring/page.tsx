@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DBRecurringBill } from "@/types/supabase"
@@ -10,7 +10,9 @@ import { DateRange } from "react-day-picker"
 import { AddRecurringModal } from "@/components/recurring/modals/add-recurring-modal"
 import { EditRecurringModal } from "@/components/recurring/modals/edit-recurring-modal"
 import { DeleteRecurringModal } from "@/components/recurring/modals/delete-recurring-modal"
-export default function ExpensesPage() {
+
+export default function RecurringPage() {
+  // State
   const [recurringExpenses, setRecurringExpenses] = useState<DBRecurringBill[]>([])
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null)
@@ -20,14 +22,108 @@ export default function ExpensesPage() {
   const [openDeleteRecurringExpenseModal, setOpenDeleteRecurringExpenseModal] = useState(false)
   const [selectedRecurringExpenseDelete, setSelectedRecurringExpenseDelete] = useState<DBRecurringBill | null>(null)
 
-  const fetchRecurringExpenses = async () => {
-    const recurringExpenses = await RecurringService.getRecurringExpenses();
-    setRecurringExpenses(recurringExpenses);
-  }
-
-  useEffect(() => {
-    Promise.all([ fetchRecurringExpenses()]);
+  // API calls with useCallback to prevent unnecessary recreations
+  const fetchRecurringExpenses = useCallback(async () => {
+    try {
+      const recurringExpenses = await RecurringService.getRecurringExpenses();
+      setRecurringExpenses(recurringExpenses);
+    } catch (error) {
+      console.error('Error fetching recurring expenses:', error);
+    }
   }, [])
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchRecurringExpenses();
+  }, [fetchRecurringExpenses])
+
+  // Event handlers with useCallback
+  const handleAddRecurringClick = useCallback(() => {
+    setOpenAddRecurringExpenseModal(true);
+  }, [])
+
+  const handleEditRecurringExpense = useCallback((expense: DBRecurringBill) => {
+    setSelectedRecurringExpense(expense);
+    setOpenEditRecurringExpenseModal(true);
+  }, [])
+
+  const handleDeleteRecurringExpense = useCallback((expense: DBRecurringBill) => {
+    setSelectedRecurringExpenseDelete(expense);
+    setOpenDeleteRecurringExpenseModal(true);
+  }, [])
+
+  const handlePaymentMethodChange = useCallback((value: string) => {
+    setSelectedPaymentMethod(value);
+  }, [])
+
+  const handleDateRangeChange = useCallback((value: DateRange | null) => {
+    setDateRange(value);
+  }, [])
+
+  // Memoize payment method options
+  const paymentMethodOptions = useMemo(() => {
+    // Get unique payment methods
+    const uniquePaymentMethods = Array.from(
+      new Set(
+        recurringExpenses
+          .map(expense => expense.payment_method)
+          .filter(Boolean) as string[]
+      )
+    );
+    
+    return uniquePaymentMethods.map(method => ({
+      label: method,
+      value: method,
+    }));
+  }, [recurringExpenses])
+
+  // Memoize table columns
+  const recurringColumns = useMemo(() => [
+    {
+      key: "name",
+      label: "Name",
+      type: "text" as const,
+    },
+    {
+      key: "payment_method",
+      label: "Payment Method",
+      type: "text" as const,
+    },
+    {
+      key: "frequency",
+      label: "Frequency",
+      type: "text" as const,
+    },
+    {
+      key: "due_day",
+      label: "Due Day",
+      type: "text" as const,
+    },
+    {
+      key: "next_due_date",
+      label: "Next Due Date",
+      type: "date" as const,
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      type: "money" as const,
+    },
+  ], [])
+
+  // Memoize actions
+  const getRowActions = useMemo(() => {
+    return (row: DBRecurringBill) => [
+      {
+        label: "Edit",
+        onClick: () => handleEditRecurringExpense(row),
+      },
+      {
+        label: "Delete",
+        onClick: () => handleDeleteRecurringExpense(row),
+      }
+    ];
+  }, [handleEditRecurringExpense, handleDeleteRecurringExpense])
 
   return (
     <div className="flex flex-col gap-4">
@@ -47,86 +143,35 @@ export default function ExpensesPage() {
                 <CardDescription>Manage your recurring expenses and subscriptions</CardDescription>
               </CardHeader>
               <CardContent>
-              <div className="rounded-md border">
+                <div className="rounded-md border">
                   <CustomDataTable
                     data={recurringExpenses}
-                    columns={[
-                      {
-                        key: "name",
-                        label: "Name",
-                        type: "text",
-                      },
-                      {
-                        key: "payment_method",
-                        label: "Payment Method",
-                        type: "text",
-                      },
-                      {
-                        key: "frequency",
-                        label: "Frequency",
-                        type: "text",
-                      },
-                      {
-                        key: "due_day",
-                        label: "Due Day",
-                        type: "text",
-                      },
-                      {
-                        key: "next_due_date",
-                        label: "Next Due Date",
-                        type: "date",
-                      },
-                      {
-                        key: "amount",
-                        label: "Amount",
-                        type: "money",
-                      },
-                    ]}
-                    actions={(row) => [
-                      {
-                        label: "Edit",
-                        onClick: () => {
-                          setSelectedRecurringExpense(row)
-                          setOpenEditRecurringExpenseModal(true)
-                        },
-                      },
-                      {
-                        label: "Delete",
-                        onClick: () => {
-                          setSelectedRecurringExpenseDelete(row)
-                          setOpenDeleteRecurringExpenseModal(true)
-                        },
-                      }
-                    ]}
+                    columns={recurringColumns}
+                    actions={getRowActions}
                     title="Expenses"
                     searchField={{
                       field: "name",
                       type: "string",
                     }}
-                    addButton={
-                      {
-                        label: "Add Recurring Expense",
-                        onClick: () => setOpenAddRecurringExpenseModal(true),
-                      }
-                    }
+                    addButton={{
+                      label: "Add Recurring Expense",
+                      onClick: handleAddRecurringClick,
+                    }}
                     filters={[
                       {
                         key: "payment_method",
                         label: "Payment Method",
                         type: "select",
-                        options: recurringExpenses.map((expense) => ({
-                          label: expense.payment_method || "",
-                          value: expense.payment_method || "",
-                        })),
+                        options: paymentMethodOptions,
                         value: selectedPaymentMethod || "",
-                        onChange: (value) => setSelectedPaymentMethod(value),
+                        onChange: handlePaymentMethodChange,
                       },
                       {
                         key: "next_due_date",
                         label: "Date",
                         type: "dateRange",
                         value: dateRange,
-                        dateRangeOnChange: (value) => setDateRange(value),
+                        dateRangeOnChange: handleDateRangeChange,
                       }
                     ]}
                     pagination={{
