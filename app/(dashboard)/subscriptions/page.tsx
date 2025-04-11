@@ -10,9 +10,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DBExpense, DBCategory, DBRecurringBill } from "@/types/supabase"
+import { DBExpense, DBCategory, DBRecurringBill, DBSubscription } from "@/types/supabase"
 import { ExpenseService } from "@/app/api/expense/service"
 import { CategoriesService } from "@/app/api/categories/service"
+import { SubscriptionsService } from "@/app/api/subscriptions/service"
 
 import { RecurringService } from "@/app/api/recurring/service"
 import { CustomDataTable } from "@/components/common/custom-data-table"
@@ -20,24 +21,26 @@ import { DateRange } from "react-day-picker"
 import { AddExpenseModal } from "@/components/expense/modals/add-expense-modal"
 import { EditExpenseModal } from "@/components/expense/modals/edit-expense-modal"
 import { DeleteExpenseModal } from "@/components/expense/modals/delete-expense-modal"
+import { AddSubscriptionModal } from "@/components/subscriptions/modals/add-subscriptions-modal"
+import { EditSubscriptionModal } from "@/components/subscriptions/modals/edit-subscriptions-modal"
+import { DeleteSubscriptionModal } from "@/components/subscriptions/modals/delete-subscriptions-modal"
 
 export default function ExpensesPage() {
 
-  const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [expenses, setExpenses] = useState<DBExpense[]>([])
   const [categories, setCategories] = useState<DBCategory[]>([])
-  const [recurringExpenses, setRecurringExpenses] = useState<DBRecurringBill[]>([])
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
-  const [openAddExpenseModal, setOpenAddExpenseModal] = useState(false)
-  const [openEditExpenseModal, setOpenEditExpenseModal] = useState(false)
-  const [selectedExpense, setSelectedExpense] = useState<DBExpense | null>(null)
-  const [openDeleteExpenseModal, setOpenDeleteExpenseModal] = useState(false)
-  const [selectedExpenseToDelete, setSelectedExpenseToDelete] = useState<DBExpense | null>(null)
+  const [openAddSubscriptionModal, setOpenAddSubscriptionModal] = useState(false)
+  const [openEditSubscriptionModal, setOpenEditSubscriptionModal] = useState(false)
+  const [openDeleteSubscriptionModal, setOpenDeleteSubscriptionModal] = useState(false)
+  const [subscriptions, setSubscriptions] = useState<DBSubscription[]>([])
+  const [selectedSubscription, setSelectedSubscription] = useState<DBSubscription | null>(null)
+  const [selectedSubscriptionToDelete, setSelectedSubscriptionToDelete] = useState<DBSubscription | null>(null)
 
-  const fetchExpenses = async () => {
-    const expenses = await ExpenseService.getExpenses();
-    setExpenses(expenses);
+
+  const fetchSubscriptions = async () => {
+    const subscriptions = await SubscriptionsService.getSubscriptions();
+    setSubscriptions(subscriptions);
   }
 
   const fetchCategories = async () => {
@@ -45,20 +48,18 @@ export default function ExpensesPage() {
     setCategories(categories);
   }
 
-  const fetchRecurringExpenses = async () => {
-    const recurringExpenses = await RecurringService.getRecurringExpenses();
-    setRecurringExpenses(recurringExpenses);
-  }
 
   useEffect(() => {
-    Promise.all([fetchExpenses(), fetchCategories(), fetchRecurringExpenses()]);
+    Promise.all([ fetchSubscriptions(), fetchCategories()]);
   }, [])
 
 
-  const handleDeleteExpense = (expense: DBExpense) => {
-    setSelectedExpenseToDelete(expense)
-    setOpenDeleteExpenseModal(true)
+  const handleDeleteSubscription = (subscription: DBSubscription) => {
+    setSelectedSubscriptionToDelete(subscription)
+    setOpenDeleteSubscriptionModal(true)
   }
+
+  console.log("subscriptions", subscriptions)
 
   return (
     <div className="flex flex-col gap-4">
@@ -67,32 +68,31 @@ export default function ExpensesPage() {
       </div>
       <Tabs defaultValue="all" className="w-full">
         <TabsList>
-          <TabsTrigger value="all">All Expenses</TabsTrigger>
+          <TabsTrigger value="all">Subscriptions</TabsTrigger>
         </TabsList>
 
         <div className="flex flex-col gap-4 mt-4">
           <TabsContent value="all" className="m-0">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle>All Expenses</CardTitle>
+                <CardTitle>Subscriptions</CardTitle>
                 <CardDescription>
-                  {expenses.length} expenses found
-                  {selectedCategory && ` in ${selectedCategory}`}
+                  {subscriptions.length} subscriptions found
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
                   <CustomDataTable
-                    data={expenses}
+                    data={subscriptions}
                     columns={[
                       {
-                        key: "date",
-                        label: "Date",
-                        type: "date",
+                        key: "name",
+                        label: "Name",
+                        type: "text",
                       },
                       {
-                        key: "merchant",
-                        label: "Merchant",
+                        key: "billing_cycle",
+                        label: "Billing Cycle",
                         type: "text",
                         // render: (value, row) => {
                         //   return (
@@ -115,30 +115,40 @@ export default function ExpensesPage() {
                         key: "amount",
                         label: "Amount",
                         type: "money",
+                      },
+                      {
+                        key: "next_billing_date",
+                        label: "Next Billing Date",
+                        type: "date",
+                      },
+                      {
+                        key: "is_active",
+                        label: "Is Active",
+                        type: "boolean",
                       }
                     ]}
                     actions={(row) => [
                       {
                         label: "Edit",
                         onClick: () => {
-                          setSelectedExpense(row)
-                          setOpenEditExpenseModal(true)
+                          setSelectedSubscription(row)
+                          setOpenEditSubscriptionModal(true)
                         },
                       },
                       {
                         label: "Delete",
-                        onClick: () => handleDeleteExpense(row),
+                        onClick: () => handleDeleteSubscription(row),
                       }
                     ]}
-                    title="Expenses"
+                    title="Subscriptions"
                     searchField={{
                       field: "merchant",
                       type: "string",
                     }}
                     addButton={
                       {
-                        label: "Add Expense",
-                        onClick: () => setOpenAddExpenseModal(true),
+                        label: "Add Subscription",
+                        onClick: () => setOpenAddSubscriptionModal(true),
                       }
                     }
                     filters={[
@@ -172,29 +182,28 @@ export default function ExpensesPage() {
           </TabsContent>
         </div>
       </Tabs>
-      {openAddExpenseModal && categories.length > 0 && (
-        <AddExpenseModal 
-          open={openAddExpenseModal} 
-          onOpenChange={setOpenAddExpenseModal} 
-          categories={categories}
-          fetchExpenses={fetchExpenses}
+      {openAddSubscriptionModal && (
+        <AddSubscriptionModal 
+          open={openAddSubscriptionModal} 
+          onOpenChange={setOpenAddSubscriptionModal} 
+          subscriptions ={subscriptions}
+          fetchSubscriptions={fetchSubscriptions}
         />
       )}
-      {selectedExpense && categories.length > 0 && (
-        <EditExpenseModal 
-          open={openEditExpenseModal} 
-          onOpenChange={setOpenEditExpenseModal} 
-          expense={selectedExpense}
-          categories={categories}
-          fetchExpenses={fetchExpenses}
+      {selectedSubscription && (
+        <EditSubscriptionModal 
+          open={openEditSubscriptionModal} 
+          onOpenChange={setOpenEditSubscriptionModal} 
+          subscription={selectedSubscription}
+          fetchSubscriptions={fetchSubscriptions}
         />
       )}
-      {selectedExpenseToDelete && categories.length > 0 && (
-        <DeleteExpenseModal
-          open={openDeleteExpenseModal}
-          onOpenChange={setOpenDeleteExpenseModal}
-          expense={selectedExpenseToDelete}
-          fetchExpenses={fetchExpenses}
+      {selectedSubscriptionToDelete && (
+        <DeleteSubscriptionModal
+          open={openDeleteSubscriptionModal}
+          onOpenChange={setOpenDeleteSubscriptionModal}
+          subscription={selectedSubscriptionToDelete}
+          fetchSubscriptions={fetchSubscriptions}
         />
       )}
     </div>

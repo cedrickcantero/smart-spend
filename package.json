@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "update-types": "npx supabase gen types typescript --project-id 'dblaogxfmwkksvfypvtb' --schema public > types/supabase/schema.ts"
+    "update-types": "npx --yes supabase@2.20.12 gen types typescript --project-id 'dblaogxfmwkksvfypvtb' --schema public > temp-schema.ts && type temp-schema.ts > types/supabase/schema.ts && del temp-schema.ts",
+    "update-schema": "npx supabase gen types typescript --project-id dblaogxfmwkksvfypvtb > types/supabase/schema.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.4",
@@ -40,6 +41,7 @@
     "react-dom": "^19.0.0",
     "recharts": "^2.15.2",
     "sonner": "^2.0.3",
+    "supabase": "^2.20.12",
     "tailwind-merge": "^3.2.0",
     "tw-animate-css": "^1.2.5"
   },

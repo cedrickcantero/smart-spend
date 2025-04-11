@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -28,16 +27,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { RecurringService } from "@/app/api/recurring/service"
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { CategoriesService } from "@/app/api/categories/service"
-import { DBCategory } from "@/types/supabase"
-import { useAuth } from "@/lib/auth-context"
-interface AddRecurringModalProps {
+import { DBCategory, DBSubscription } from "@/types/supabase"
+import { SubscriptionsService } from "@/app/api/subscriptions/service"
+
+interface EditSubscriptionModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  fetchRecurringExpenses: () => void
+  subscription: DBSubscription
+  fetchSubscriptions: () => void
 }
 
 const paymentMethods = [
@@ -48,27 +48,37 @@ const paymentMethods = [
     { value: "Mobile Payment", label: "Mobile Payment" },
   ]
 
-export function AddRecurringModal({
+const billingCycles = [
+  { value: "monthly", label: "Monthly" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "annually", label: "Annually" },
+  { value: "weekly", label: "Weekly" },
+  { value: "daily", label: "Daily" },
+]
+
+export function EditSubscriptionModal({
   open,
   onOpenChange,
-  fetchRecurringExpenses,
-}: AddRecurringModalProps) {
+  subscription,
+  fetchSubscriptions,
+}: EditSubscriptionModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
   const [categories, setCategories] = useState<DBCategory[]>([])
-  const { user } = useAuth()
-  const [recurringData, setRecurringData] = useState({
-    name: "",
-    amount: 0,
-    category_id: "",
-    due_day: "",
-    frequency: "monthly",
-    next_due_date: new Date(),
-    payment_method: paymentMethods[0].value,
-    is_automatic: false,
+  const [subscriptionData, setSubscriptionData] = useState({
+    id: subscription.id,
+    name: subscription.name,
+    description: subscription.description || "",
+    amount: subscription.amount,
+    billing_cycle: subscription.billing_cycle,
+    next_billing_date: new Date(subscription.next_billing_date),
+    category_id: subscription.category_id || "",
+    is_active: subscription.is_active,
+    payment_method: subscription.payment_method || paymentMethods[0].value,
+    website: subscription.website || "",
+    notes: subscription.notes || "",
   })
 
-  // Fetch categories when the modal opens
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -86,9 +96,25 @@ export function AddRecurringModal({
     loadCategories()
   }, [toast])
 
+  useEffect(() => {
+    setSubscriptionData({
+      id: subscription.id,
+      name: subscription.name,
+      description: subscription.description || "",
+      amount: subscription.amount,
+      billing_cycle: subscription.billing_cycle,
+      next_billing_date: new Date(subscription.next_billing_date),
+      category_id: subscription.category_id || "",
+      is_active: subscription.is_active,
+      payment_method: subscription.payment_method || paymentMethods[0].value,
+      website: subscription.website || "",
+      notes: subscription.notes || "",
+    })
+  }, [subscription])
+
   const handleChange = (field: string, value: any) => {
-    setRecurringData({
-      ...recurringData,
+    setSubscriptionData({
+      ...subscriptionData,
       [field]: value,
     })
   }
@@ -97,43 +123,51 @@ export function AddRecurringModal({
     e.preventDefault()
     setIsSubmitting(true)
     try {
-      // Validate form
-      if (!recurringData.name || !recurringData.amount || !recurringData.frequency) {
+      if (!subscriptionData.name || !subscriptionData.amount || !subscriptionData.billing_cycle) {
         throw new Error("Please fill in all required fields")
       }
 
-      // Ensure category_id is a valid UUID if provided
-      if (recurringData.category_id && !recurringData.category_id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      if (subscriptionData.category_id && !subscriptionData.category_id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
         throw new Error("Please select a valid category")
       }
 
-      await RecurringService.createRecurringExpense({
-        ...recurringData,
-        due_day: recurringData.due_day ? parseInt(recurringData.due_day) : null,
-        user_id: user?.id || "",
-        next_due_date: recurringData.next_due_date.toISOString(),
+      await SubscriptionsService.updateSubscription({
+        id: subscriptionData.id,
+        name: subscriptionData.name,
+        description: subscriptionData.description || null,
+        amount: subscriptionData.amount,
+        billing_cycle: subscriptionData.billing_cycle,
+        next_billing_date: subscriptionData.next_billing_date.toISOString().split('T')[0],
+        category_id: subscriptionData.category_id || null,
+        is_active: subscriptionData.is_active,
+        payment_method: subscriptionData.payment_method || null,
+        website: subscriptionData.website || null,
+        notes: subscriptionData.notes || null,
       })
       toast({
         title: "Success",
-        description: "Recurring expense created successfully",
+        description: "Subscription updated successfully",
       })
-      setRecurringData({
+      setSubscriptionData({
+        id: "",
         name: "",
+        description: "",
         amount: 0,
+        billing_cycle: "monthly",
+        next_billing_date: new Date(),
         category_id: "",
-        due_day: "",
-        frequency: "monthly",
-        next_due_date: new Date(),
-        payment_method: "",
-        is_automatic: false,
+        is_active: true,
+        payment_method: paymentMethods[0].value,
+        website: "",
+        notes: "",
       })
       onOpenChange(false)
-      fetchRecurringExpenses()
+      fetchSubscriptions()
     } catch (error: any) {
-      console.error("Error creating recurring expense:", error)
+      console.error("Error creating subscription:", error)
       toast({
         title: "Error",
-        description: error.message || "Failed to create recurring expense",
+        description: error.message || "Failed to create subscription",
         variant: "destructive",
       })
     } finally {
@@ -145,9 +179,9 @@ export function AddRecurringModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Recurring Expense</DialogTitle>
+          <DialogTitle>Edit Subscription</DialogTitle>
           <DialogDescription>
-            Create a new recurring expense or subscription
+            Edit the subscription
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -156,9 +190,19 @@ export function AddRecurringModal({
             <Input 
               id="name"
               placeholder="Netflix" 
-              value={recurringData.name}
+              value={subscriptionData.name}
               onChange={(e) => handleChange("name", e.target.value)}
               required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Input 
+              id="description"
+              placeholder="Streaming service" 
+              value={subscriptionData.description}
+              onChange={(e) => handleChange("description", e.target.value)}
             />
           </div>
           
@@ -169,7 +213,7 @@ export function AddRecurringModal({
               type="number"
               step="0.01"
               placeholder="19.99"
-              value={recurringData.amount}
+              value={subscriptionData.amount}
               onChange={(e) => handleChange("amount", parseFloat(e.target.value))}
               required
             />
@@ -178,7 +222,7 @@ export function AddRecurringModal({
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
             <Select
-              value={recurringData.category_id}
+              value={subscriptionData.category_id}
               onValueChange={(value) => handleChange("category_id", value)}
             >
               <SelectTrigger>
@@ -198,49 +242,35 @@ export function AddRecurringModal({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="frequency">Frequency</Label>
+            <Label htmlFor="billing_cycle">Billing Cycle</Label>
             <Select
-              value={recurringData.frequency}
-              onValueChange={(value) => handleChange("frequency", value)}
+              value={subscriptionData.billing_cycle}
+              onValueChange={(value) => handleChange("billing_cycle", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select frequency" />
+                <SelectValue placeholder="Select billing cycle" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="quarterly">Quarterly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
+                {billingCycles.map((cycle) => (
+                  <SelectItem key={cycle.value} value={cycle.value}>
+                    {cycle.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           
-          {recurringData.frequency === "monthly" && (
-            <div className="space-y-2">
-              <Label htmlFor="due_day">Due Day (1-31)</Label>
-              <Input
-                id="due_day"
-                type="number"
-                min="1"
-                max="31"
-                placeholder="15"
-                value={recurringData.due_day}
-                onChange={(e) => handleChange("due_day", e.target.value)}
-              />
-            </div>
-          )}
-          
           <div className="space-y-2">
-            <Label htmlFor="next_due_date">Next Due Date</Label>
+            <Label htmlFor="next_billing_date">Next Billing Date</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
                   className="w-full pl-3 text-left font-normal"
-                  id="next_due_date"
+                  id="next_billing_date"
                 >
-                  {recurringData.next_due_date ? (
-                    format(recurringData.next_due_date, "PPP")
+                  {subscriptionData.next_billing_date ? (
+                    format(subscriptionData.next_billing_date, "PPP")
                   ) : (
                     <span className="text-muted-foreground">Pick a date</span>
                   )}
@@ -250,8 +280,8 @@ export function AddRecurringModal({
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={recurringData.next_due_date}
-                  onSelect={(date) => handleChange("next_due_date", date)}
+                  selected={subscriptionData.next_billing_date}
+                  onSelect={(date) => handleChange("next_billing_date", date)}
                   initialFocus
                 />
               </PopoverContent>
@@ -261,7 +291,7 @@ export function AddRecurringModal({
           <div className="space-y-2">
             <Label htmlFor="payment_method">Payment Method</Label>
             <Select
-              value={recurringData.payment_method}
+              value={subscriptionData.payment_method}
               onValueChange={(value) => handleChange("payment_method", value)}
             >
               <SelectTrigger>
@@ -276,23 +306,44 @@ export function AddRecurringModal({
               </SelectContent>
             </Select>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="website">Website</Label>
+            <Input 
+              id="website"
+              type="url"
+              placeholder="https://example.com" 
+              value={subscriptionData.website}
+              onChange={(e) => handleChange("website", e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Input 
+              id="notes"
+              placeholder="Additional notes" 
+              value={subscriptionData.notes}
+              onChange={(e) => handleChange("notes", e.target.value)}
+            />
+          </div>
           
           <div className="flex items-center space-x-2 rounded-md border p-4">
             <Checkbox
-              id="is_automatic"
-              checked={recurringData.is_automatic}
+              id="is_active"
+              checked={subscriptionData.is_active}
               onCheckedChange={(checked) => 
-                handleChange("is_automatic", checked === true)
+                handleChange("is_active", checked === true)
               }
             />
-            <Label htmlFor="is_automatic" className="cursor-pointer">
-              Automatic Payment
+            <Label htmlFor="is_active" className="cursor-pointer">
+              Active Subscription
             </Label>
           </div>
           
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create"}
+              {isSubmitting ? "Updating..." : "Update"}
             </Button>
           </DialogFooter>
         </form>

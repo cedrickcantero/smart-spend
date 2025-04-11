@@ -1,5 +1,5 @@
 import { api } from "@/lib/services/api-service";
-import { DBRecurringBill } from "@/types/supabase";
+import { DBRecurringBill, DBRecurringBillInsert } from "@/types/supabase";
 
 
 export const RecurringService = {
@@ -11,7 +11,7 @@ export const RecurringService = {
           throw error;
         }
       },
-      createRecurringExpense: async (expense: DBRecurringBill): Promise<DBRecurringBill> => {
+      createRecurringExpense: async (expense: DBRecurringBillInsert): Promise<DBRecurringBill> => {
         try {
           return await api.post<DBRecurringBill>("/api/recurring", expense);
         } catch (error) {

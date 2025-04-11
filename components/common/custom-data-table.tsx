@@ -37,6 +37,7 @@ export type ColumnType =
   | "number"
   | "money"
   | "date"
+  | "boolean"
 export interface Column {
   key: string
   label: string
@@ -408,6 +409,8 @@ export function CustomDataTable({
           return moment(value).format("MM/DD/YYYY");
         }
         return value;
+      case "boolean":
+        return value ? "Yes" : "No";
       default:
         return value
     }

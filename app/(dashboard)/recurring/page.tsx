@@ -18,7 +18,7 @@ export default function ExpensesPage() {
   const [openEditRecurringExpenseModal, setOpenEditRecurringExpenseModal] = useState(false)
   const [selectedRecurringExpense, setSelectedRecurringExpense] = useState<DBRecurringBill | null>(null)
   const [openDeleteRecurringExpenseModal, setOpenDeleteRecurringExpenseModal] = useState(false)
-  const [selectedRecurringExpenseDelete, setSelectedRecurringExpenseDelete] = useState<string | null>(null)
+  const [selectedRecurringExpenseDelete, setSelectedRecurringExpenseDelete] = useState<DBRecurringBill | null>(null)
 
   const fetchRecurringExpenses = async () => {
     const recurringExpenses = await RecurringService.getRecurringExpenses();
@@ -115,8 +115,8 @@ export default function ExpensesPage() {
                         label: "Payment Method",
                         type: "select",
                         options: recurringExpenses.map((expense) => ({
-                          label: expense.payment_method,
-                          value: expense.payment_method,
+                          label: expense.payment_method || "",
+                          value: expense.payment_method || "",
                         })),
                         value: selectedPaymentMethod || "",
                         onChange: (value) => setSelectedPaymentMethod(value),
@@ -155,7 +155,7 @@ export default function ExpensesPage() {
           recurring={selectedRecurringExpense}
         />
       )}
-      {openDeleteRecurringExpenseModal && (
+      {selectedRecurringExpenseDelete && (
         <DeleteRecurringModal
           open={openDeleteRecurringExpenseModal}
           onOpenChange={setOpenDeleteRecurringExpenseModal}
