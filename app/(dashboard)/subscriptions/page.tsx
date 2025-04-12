@@ -1,32 +1,18 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Calendar, Download, Filter, Plus, Search, SlidersHorizontal } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DBExpense, DBCategory, DBRecurringBill, DBSubscription } from "@/types/supabase"
-import { ExpenseService } from "@/app/api/expense/service"
 import { CategoriesService } from "@/app/api/categories/service"
 import { SubscriptionsService } from "@/app/api/subscriptions/service"
-
-import { RecurringService } from "@/app/api/recurring/service"
 import { CustomDataTable } from "@/components/common/custom-data-table"
 import { DateRange } from "react-day-picker"
-import { AddExpenseModal } from "@/components/expense/modals/add-expense-modal"
-import { EditExpenseModal } from "@/components/expense/modals/edit-expense-modal"
-import { DeleteExpenseModal } from "@/components/expense/modals/delete-expense-modal"
 import { AddSubscriptionModal } from "@/components/subscriptions/modals/add-subscriptions-modal"
 import { EditSubscriptionModal } from "@/components/subscriptions/modals/edit-subscriptions-modal"
 import { DeleteSubscriptionModal } from "@/components/subscriptions/modals/delete-subscriptions-modal"
 
 export default function SubscriptionsPage() {
-  // State
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [categories, setCategories] = useState<DBCategory[]>([])
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
@@ -37,7 +23,6 @@ export default function SubscriptionsPage() {
   const [selectedSubscription, setSelectedSubscription] = useState<DBSubscription | null>(null)
   const [selectedSubscriptionToDelete, setSelectedSubscriptionToDelete] = useState<DBSubscription | null>(null)
 
-  // API calls with useCallback to prevent unnecessary recreations
   const fetchSubscriptions = useCallback(async () => {
     try {
       const subscriptions = await SubscriptionsService.getSubscriptions();
@@ -56,12 +41,10 @@ export default function SubscriptionsPage() {
     }
   }, [])
 
-  // Initial data fetch with stable dependencies
   useEffect(() => {
     Promise.all([fetchSubscriptions(), fetchCategories()]);
   }, [fetchSubscriptions, fetchCategories])
 
-  // Event handlers with useCallback
   const handleAddSubscriptionClick = useCallback(() => {
     setOpenAddSubscriptionModal(true);
   }, [])
@@ -84,7 +67,6 @@ export default function SubscriptionsPage() {
     setDateRange(value);
   }, [])
 
-  // Memoize expensive data transformations
   const categoryOptions = useMemo(() => {
     return categories.map((category) => ({
       label: category.name,
@@ -92,7 +74,6 @@ export default function SubscriptionsPage() {
     }));
   }, [categories])
 
-  // Memoize table columns to prevent unnecessary recreations
   const subscriptionColumns = useMemo(() => [
     {
       key: "name",
@@ -126,7 +107,6 @@ export default function SubscriptionsPage() {
     }
   ], [])
 
-  // Memoize actions to prevent recreations
   const getRowActions = useMemo(() => {
     return (row: DBSubscription) => [
       {
@@ -142,25 +122,16 @@ export default function SubscriptionsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Subscriptions</h1>
-      </div>
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList>
-          <TabsTrigger value="all">Subscriptions</TabsTrigger>
-        </TabsList>
-
         <div className="flex flex-col gap-4 mt-4">
-          <TabsContent value="all" className="m-0">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Subscriptions</CardTitle>
-                <CardDescription>
+            <div className="border rounded-lg p-4">
+              <div className="pb-2">
+                <h2 className="text-2xl font-semibold">Subscriptions</h2>
+                <p className="text-sm text-muted-foreground">
                   {subscriptions.length} subscriptions found
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
+                </p>
+              </div>
+              <div>
+                <div className="rounded-md border p-4">
                   <CustomDataTable
                     data={subscriptions}
                     columns={subscriptionColumns}
@@ -197,11 +168,9 @@ export default function SubscriptionsPage() {
                     }}
                   />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </div>
         </div>
-      </Tabs>
       {openAddSubscriptionModal && (
         <AddSubscriptionModal 
           open={openAddSubscriptionModal} 

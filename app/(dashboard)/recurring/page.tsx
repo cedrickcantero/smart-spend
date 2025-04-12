@@ -12,7 +12,6 @@ import { EditRecurringModal } from "@/components/recurring/modals/edit-recurring
 import { DeleteRecurringModal } from "@/components/recurring/modals/delete-recurring-modal"
 
 export default function RecurringPage() {
-  // State
   const [recurringExpenses, setRecurringExpenses] = useState<DBRecurringBill[]>([])
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null)
@@ -22,7 +21,6 @@ export default function RecurringPage() {
   const [openDeleteRecurringExpenseModal, setOpenDeleteRecurringExpenseModal] = useState(false)
   const [selectedRecurringExpenseDelete, setSelectedRecurringExpenseDelete] = useState<DBRecurringBill | null>(null)
 
-  // API calls with useCallback to prevent unnecessary recreations
   const fetchRecurringExpenses = useCallback(async () => {
     try {
       const recurringExpenses = await RecurringService.getRecurringExpenses();
@@ -32,12 +30,10 @@ export default function RecurringPage() {
     }
   }, [])
 
-  // Initial data fetch
   useEffect(() => {
     fetchRecurringExpenses();
   }, [fetchRecurringExpenses])
 
-  // Event handlers with useCallback
   const handleAddRecurringClick = useCallback(() => {
     setOpenAddRecurringExpenseModal(true);
   }, [])
@@ -60,9 +56,7 @@ export default function RecurringPage() {
     setDateRange(value);
   }, [])
 
-  // Memoize payment method options
   const paymentMethodOptions = useMemo(() => {
-    // Get unique payment methods
     const uniquePaymentMethods = Array.from(
       new Set(
         recurringExpenses
@@ -77,7 +71,6 @@ export default function RecurringPage() {
     }));
   }, [recurringExpenses])
 
-  // Memoize table columns
   const recurringColumns = useMemo(() => [
     {
       key: "name",
@@ -111,7 +104,6 @@ export default function RecurringPage() {
     },
   ], [])
 
-  // Memoize actions
   const getRowActions = useMemo(() => {
     return (row: DBRecurringBill) => [
       {
@@ -127,23 +119,14 @@ export default function RecurringPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Recurring</h1>
-      </div>
-      <Tabs defaultValue="recurring" className="w-full">
-        <TabsList>
-          <TabsTrigger value="recurring">Recurring</TabsTrigger>
-        </TabsList>
-
         <div className="flex flex-col gap-4 mt-4">
-          <TabsContent value="recurring" className="m-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recurring Expenses</CardTitle>
-                <CardDescription>Manage your recurring expenses and subscriptions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
+            <div className="border rounded-lg p-4">
+              <div className="pb-2">
+                <h2 className="text-2xl font-semibold">Recurring Expenses</h2>
+                <p className="text-sm text-muted-foreground">Manage your recurring expenses</p>
+              </div>
+              <div>
+                <div className="rounded-md border p-4">
                   <CustomDataTable
                     data={recurringExpenses}
                     columns={recurringColumns}
@@ -180,11 +163,9 @@ export default function RecurringPage() {
                     }}
                   />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </div>
         </div>
-      </Tabs>
       {openAddRecurringExpenseModal && (
         <AddRecurringModal
           open={openAddRecurringExpenseModal}

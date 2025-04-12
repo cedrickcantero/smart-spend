@@ -45,22 +45,18 @@ export async function DELETE(
       return NextResponse.json({ error: 'Event ID is required' }, { status: 400 });
     }
     
-    // Get authenticated user ID
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // Create Supabase client
     const supabase = await createClient();
     
-    // Verify ownership
     const isOwner = await calendarService.verifyOwnership(id, userId, supabase);
     if (!isOwner) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
     
-    // Delete event
     await calendarService.deleteCalendarEvent(id, supabase);
     return NextResponse.json({ message: 'Event deleted successfully' });
   } catch (error) {

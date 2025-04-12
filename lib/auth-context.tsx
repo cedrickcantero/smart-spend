@@ -12,6 +12,8 @@ import type {
   Session,
   User as SupabaseUser,
 } from "@supabase/supabase-js"
+import { UserSettingsService } from "@/app/api/user-settings/service"
+import { DBUserSettings } from "@/types/supabase"
 
 type User = SupabaseUser
 
@@ -19,6 +21,9 @@ type AuthContextType = {
   user: User | null
   session: Session | null
   isLoading: boolean
+  userSettings: DBUserSettings
+  updateUserSettings: (pathOrSettings: string[] | DBUserSettings, value?: any) => Promise<{ success: boolean; error?: any }>
+  updateUserProfile: (firstName: string, lastName: string, bio?: string) => Promise<{ success: boolean; error?: any }>
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<{ error: Error | null }>
@@ -30,7 +35,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  // Initialize with empty object that follows DBUserSettings structure
+  const [userSettings, setUserSettings] = useState<DBUserSettings>({
+    id: '',
+    user_id: null,
+    settings: {},
+    created_at: null,
+    updated_at: null
+  })
 
+  const fetchUserSettings = useCallback(async () => {
+    if (user) {
+      try {
+        const response = await UserSettingsService.getUserSettings();
+        
+        if (response) {
+          setUserSettings(response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user settings:", error);
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     const getSession = async () => {
@@ -54,12 +80,89 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => listener.subscription.unsubscribe()
   }, [])
 
+  // Load user settings when user changes
+  useEffect(() => {
+    fetchUserSettings();
+  }, [user, fetchUserSettings]);
+
+  const updateUserSettings = async (
+    pathOrSettings: string[] | DBUserSettings,
+    value?: any
+  ): Promise<{ success: boolean; error?: any }> => {
+    try {
+      let result;
+      
+      if (Array.isArray(pathOrSettings)) {
+        // Handle paths and ensure no 'settings.' prefix
+        const correctedPath = pathOrSettings[0] === 'settings' 
+          ? pathOrSettings.slice(1) 
+          : pathOrSettings;
+        
+        result = await UserSettingsService.updateUserSetting(correctedPath, value);
+      } else {
+        // When updating full settings object
+        result = await UserSettingsService.updateUserSettings(pathOrSettings);
+      }
+
+      if (result) {
+        // Refresh user settings after update
+        fetchUserSettings();
+        return { success: true };
+      }
+      
+      return { success: false, error: "Failed to update settings" };
+    } catch (error) {
+      console.error("Error updating user settings:", error);
+      return { success: false, error };
+    }
+  };
+
+  const updateUserProfile = async (
+    firstName: string, 
+    lastName: string, 
+    bio?: string
+  ): Promise<{ success: boolean; error?: any }> => {
+    try {
+      // Update user metadata
+      const { error: userUpdateError } = await supabase.auth.updateUser({
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          name: `${firstName} ${lastName}` // Keep full name for backward compatibility
+        }
+      });
+
+      if (userUpdateError) throw userUpdateError;
+
+      // Update user settings if bio is provided
+      if (bio !== undefined) {
+        // Use path-based update for profile.bio
+        const { success, error } = await updateUserSettings(['profile', 'bio'], bio);
+        if (!success) throw error;
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      return { success: false, error };
+    }
+  };
+
   const signUp = async (email: string, password: string, name: string) => {
+    // Split the full name into first and last name
+    const nameParts = name.trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name },
+        data: { 
+          name, // Keep original full name for backward compatibility
+          first_name: firstName,
+          last_name: lastName
+        },
       },
     })
     return { error }
@@ -75,6 +178,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
+    if (!error) {
+      // Reset user settings on sign out
+      setUserSettings({
+        id: '',
+        user_id: null,
+        settings: {},
+        created_at: null,
+        updated_at: null
+      })
+    }
     return { error }
   }
 
@@ -84,6 +197,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         session,
         isLoading,
+        userSettings,
+        updateUserSettings,
+        updateUserProfile,
         signUp,
         signIn,
         signOut,

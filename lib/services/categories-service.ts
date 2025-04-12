@@ -61,6 +61,6 @@ export const CategoriesService = {
       return { error: error.message };
     }
 
-    return data;
+    return data || { error: 'Category not found' };
   }
 };

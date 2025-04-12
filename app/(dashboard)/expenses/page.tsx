@@ -63,12 +63,10 @@ export default function ExpensesPage() {
     }
   }, [])
 
-  // Initial data fetch with stable dependencies
   useEffect(() => {
     Promise.all([fetchExpenses(), fetchCategories(), fetchRecurringExpenses()]);
   }, [fetchExpenses, fetchCategories, fetchRecurringExpenses])
 
-  // Event handlers with useCallback
   const handleDeleteExpense = useCallback((expense: DBExpense) => {
     setSelectedExpenseToDelete(expense)
     setOpenDeleteExpenseModal(true)
@@ -91,7 +89,6 @@ export default function ExpensesPage() {
     setOpenEditExpenseModal(true);
   }, [])
 
-  // Memoize expensive data transformations
   const categoryOptions = useMemo(() => {
     return categories.map((category) => ({
       label: category.name,
@@ -99,7 +96,6 @@ export default function ExpensesPage() {
     }));
   }, [categories])
 
-  // Memoize table columns to prevent unnecessary recreations
   const expenseColumns = useMemo(() => [
     {
       key: "date",
@@ -123,7 +119,6 @@ export default function ExpensesPage() {
     }
   ], [])
 
-  // Memoize actions to prevent recreations
   const getRowActions = useCallback((row: DBExpense) => [
     {
       label: "Edit",
@@ -137,26 +132,17 @@ export default function ExpensesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Expenses</h1>
-      </div>
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList>
-          <TabsTrigger value="all">All Expenses</TabsTrigger>
-        </TabsList>
-
         <div className="flex flex-col gap-4 mt-4">
-          <TabsContent value="all" className="m-0">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>All Expenses</CardTitle>
-                <CardDescription>
+            <div className="border rounded-lg p-4">
+              <div className="pb-2">
+                <h2 className="text-2xl font-semibold">Expenses</h2>
+                <p className="text-sm text-muted-foreground">
                   {expenses.length} expenses found
                   {selectedCategory && ` in ${selectedCategory}`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
+                </p>
+              </div>
+              <div>
+                <div className="rounded-md border p-4">
                   <CustomDataTable
                     data={expenses}
                     columns={expenseColumns}
@@ -193,11 +179,9 @@ export default function ExpensesPage() {
                     }}
                   />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </div>
         </div>
-      </Tabs>
       {openAddExpenseModal && categories.length > 0 && (
         <AddExpenseModal 
           open={openAddExpenseModal} 

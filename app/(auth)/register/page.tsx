@@ -19,7 +19,8 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [email, setEmail] = React.useState<string>("")
   const [password, setPassword] = React.useState<string>("")
-  const [name, setName] = React.useState<string>("")
+  const [firstName, setFirstName] = React.useState<string>("")
+  const [lastName, setLastName] = React.useState<string>("")
 
   // If user is already logged in, redirect to dashboard
   React.useEffect(() => {
@@ -32,7 +33,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    if (!email || !password || !name) {
+    if (!email || !password || !firstName || !lastName) {
       toast({
         title: "Missing fields",
         description: "Please fill in all required fields.",
@@ -43,7 +44,8 @@ export default function RegisterPage() {
     }
 
     try {
-      const { error } = await signUp(email, password, name)
+      const fullName = `${firstName} ${lastName}`;
+      const { error } = await signUp(email, password, fullName)
 
       if (error) {
         throw error
@@ -77,16 +79,29 @@ export default function RegisterPage() {
           <div className="space-y-4">
             <form onSubmit={onSubmit}>
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="John Doe"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    disabled={isLoading}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input
+                      id="firstName"
+                      placeholder="John"
+                      required
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      placeholder="Doe"
+                      required
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
