@@ -156,6 +156,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       email,
       password,
       options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_API_URL}/email-confirmed`,
         data: { 
           name, // Keep original full name for backward compatibility
           first_name: firstName,

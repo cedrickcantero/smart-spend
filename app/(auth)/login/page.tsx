@@ -21,7 +21,8 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState<string>("")
   
   React.useEffect(() => {
-    if (user) {
+    // Only redirect if not already on the dashboard page
+    if (user && window.location.pathname !== "/dashboard") {
       router.push("/dashboard")
     }
   }, [user, router])
