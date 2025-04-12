@@ -37,14 +37,17 @@ export function DeleteExpenseModal({ open, onOpenChange, expense, fetchExpenses 
       toast({
         title: "Expense deleted",
         description: `The expense for ${expense.merchant} has been deleted successfully.`,
+        variant: "success",
       })
       
       onOpenChange(false)
       fetchExpenses()
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error",
-        description: error.message || "Failed to delete expense. Please try again.",
+        description: err.message || "Failed to delete expense. Please try again.",
         variant: "destructive",
       })
     } finally {

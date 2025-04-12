@@ -44,7 +44,6 @@ interface EditRecurringModalProps {
 export function EditRecurringModal({
   open,
   onOpenChange,
-  onSuccess,
   recurring,
   fetchRecurringExpenses,
 }: EditRecurringModalProps) {
@@ -57,12 +56,11 @@ export function EditRecurringModal({
     category_id: recurring.category_id,
     due_day: recurring.due_day,
     frequency: recurring.frequency,
-    next_due_date: recurring.next_due_date,
+    next_due_date: new Date(recurring.next_due_date),
     payment_method: recurring.payment_method,
     is_automatic: false,
   })
 
-  // Initialize form with recurring data when modal opens
   useEffect(() => {
     if (recurring) {
       setRecurringData({
@@ -70,16 +68,16 @@ export function EditRecurringModal({
         name: recurring.name,
         amount: recurring.amount,
         category_id: recurring.category_id || "",
-        due_day: recurring.due_day?.toString() || "",
+        due_day: recurring.due_day,
         frequency: recurring.frequency,
         next_due_date: new Date(recurring.next_due_date),
         payment_method: recurring.payment_method,
-        is_automatic: recurring.is_automatic,
+        is_automatic: recurring.is_automatic || false,
       })
     }
   }, [recurring, open])
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setRecurringData({
       ...recurringData,
       [field]: value,
@@ -92,7 +90,10 @@ export function EditRecurringModal({
     try {
       await RecurringService.updateRecurringExpense({
         ...recurringData,
-        due_day: recurringData.due_day ? parseInt(recurringData.due_day) : null,
+        next_due_date: format(recurringData.next_due_date, 'yyyy-MM-dd'),
+        created_at: recurring.created_at,
+        updated_at: new Date().toISOString(),
+        user_id: recurring.user_id
       })
       toast({
         title: "Success",
@@ -106,9 +107,9 @@ export function EditRecurringModal({
         category_id: recurring.category_id,
         due_day: recurring.due_day,
         frequency: recurring.frequency,
-        next_due_date: recurring.next_due_date,
+        next_due_date: new Date(recurring.next_due_date),
         payment_method: recurring.payment_method,
-        is_automatic: recurring.is_automatic,
+        is_automatic: recurring.is_automatic || false,
       })
       onOpenChange(false)
       fetchRecurringExpenses()
@@ -185,7 +186,7 @@ export function EditRecurringModal({
                 min="1"
                 max="31"
                 placeholder="15"
-                value={recurringData.due_day}
+                value={recurringData.due_day ?? ''}
                 onChange={(e) => handleChange("due_day", e.target.value)}
               />
             </div>
@@ -224,7 +225,7 @@ export function EditRecurringModal({
             <Input
               id="payment_method"
               placeholder="Credit Card"
-              value={recurringData.payment_method}
+              value={recurringData.payment_method ?? ''}
               onChange={(e) => handleChange("payment_method", e.target.value)}
             />
           </div>

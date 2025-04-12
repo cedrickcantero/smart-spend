@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
+import { UserSettings } from "@/types/userSettings"
 
 interface SecuritySettingsData {
   twoFactorEnabled: boolean;
@@ -30,8 +31,8 @@ export function SecuritySettings() {
   const [securityData, setSecurityData] = useState<SecuritySettingsData>(defaultSecuritySettings)
 
   useEffect(() => {
-    if (userSettings?.settings) {
-      const settings = userSettings.settings as Record<string, any>;
+    if (userSettings) {
+      const settings = userSettings as unknown as UserSettings;
       if (settings.security) {
         setSecurityData({
           twoFactorEnabled: Boolean(settings.security.twoFactorEnabled),
@@ -56,14 +57,17 @@ export function SecuritySettings() {
         toast({
           title: "Security settings updated",
           description: "Your security preferences have been saved successfully.",
+          variant: "success",
         });
       } else {
         throw new Error("Update function not available");
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error updating security settings",
-        description: error.message || "There was an error updating your security settings.",
+        description: err.message || "There was an error updating your security settings.",
         variant: "destructive",
       });
     } finally {

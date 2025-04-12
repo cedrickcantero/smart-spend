@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
-
+import { UserSettings } from "@/types/userSettings"
 interface PreferencesData {
   preferences: {
     currency: string;
@@ -57,7 +57,7 @@ export function PreferencesSettings() {
   
   useEffect(() => {
     if (userSettings) {
-      const settings = userSettings as Record<string, any>;
+      const settings = userSettings as unknown as UserSettings;
       
       const storedTheme = settings.preferences?.theme;
       
@@ -99,7 +99,6 @@ export function PreferencesSettings() {
   useEffect(() => {
     const themeValue = preferencesData.preferences.theme;
     if (themeValue && themeValue !== currentTheme) {
-      console.log("Applying theme:", themeValue);
       setTheme(themeValue);
     }
   }, [preferencesData.preferences.theme, setTheme]);
@@ -134,10 +133,12 @@ export function PreferencesSettings() {
       } else {
         throw new Error("Update function not available");
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error updating preferences",
-        description: error.message || "There was an error updating your preferences.",
+        description: err.message || "There was an error updating your preferences.",
         variant: "destructive",
       });
     } finally {

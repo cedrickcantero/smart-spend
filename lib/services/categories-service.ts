@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { DBCategory, DBExpense, DBExpenseInsert, DBExpenseUpdate } from '@/types/supabase';
+import { DBCategory } from '@/types/supabase';
 
 export const CategoriesService = {
   async getCategories(userId: string, supabase: SupabaseClient): Promise<DBCategory[] | { error: string }> {

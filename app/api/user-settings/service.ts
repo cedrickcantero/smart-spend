@@ -12,11 +12,10 @@ export const UserSettingsService = {
     }
   },
 
-  async getUserSettingByPath(path: string | string[]): Promise<any | null> {
+  async getUserSettingByPath(path: string | string[]): Promise<DBUserSettings | null> {
     try {
       const pathParam = Array.isArray(path) ? path.join('.') : path;
-      const response = await api.get<any>(`/api/user-settings?path=${encodeURIComponent(pathParam)}`);
-      // Simply return the response data
+      const response = await api.get<DBUserSettings>(`/api/user-settings?path=${encodeURIComponent(pathParam)}`);
       return response;
     } catch (error) {
       console.error('Error fetching user setting:', error);
@@ -34,7 +33,7 @@ export const UserSettingsService = {
     }
   },
 
-  async updateUserSetting(path: string | string[], value: any): Promise<{ success: boolean; error?: any; data?: DBUserSettings }> {
+  async updateUserSetting(path: string | string[], value: DBUserSettings): Promise<{ success: boolean; error?: unknown; data?: DBUserSettings }> {
     try {
       const pathArray = Array.isArray(path) ? path : path.split('.');
       const response = await api.patch<DBUserSettings>('/api/user-settings', { path: pathArray, value });

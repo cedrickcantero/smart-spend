@@ -1,5 +1,4 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '@/types/supabase/schema';
 import { DBUserSettings } from '@/types/supabase/index';
 
 
@@ -16,19 +15,17 @@ export const UserSettingsService = {
       return { error: error.message };
     }
 
-    console.log("data", data);
-
     return data?.settings || { error: 'No settings found' };
   },
 
-  async getUserSettingsByPath(userId: string, path: string[], supabase: SupabaseClient): Promise<any | { error: string }> {
+  async getUserSettingsByPath(userId: string, path: string[], supabase: SupabaseClient): Promise<DBUserSettings | { error: string }> {
     const result = await this.getUserSettings(userId, supabase);
     
     if ('error' in result) {
       return result;
     }
     
-    let current: any = result;
+    let current: unknown = result;
     for (const key of path) {
       if (current && typeof current === 'object' && key in current) {
         current = current[key as keyof typeof current];
@@ -37,7 +34,7 @@ export const UserSettingsService = {
       }
     }
     
-    return current;
+    return current as DBUserSettings;
   },
 
   async createUserSettings(userId: string, settings: DBUserSettings, supabase: SupabaseClient): Promise<DBUserSettings | { error: string }> {
@@ -59,14 +56,13 @@ export const UserSettingsService = {
   },
 
   async updateUserSettings(userId: string, settings: DBUserSettings, supabase: SupabaseClient): Promise<DBUserSettings | { error: string }> {
-    // First check if settings exist for this user
     const { data: existingSettings, error: checkError } = await supabase
       .from('user_settings')
       .select('id')
       .eq('user_id', userId)
       .single();
 
-    if (checkError && checkError.code !== 'PGRST116') { // Not found error is OK
+    if (checkError && checkError.code !== 'PGRST116') {
       console.error('Error checking user settings:', checkError);
       return { error: checkError.message };
     }
@@ -98,7 +94,7 @@ export const UserSettingsService = {
   async updateUserSetting(
     userId: string, 
     path: string[], 
-    value: any, 
+    value: DBUserSettings, 
     supabase: SupabaseClient
   ): Promise<DBUserSettings | { error: string }> {
     const settingsResult = await this.getUserSettings(userId, supabase);

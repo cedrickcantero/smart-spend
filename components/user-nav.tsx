@@ -29,12 +29,15 @@ export function UserNav() {
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
+        variant: "success",
       })
       router.push("/")
     } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error",
-        description: "Failed to log out. Please try again.",
+        description: err.message || "Failed to log out. Please try again.",
         variant: "destructive",
       })
     }

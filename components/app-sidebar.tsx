@@ -3,14 +3,7 @@
 import type * as React from "react"
 import Link from "next/link"
 import {
-  BadgeDollarSign,
-  BarChart3,
-  Calendar,
-  FileText,
-  Home,
-  Package,
   Package2,
-  Receipt,
   Settings,
   Sparkles,
 } from "lucide-react"
@@ -49,7 +42,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   }
 
   const shouldShowMenuItem = (item: SidebarItem) => {
-
+    console.log("item", item)
     return true;
   }
 

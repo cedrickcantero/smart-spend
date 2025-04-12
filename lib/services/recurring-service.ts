@@ -45,7 +45,7 @@ export const RecurringService = {
     return data;
   },
   async deleteRecurringExpense(id: string, supabase: SupabaseClient): Promise<{ success: boolean } | { error: string }> {
-    const { data, error } = await supabase
+    const {error } = await supabase
       .from('recurring_bills')
       .delete()
       .eq('id', id);

@@ -38,6 +38,7 @@ export function DeleteRecurringModal({
       toast({
         title: "Success",
         description: "Recurring expense deleted successfully",
+        variant: "success",
       })
       onOpenChange(false)
       fetchRecurringExpenses()
@@ -52,8 +53,6 @@ export function DeleteRecurringModal({
       setIsDeleting(false)
     }
   }
-
-  console.log("recurringExpense", recurringExpense)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

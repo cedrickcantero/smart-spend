@@ -1,8 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DBRecurringBill } from "@/types/supabase"
 import { RecurringService } from "@/app/api/recurring/service"
 import { CustomDataTable } from "@/components/common/custom-data-table"

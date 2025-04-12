@@ -184,7 +184,7 @@ export default function BudgetsPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="monthly" className="w-full" onValueChange={setActiveTab}>
+      <Tabs defaultValue="monthly" className="w-full" value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="monthly">Monthly Budgets</TabsTrigger>
           <TabsTrigger value="savings">Savings Goals</TabsTrigger>

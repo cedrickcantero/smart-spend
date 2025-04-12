@@ -351,7 +351,7 @@ export function DashboardPage() {
                         <div className="grid gap-1">
                           <h3 className="font-semibold">Spending Forecast</h3>
                           <p className="text-sm text-muted-foreground">
-                            Based on your current spending patterns, you're projected to exceed your monthly budget by
+                            Based on your current spending patterns, you&apos;re projected to exceed your monthly budget by
                             $120. Consider reducing discretionary spending in the entertainment category.
                           </p>
                           <div className="mt-2">
@@ -371,7 +371,7 @@ export function DashboardPage() {
                         <div className="grid gap-1">
                           <h3 className="font-semibold">Savings Opportunity</h3>
                           <p className="text-sm text-muted-foreground">
-                            We've identified a potential tax deduction of $85 from your recent work-related expenses.
+                            We&apos;ve identified a potential tax deduction of $85 from your recent work-related expenses.
                             Make sure to categorize these properly for tax season.
                           </p>
                           <div className="mt-2">

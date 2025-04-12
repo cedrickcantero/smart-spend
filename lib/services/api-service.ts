@@ -4,7 +4,7 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 interface ApiOptions {
   method: HttpMethod;
-  data?: any;
+  data?: unknown;
   requiresAuth?: boolean;
 }
 
@@ -79,18 +79,18 @@ export const apiService = async (endpoint: string, { method, data, requiresAuth 
 };
 
 export const api = {
-  get: <T>(endpoint: string, params?: any, requiresAuth = true) =>
+  get: <T>(endpoint: string, params?: unknown, requiresAuth = true) =>
     apiService(endpoint, { method: 'GET', data: params, requiresAuth }) as Promise<T>,
 
-  post: <T>(endpoint: string, data?: any, requiresAuth = true) =>
+  post: <T>(endpoint: string, data?: unknown, requiresAuth = true) =>
     apiService(endpoint, { method: 'POST', data, requiresAuth }) as Promise<T>,
 
-  put: <T>(endpoint: string, data?: any, requiresAuth = true) =>
+  put: <T>(endpoint: string, data?: unknown, requiresAuth = true) =>
     apiService(endpoint, { method: 'PUT', data, requiresAuth }) as Promise<T>,
 
-  delete: <T>(endpoint: string, data?: any, requiresAuth = true) =>
+  delete: <T>(endpoint: string, data?: unknown, requiresAuth = true) =>
     apiService(endpoint, { method: 'DELETE', data, requiresAuth }) as Promise<T>,
 
-  patch: <T>(endpoint: string, data?: any, requiresAuth = true) =>
+  patch: <T>(endpoint: string, data?: unknown, requiresAuth = true) =>
     apiService(endpoint, { method: 'PATCH', data, requiresAuth }) as Promise<T>,
 };

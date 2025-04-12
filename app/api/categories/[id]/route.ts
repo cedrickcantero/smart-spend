@@ -24,7 +24,12 @@ export async function PUT(
         const categoryData = {
             ...body,
             id: params.id,
-            user_id: userId
+            user_id: userId,
+            name: "",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            icon: null,
+            color: null
         };
         
         const result = await CategoriesService.updateCategory(categoryData, supabase);
@@ -41,8 +46,8 @@ export async function PUT(
 }
 
 export async function DELETE(
-    request: NextRequest,
-    context: { params: Promise<{ id: string }> }
+    request: NextRequest,context: 
+    { params: { id: string } }
 ) {
     try {
 
@@ -61,7 +66,12 @@ export async function DELETE(
         
         const categoryData = {
             id: id,
-            user_id: userId
+            user_id: userId,
+            name: "",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            icon: null,
+            color: null
         };
         
         await CategoriesService.deleteCategory(categoryData, supabase);

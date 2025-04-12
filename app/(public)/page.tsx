@@ -122,7 +122,7 @@ export default function LandingPage() {
                 <CreditCard className="h-12 w-12 text-primary" />
                 <h3 className="text-xl font-bold">Budget Management</h3>
                 <p className="text-center text-gray-500 dark:text-gray-400">
-                  Set budgets for different categories and get alerts when you're close to your limits.
+                  Set budgets for different categories and get alerts when you&apos;re close to your limits.
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-2 rounded-lg border p-6 shadow-sm">

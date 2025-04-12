@@ -86,7 +86,7 @@ export function AddRecurringModal({
     loadCategories()
   }, [toast])
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setRecurringData({
       ...recurringData,
       [field]: value,
@@ -116,6 +116,7 @@ export function AddRecurringModal({
       toast({
         title: "Success",
         description: "Recurring expense created successfully",
+        variant: "success",
       })
       setRecurringData({
         name: "",
@@ -129,11 +130,13 @@ export function AddRecurringModal({
       })
       onOpenChange(false)
       fetchRecurringExpenses()
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       console.error("Error creating recurring expense:", error)
       toast({
         title: "Error",
-        description: error.message || "Failed to create recurring expense",
+        description: err.message || "Failed to create recurring expense",
         variant: "destructive",
       })
     } finally {

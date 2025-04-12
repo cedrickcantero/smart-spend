@@ -95,7 +95,7 @@ export function AddSubscriptionModal({
     loadCategories()
   }, [toast])
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setSubscriptionData({
       ...subscriptionData,
       [field]: value,
@@ -129,6 +129,7 @@ export function AddSubscriptionModal({
       toast({
         title: "Success",
         description: "Subscription created successfully",
+        variant: "success",
       })
       setSubscriptionData({
         name: "",
@@ -144,11 +145,13 @@ export function AddSubscriptionModal({
       })
       onOpenChange(false)
       fetchSubscriptions()
-    } catch (error: any) {
-      console.error("Error creating subscription:", error)
+    } catch (error) {
+      const err = error as { message?: string };
+
+      console.error("Error creating recurring expense:", error)
       toast({
         title: "Error",
-        description: error.message || "Failed to create subscription",
+        description: err.message || "Failed to create subscription",
         variant: "destructive",
       })
     } finally {

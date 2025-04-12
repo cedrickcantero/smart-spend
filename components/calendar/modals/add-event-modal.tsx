@@ -27,18 +27,6 @@ import { DBCalendarEvent, DBCalendarEventInsert, DBCategory } from "@/types/supa
 import { CalendarService } from "@/app/api/calendar/service"
 import { useAuth } from "@/lib/auth-context"
 
-// Mock categories - replace with real categories from your database later
-const eventCategories = [
-  { value: "Utilities", label: "Utilities", icon: "💡", color: "bg-purple-500" },
-  { value: "Health", label: "Health", icon: "🏥", color: "bg-pink-500" },
-  { value: "Groceries", label: "Groceries", icon: "🛒", color: "bg-green-500" },
-  { value: "Entertainment", label: "Entertainment", icon: "🎬", color: "bg-yellow-500" },
-  { value: "Transportation", label: "Transportation", icon: "🚗", color: "bg-blue-500" },
-  { value: "Food & Dining", label: "Food & Dining", icon: "🍽️", color: "bg-primary" },
-  { value: "Housing", label: "Housing", icon: "🏠", color: "bg-blue-500" },
-  { value: "Shopping", label: "Shopping", icon: "🛍️", color: "bg-red-500" },
-]
-
 interface AddEventModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -95,6 +83,7 @@ export function AddEventModal({ open, onOpenChange, initialDate, categories, onE
       toast({
         title: "Event added",
         description: `"${title}" has been added to your calendar.`,
+        variant: "success",
       });
 
       if (onEventAdded && event) {
@@ -107,10 +96,12 @@ export function AddEventModal({ open, onOpenChange, initialDate, categories, onE
 
       resetForm()
       onOpenChange(false)
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error",
-        description: error.message || "Failed to add event. Please try again.",
+        description: err.message || "Failed to add event. Please try again.",
         variant: "destructive",
       })
     } finally {

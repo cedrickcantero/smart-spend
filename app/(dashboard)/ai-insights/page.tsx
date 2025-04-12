@@ -54,10 +54,10 @@ export default function AIInsightsPage() {
                     <AvatarFallback>AI</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 rounded-lg bg-muted p-3">
-                    <p className="text-sm">
-                      Hello! I'm your AI financial assistant. I can help you understand your spending patterns, suggest
-                      ways to save money, and answer questions about your finances. What would you like to know?
-                    </p>
+                  <p className="text-sm">
+                    Hello! I&apos;m your AI financial assistant. I can help you understand your spending patterns, suggest
+                    ways to save money, and answer questions about your finances. What would you like to know?
+                  </p>
                   </div>
                 </div>
 
@@ -161,7 +161,7 @@ export default function AIInsightsPage() {
                     <div className="grid gap-1">
                       <h3 className="font-semibold">Spending Forecast</h3>
                       <p className="text-sm text-muted-foreground">
-                        Based on your current spending patterns, you're projected to exceed your monthly budget by $120.
+                        Based on your current spending patterns, you&apos;re projected to exceed your monthly budget by $120.
                         Consider reducing discretionary spending in the entertainment category.
                       </p>
                       <div className="mt-2">
@@ -181,7 +181,7 @@ export default function AIInsightsPage() {
                     <div className="grid gap-1">
                       <h3 className="font-semibold">Savings Opportunity</h3>
                       <p className="text-sm text-muted-foreground">
-                        We've identified a potential tax deduction of $85 from your recent work-related expenses. Make
+                        We&apos;ve identified a potential tax deduction of $85 from your recent work-related expenses. Make
                         sure to categorize these properly for tax season.
                       </p>
                       <div className="mt-2">
@@ -417,7 +417,7 @@ export default function AIInsightsPage() {
                     [Savings Projection Chart]
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    At your current savings rate, you'll reach your vacation fund goal of $5,000 by December 2023, which
+                    At your current savings rate, you&apos;ll reach your vacation fund goal of $5,000 by December 2023, which
                     aligns with your target date.
                   </p>
                 </div>

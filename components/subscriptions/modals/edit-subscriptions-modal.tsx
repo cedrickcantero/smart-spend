@@ -112,7 +112,7 @@ export function EditSubscriptionModal({
     })
   }, [subscription])
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: unknown) => {
     setSubscriptionData({
       ...subscriptionData,
       [field]: value,
@@ -147,6 +147,7 @@ export function EditSubscriptionModal({
       toast({
         title: "Success",
         description: "Subscription updated successfully",
+        variant: "success",
       })
       setSubscriptionData({
         id: "",
@@ -163,11 +164,13 @@ export function EditSubscriptionModal({
       })
       onOpenChange(false)
       fetchSubscriptions()
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       console.error("Error creating subscription:", error)
       toast({
         title: "Error",
-        description: error.message || "Failed to create subscription",
+        description: err.message || "Failed to create subscription",
         variant: "destructive",
       })
     } finally {

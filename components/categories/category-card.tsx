@@ -3,17 +3,10 @@
 import { Pencil, Trash2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-
-// Define the Category type
-type Category = {
-  id: string
-  name: string
-  icon: string | null
-  color: string | null
-}
+import { DBCategory } from "@/types/supabase"
 
 interface CategoryCardProps {
-  category: Category
+  category: DBCategory
   onEdit: () => void
   onDelete: () => void
 }

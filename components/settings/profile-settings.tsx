@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react"
 import { Save, Download, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
+import { UserSettings } from "@/types/userSettings"
 
 interface ProfileData {
   firstName: string;
@@ -41,10 +42,9 @@ export function ProfileSettings() {
     }
     
     if (userSettings) {
-      const settingsObj = userSettings as Record<string, any>;
+      const settingsObj = userSettings as unknown as UserSettings;
       
       if (settingsObj.profile && settingsObj.profile.bio !== undefined) {
-        console.log("settingsObj.profile.bio", settingsObj.profile.bio);
         setProfileData(prev => ({
           ...prev,
           bio: settingsObj.profile.bio || ''
@@ -66,18 +66,17 @@ export function ProfileSettings() {
       
       if (!success) throw error;
 
-      console.log("success", success);
-      
-
       toast({
         title: "Profile updated",
         description: "Your profile information has been updated successfully.",
         variant: "success",
       });
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error updating profile",
-        description: error.message || "There was an error updating your profile.",
+        description: err.message || "There was an error updating your profile.",
         variant: "destructive",
       });
     } finally {
@@ -98,11 +97,14 @@ export function ProfileSettings() {
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
+        variant: "success",
       })
     } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error",
-        description: "Failed to log out. Please try again.",
+        description: err.message || "Failed to log out. Please try again.",
         variant: "destructive",
       })
     }

@@ -1,6 +1,6 @@
 
 import { api } from "@/lib/services/api-service"
-import { DBCalendarEvent, DBCalendarEventInsert, DBCategory, DBCategoryInsert } from "@/types/supabase"
+import {DBCategory, DBCategoryInsert } from "@/types/supabase"
 
 export const CategoriesService = {
   getCategories: async (): Promise<DBCategory[]> => {

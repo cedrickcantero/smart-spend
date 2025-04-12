@@ -54,13 +54,16 @@ export default function RegisterPage() {
       toast({
         title: "Registration successful",
         description: "Your account has been created. Please check your email to confirm your registration.",
+        variant: "success",
       })
 
       router.push("/login")
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Registration failed",
-        description: error.message || "Something went wrong. Please try again.",
+        description: err.message || "Something went wrong. Please try again.",
         variant: "destructive",
       })
     } finally {

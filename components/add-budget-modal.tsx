@@ -51,31 +51,24 @@ export function AddBudgetModal({ open, onOpenChange }: AddBudgetModalProps) {
     setIsSubmitting(true)
 
     try {
-      // Validate form
       if (!amount || !category) {
         throw new Error("Please fill in all required fields")
       }
 
-      // In a real app, you would send this data to your backend
-      console.log({
-        category,
-        amount: Number.parseFloat(amount),
-        period,
-      })
-
-      // Show success message
       toast({
         title: "Budget created",
         description: `A ${period} budget of $${amount} for ${budgetCategories.find((c) => c.value === category)?.label} has been created.`,
+        variant: "success",
       })
 
-      // Reset form and close modal
       resetForm()
       onOpenChange(false)
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error",
-        description: error.message || "Failed to create budget. Please try again.",
+        description: err.message || "Failed to create budget. Please try again.",
         variant: "destructive",
       })
     } finally {

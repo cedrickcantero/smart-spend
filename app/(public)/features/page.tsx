@@ -58,7 +58,7 @@ export default function FeaturesPage() {
                 <Wallet className="h-10 w-10 text-primary" />
                 <h3 className="text-xl font-bold">Budget Management</h3>
                 <p className="text-gray-500 dark:text-gray-400">
-                  Set budgets for different categories and get alerts when you're close to your limits. Track your
+                  Set budgets for different categories and get alerts when you&apos;re close to your limits. Track your
                   progress with visual indicators.
                 </p>
               </div>

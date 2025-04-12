@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [email, setEmail] = React.useState<string>("")
   const [password, setPassword] = React.useState<string>("")
-  // If user is already logged in, redirect to dashboard
+  
   React.useEffect(() => {
     if (user) {
       router.push("/dashboard")
@@ -40,16 +40,19 @@ export default function LoginPage() {
       toast({
         title: "Login successful",
         description: "You have been logged in successfully.",
+        variant: "success",
       })
 
       router.push("/dashboard")
       router.refresh()
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Login failed",
-        description: error.message || "Something went wrong. Please try again.",
+        description: err.message || "Something went wrong. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
       setIsLoading(false)
     }

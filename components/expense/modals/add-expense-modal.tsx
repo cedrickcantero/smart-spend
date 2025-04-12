@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 
@@ -63,32 +63,31 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
     setIsSubmitting(true)
 
     try {
-      // Validate form
       if (!expenseData.amount || !expenseData.merchant || !expenseData.category_id) {
         throw new Error("Please fill in all required fields")
       }
 
-      // Ensure category_id is a valid UUID
       if (!expenseData.category_id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
         throw new Error("Please select a valid category")
       }
 
       await ExpenseService.createExpense(expenseData)
 
-      // Show success message
       toast({
         title: "Expense added",
         description: `$${amount} expense to ${merchant} has been added successfully.`,
+        variant: "success",
       })
 
-      // Reset form and close modal
       resetForm()
       onOpenChange(false)
       await fetchExpenses()
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error",
-        description: error.message || "Failed to add expense. Please try again.",
+        description: err.message || "Failed to add expense. Please try again.",
         variant: "destructive",
       })
     } finally {

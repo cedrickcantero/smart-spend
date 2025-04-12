@@ -31,6 +31,8 @@ import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { DateRange } from "react-day-picker"
 import { formatMoney } from "@/lib/utils"
 import moment from "moment"
+import { useAuth } from "@/lib/auth-context"
+import { UserSettings } from "@/types/userSettings"
 
 export type ColumnType = 
   | "text"
@@ -193,6 +195,8 @@ export function CustomDataTable({
     }, 300),
     []
   )
+
+  const { userSettings } = useAuth();
 
   useEffect(() => {
     const initialFilterValues: Record<string, string> = {}
@@ -456,7 +460,7 @@ export function CustomDataTable({
       case "number":
         return Number(value).toLocaleString();
       case "money":
-        return formatMoney(value);
+        return formatMoney(value, (userSettings?.settings as unknown as UserSettings)?.preferences?.currency || "USD");
       case "date":
         if (typeof value === 'number') {
           // Handle Excel date serial numbers

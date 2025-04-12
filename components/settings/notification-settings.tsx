@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
-
+import { UserSettings } from "@/types/userSettings"
 interface NotificationSettingsData {
   email: {
     productUpdates: boolean;
@@ -58,7 +58,7 @@ export function NotificationSettings() {
   
   useEffect(() => {
     if (userSettings && typeof userSettings === 'object' && userSettings.settings) {
-      const settings = userSettings.settings as any;
+      const settings = userSettings.settings as unknown as UserSettings;
       
       const newNotificationData: NotificationSettingsData = {
         email: {
@@ -109,14 +109,17 @@ export function NotificationSettings() {
         toast({
           title: "Notification settings updated",
           description: "Your notification preferences have been saved successfully.",
+          variant: "success",
         });
       } else {
         throw new Error("Update function not available");
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error updating notifications",
-        description: error.message || "There was an error updating your notification settings.",
+        description: err.message || "There was an error updating your notification settings.",
         variant: "destructive",
       });
     } finally {
@@ -215,7 +218,7 @@ export function NotificationSettings() {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="budget-alerts">Budget Alerts</Label>
-                <p className="text-sm text-muted-foreground">Get notified when you're approaching budget limits</p>
+                <p className="text-sm text-muted-foreground">Get notified when you&apos;re approaching budget limits</p>
               </div>
               <Switch 
                 id="budget-alerts" 

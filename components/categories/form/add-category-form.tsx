@@ -1,22 +1,14 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Check } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { DBCategory } from "@/types/supabase"
 
-type Category = {
-  id: string
-  name: string
-  icon: string | null
-  color: string | null
-}
 
 const CATEGORY_ICONS = [
   "🍔",
@@ -96,7 +88,7 @@ export function AddCategoryForm({ category, onSubmit, onCancel }: AddCategoryFor
           name,
           icon,
           color,
-        } as any)
+        } as DBCategory)
       }
     } finally {
       setIsSubmitting(false)

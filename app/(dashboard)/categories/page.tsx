@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { Plus, Loader2 } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
@@ -12,31 +11,12 @@ import { CategoriesService } from "@/app/api/categories/service"
 import { DBCategory } from "@/types/supabase"
 import { EditCategoryModal } from "@/components/categories/modals/edit-category-modal"
 
-type Category = {
-  id: string
-  name: string
-  icon: string | null
-  color: string | null
-}
-
-// Mock data for categories
-const initialCategories: Category[] = [
-  { id: "1", name: "Food & Dining", icon: "🍔", color: "#0ea5e9" },
-  { id: "2", name: "Housing", icon: "🏠", color: "#3b82f6" },
-  { id: "3", name: "Transportation", icon: "🚗", color: "#22c55e" },
-  { id: "4", name: "Entertainment", icon: "🎬", color: "#eab308" },
-  { id: "5", name: "Shopping", icon: "🛍️", color: "#ef4444" },
-  { id: "6", name: "Utilities", icon: "💡", color: "#8b5cf6" },
-  { id: "7", name: "Health", icon: "💊", color: "#ec4899" },
-]
-
 export default function CategoriesPage() {
   const { toast } = useToast()
-  const router = useRouter()
-  const [categories, setCategories] = useState<Category[]>([])
+  const [categories, setCategories] = useState<DBCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [isAddingCategory, setIsAddingCategory] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const [editingCategory, setEditingCategory] = useState<DBCategory | null>(null)
 
   const fetchCategories = async () => {
     const categories = await CategoriesService.getCategories()
@@ -48,10 +28,8 @@ export default function CategoriesPage() {
     fetchCategories()
   }, [])
 
-  // Function to handle category deletion
   const handleDeleteCategory = async (id: string) => {
     try {
-      // Simulate API call delay
       setLoading(true)
 
       await CategoriesService.deleteCategory(id)
@@ -61,6 +39,7 @@ export default function CategoriesPage() {
       toast({
         title: "Category deleted",
         description: "The category has been deleted successfully.",
+        variant: "success",
       })
     } catch (error) {
       console.error("Error deleting category:", error)
@@ -91,6 +70,7 @@ export default function CategoriesPage() {
       toast({
         title: "Category added",
         description: "The new category has been added successfully.",
+        variant: "success",
       })
     } catch (error) {
       console.error("Error adding category:", error)
@@ -104,7 +84,7 @@ export default function CategoriesPage() {
     }
   }
 
-  const handleUpdateCategory = async (updatedCategory: Category) => {
+  const handleUpdateCategory = async (updatedCategory: DBCategory) => {
     try {
       setLoading(true)
 
@@ -117,6 +97,7 @@ export default function CategoriesPage() {
       toast({
         title: "Category updated",
         description: "The category has been updated successfully.",
+        variant: "success",
       })
     } catch (error) {
       console.error("Error updating category:", error)
@@ -173,7 +154,7 @@ export default function CategoriesPage() {
                 <Plus className="h-6 w-6 text-muted-foreground" />
               </div>
               <h3 className="mb-1 font-medium">No categories found</h3>
-              <p className="mb-4 text-sm text-muted-foreground">You haven't created any expense categories yet.</p>
+              <p className="mb-4 text-sm text-muted-foreground">You haven&apos;t created any expense categories yet.</p>
               <Button onClick={() => setIsAddingCategory(true)}>Add Your First Category</Button>
             </Card>
           )}

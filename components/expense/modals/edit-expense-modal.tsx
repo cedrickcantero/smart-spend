@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
-import { format, setDate } from "date-fns"
+import { format } from "date-fns"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -24,22 +24,7 @@ import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { DBCategory, DBExpense } from "@/types/supabase"
 import { ExpenseService } from "@/app/api/expense/service"
-// Mock categories
-const expenseCategories = [
-  { value: "food", label: "Food & Dining", icon: "🍔" },
-  { value: "housing", label: "Housing", icon: "🏠" },
-  { value: "transportation", label: "Transportation", icon: "🚗" },
-  { value: "entertainment", label: "Entertainment", icon: "🎬" },
-  { value: "shopping", label: "Shopping", icon: "🛍️" },
-  { value: "utilities", label: "Utilities", icon: "💡" },
-  { value: "health", label: "Health", icon: "💊" },
-  { value: "travel", label: "Travel", icon: "✈️" },
-  { value: "education", label: "Education", icon: "📚" },
-  { value: "personal", label: "Personal", icon: "👤" },
-  { value: "other", label: "Other", icon: "📦" },
-]
 
-// Mock payment methods
 const paymentMethods = [
   { value: "Credit Card", label: "Credit Card" },
   { value: "Debit Card", label: "Debit Card" },
@@ -64,22 +49,23 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
     id: expense.id,
     amount: expense.amount,
     merchant: expense.merchant,
-    category: expense.category,
+    category_id: expense.category_id,
     date: expense.date,
     payment_method: expense.payment_method,
-    notes: expense.notes,
+    description: expense.description,
     is_tax_deductible: expense.is_tax_deductible,
     receipt_url: expense.receipt_url,
+    created_at: expense.created_at,
+    updated_at: expense.updated_at,
+    user_id: expense.user_id
   })
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
-      if (!expenseData.amount || !expenseData.merchant || !expenseData.category) {
+      if (!expenseData.amount || !expenseData.merchant || !expenseData.category_id) {
         throw new Error("Please fill in all required fields")
       }
 
@@ -87,14 +73,17 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
       toast({
         title: "Expense added",
         description: `$${expenseData.amount} expense to ${expenseData.merchant} has been added successfully.`,
+        variant: "success",
       })
       resetForm()
       onOpenChange(false)
       fetchExpenses()
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error",
-        description: error.message || "Failed to add expense. Please try again.",
+        description: err.message || "Failed to add expense. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -107,12 +96,15 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
       id: expense.id,
       amount: expense.amount,
       merchant: expense.merchant,
-      category: expense.category,
+      category_id: expense.category_id,
       date: expense.date,
       payment_method: expense.payment_method,
-      notes: expense.notes,
+      description: expense.description,
       is_tax_deductible: expense.is_tax_deductible,
       receipt_url: expense.receipt_url,
+      created_at: expense.created_at,
+      updated_at: expense.updated_at,
+      user_id: expense.user_id
     })
   }
 
@@ -161,7 +153,7 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
               <Label htmlFor="category" className="text-right">
                 Category*
               </Label>
-              <Select value={expenseData.category_id} onValueChange={(value) => setExpenseData({ ...expenseData, category_id: value })} required>
+              <Select value={expenseData.category_id || ""} onValueChange={(value) => setExpenseData({ ...expenseData, category_id: value })} required>
                 <SelectTrigger id="category" className="col-span-3">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -188,11 +180,16 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
                     className={cn("col-span-3 justify-start text-left font-normal", !expenseData.date && "text-muted-foreground")}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {expenseData.date ? format(expenseData.date, "PPP") : <span>Pick a date</span>}
+                    {expenseData.date ? format(new Date(expenseData.date), "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={expenseData.date} onSelect={(date) => date && setExpenseData({ ...expenseData, date: date })} initialFocus />
+                  <Calendar 
+                    mode="single" 
+                    selected={expenseData.date ? new Date(expenseData.date) : undefined} 
+                    onSelect={(date) => date && setExpenseData({ ...expenseData, date: date.toISOString() })} 
+                    initialFocus 
+                  />
                 </PopoverContent>
               </Popover>
             </div>
@@ -200,7 +197,7 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
               <Label htmlFor="payment" className="text-right">
                 Payment
               </Label>
-              <Select value={expenseData.payment_method} onValueChange={(value) => setExpenseData({ ...expenseData, payment_method: value })}>
+              <Select value={expenseData.payment_method || ""} onValueChange={(value) => setExpenseData({ ...expenseData, payment_method: value })}>
                 <SelectTrigger id="payment" className="col-span-3">
                   <SelectValue placeholder="Select payment method" />
                 </SelectTrigger>
@@ -221,8 +218,8 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
                 id="notes"
                 placeholder="Additional details"
                 className="col-span-3"
-                value={expenseData.notes}
-                onChange={(e) => setExpenseData({ ...expenseData, notes: e.target.value })}
+                value={expenseData.description || ""}
+                onChange={(e) => setExpenseData({ ...expenseData, description: e.target.value })}
               />
             </div>
           </div>

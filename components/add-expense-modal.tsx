@@ -69,34 +69,24 @@ export function AddExpenseModal({ open, onOpenChange }: AddExpenseModalProps) {
     setIsSubmitting(true)
 
     try {
-      // Validate form
       if (!amount || !merchant || !category) {
         throw new Error("Please fill in all required fields")
       }
 
-      // In a real app, you would send this data to your backend
-      console.log({
-        amount: Number.parseFloat(amount),
-        merchant,
-        category,
-        date,
-        paymentMethod,
-        notes,
-      })
-
-      // Show success message
       toast({
         title: "Expense added",
         description: `$${amount} expense to ${merchant} has been added successfully.`,
+        variant: "success",
       })
 
-      // Reset form and close modal
       resetForm()
       onOpenChange(false)
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error",
-        description: error.message || "Failed to add expense. Please try again.",
+        description: err.message || "Failed to add expense. Please try again.",
         variant: "destructive",
       })
     } finally {

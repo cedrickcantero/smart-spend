@@ -22,8 +22,8 @@ type AuthContextType = {
   session: Session | null
   isLoading: boolean
   userSettings: DBUserSettings
-  updateUserSettings: (pathOrSettings: string[] | DBUserSettings, value?: any) => Promise<{ success: boolean; error?: any }>
-  updateUserProfile: (firstName: string, lastName: string, bio?: string) => Promise<{ success: boolean; error?: any }>
+  updateUserSettings: (pathOrSettings: string[] | DBUserSettings, value?: unknown) => Promise<{ success: boolean; error?: unknown }>
+  updateUserProfile: (firstName: string, lastName: string, bio?: string) => Promise<{ success: boolean; error?: unknown }>
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<{ error: Error | null }>
@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const getSession = async () => {
-      const { data, error } = await supabase.auth.getSession()
+      const { data } = await supabase.auth.getSession()
       if (data.session) {
         setUser(data.session.user)
         setSession(data.session)
@@ -80,15 +80,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  // Load user settings when user changes
   useEffect(() => {
     fetchUserSettings();
   }, [user, fetchUserSettings]);
 
   const updateUserSettings = async (
     pathOrSettings: string[] | DBUserSettings,
-    value?: any
-  ): Promise<{ success: boolean; error?: any }> => {
+    value?: unknown
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       let result;
       
@@ -98,9 +97,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           ? pathOrSettings.slice(1) 
           : pathOrSettings;
         
-        result = await UserSettingsService.updateUserSetting(correctedPath, value);
+        result = await UserSettingsService.updateUserSetting(correctedPath, value as unknown as DBUserSettings);
       } else {
-        // When updating full settings object
         result = await UserSettingsService.updateUserSettings(pathOrSettings);
       }
 
@@ -113,7 +111,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { success: false, error: "Failed to update settings" };
     } catch (error) {
       console.error("Error updating user settings:", error);
-      return { success: false, error };
+      return { success: false, error: error as string };
     }
   };
 
@@ -121,7 +119,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     firstName: string, 
     lastName: string, 
     bio?: string
-  ): Promise<{ success: boolean; error?: any }> => {
+  ): Promise<{ success: boolean; error?: unknown }> => {
     try {
       // Update user metadata
       const { error: userUpdateError } = await supabase.auth.updateUser({

@@ -28,12 +28,11 @@ interface EditEventModalProps {
   open: boolean
   event: DBCalendarEvent
   onOpenChange: (open: boolean) => void
-  onEventUpdated?: (event: DBCalendarEvent) => void
   fetchEvents: () => void
   categories: DBCategory[]
 }
 
-export function EditEventModal({ open, onOpenChange, onEventUpdated, event, fetchEvents, categories }: EditEventModalProps) {
+export function EditEventModal({ open, onOpenChange, event, fetchEvents, categories }: EditEventModalProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [eventData, setEventData] = useState({
@@ -91,43 +90,29 @@ export function EditEventModal({ open, onOpenChange, onEventUpdated, event, fetc
         updated_at: event.updated_at
       } as DBCalendarEvent);
 
-      // Refresh calendar events
       if (fetchEvents) {
         await fetchEvents();
       }
 
-      // Show success message
       toast({
         title: "Event updated",
         description: `"${eventData.title}" has been updated.`,
+        variant: "success",
       });
 
-      // Close modal
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error",
-        description: error.message || "Failed to update event. Please try again.",
+        description: err.message || "Failed to update event. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const resetForm = () => {
-    setEventData({
-      id: event?.id,
-      title: event?.title || '',
-      amount: event?.amount || 0,
-      category: event?.category || '',
-      date: event?.date || new Date().toISOString().split('T')[0],
-      is_recurring: event?.is_recurring || false,
-      recurring_period: event?.recurring_period || '',
-      notes: event?.notes || '',
-      user_id: event?.user_id,
-    })
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

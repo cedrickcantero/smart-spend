@@ -1,20 +1,9 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Calendar, Download, Filter, Plus, Search, SlidersHorizontal } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DBExpense, DBCategory, DBRecurringBill } from "@/types/supabase"
+import { DBExpense, DBCategory } from "@/types/supabase"
 import { ExpenseService } from "@/app/api/expense/service"
 import { CategoriesService } from "@/app/api/categories/service"
-
-import { RecurringService } from "@/app/api/recurring/service"
 import { CustomDataTable } from "@/components/common/custom-data-table"
 import { DateRange } from "react-day-picker"
 import { AddExpenseModal } from "@/components/expense/modals/add-expense-modal"
@@ -22,12 +11,9 @@ import { EditExpenseModal } from "@/components/expense/modals/edit-expense-modal
 import { DeleteExpenseModal } from "@/components/expense/modals/delete-expense-modal"
 
 export default function ExpensesPage() {
-  // State
-  const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [expenses, setExpenses] = useState<DBExpense[]>([])
   const [categories, setCategories] = useState<DBCategory[]>([])
-  const [recurringExpenses, setRecurringExpenses] = useState<DBRecurringBill[]>([])
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
   const [openAddExpenseModal, setOpenAddExpenseModal] = useState(false)
   const [openEditExpenseModal, setOpenEditExpenseModal] = useState(false)
@@ -54,18 +40,9 @@ export default function ExpensesPage() {
     }
   }, [])
 
-  const fetchRecurringExpenses = useCallback(async () => {
-    try {
-      const recurringExpenses = await RecurringService.getRecurringExpenses();
-      setRecurringExpenses(recurringExpenses);
-    } catch (error) {
-      console.error('Error fetching recurring expenses:', error);
-    }
-  }, [])
-
   useEffect(() => {
-    Promise.all([fetchExpenses(), fetchCategories(), fetchRecurringExpenses()]);
-  }, [fetchExpenses, fetchCategories, fetchRecurringExpenses])
+    Promise.all([fetchExpenses(), fetchCategories()]);
+  }, [fetchExpenses, fetchCategories])
 
   const handleDeleteExpense = useCallback((expense: DBExpense) => {
     setSelectedExpenseToDelete(expense)

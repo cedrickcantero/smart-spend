@@ -22,7 +22,6 @@ export default function CalendarPage() {
   const [viewMode, setViewMode] = useState("month")
   const [addEventOpen, setAddEventOpen] = useState(false)
   const [calendarEvents, setCalendarEvents] = useState<DBCalendarEvent[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [editEventOpen, setEditEventOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<DBCalendarEvent | null>(null)
   const [categories, setCategories] = useState<DBCategory[]>([])
@@ -32,14 +31,11 @@ export default function CalendarPage() {
     if (!user) return
     
     try {
-      setIsLoading(true)
       const response = await CalendarService.getCalendarEvents()
       setCalendarEvents(response)
     } catch (error) {
       console.error('Error fetching calendar events:', error)
       setCalendarEvents([])
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -52,8 +48,6 @@ export default function CalendarPage() {
   useEffect(() => {
     Promise.all([fetchEvents(), fetchCategories()])
   }, [user])
-
-  console.log("categories", categories)
 
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate()

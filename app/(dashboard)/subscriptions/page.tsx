@@ -1,9 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DBExpense, DBCategory, DBRecurringBill, DBSubscription } from "@/types/supabase"
+import { DBCategory, DBSubscription } from "@/types/supabase"
 import { CategoriesService } from "@/app/api/categories/service"
 import { SubscriptionsService } from "@/app/api/subscriptions/service"
 import { CustomDataTable } from "@/components/common/custom-data-table"

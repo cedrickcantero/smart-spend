@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
+import { UserSettings } from "@/types/userSettings"
 interface PaymentSettingsData {
   paymentMethods: PaymentMethod[];
   billingAddress: BillingAddress;
@@ -26,7 +27,6 @@ interface PaymentMethod {
 }
 
 interface BillingAddress {
-  name: string;
   address: string;
   city: string;
   state: string;
@@ -37,7 +37,6 @@ interface BillingAddress {
 const defaultPaymentSettings: PaymentSettingsData = {
   paymentMethods: [],
   billingAddress: {
-    name: "",
     address: "",
     city: "",
     state: "",
@@ -54,13 +53,12 @@ export function PaymentSettings() {
   const [paymentData, setPaymentData] = useState<PaymentSettingsData>(defaultPaymentSettings)
   
   useEffect(() => {
-    if (userSettings?.settings) {
-      const settings = userSettings.settings as Record<string, any>;
+    if (userSettings) {
+      const settings = userSettings as unknown as UserSettings;
       if (settings.payment) {
         setPaymentData({
           paymentMethods: settings.payment.paymentMethods || [],
           billingAddress: {
-            name: settings.payment.billingAddress?.name || "",
             address: settings.payment.billingAddress?.address || "",
             city: settings.payment.billingAddress?.city || "",
             state: settings.payment.billingAddress?.state || "",
@@ -91,10 +89,12 @@ export function PaymentSettings() {
       } else {
         throw new Error("Update function not available");
       }
-    } catch (error: any) {
+    } catch (error) {
+      const err = error as { message?: string };
+
       toast({
         title: "Error updating billing information",
-        description: error.message || "There was an error updating your billing information.",
+        description: err.message || "There was an error updating your billing information.",
         variant: "destructive",
       });
     } finally {
@@ -155,14 +155,6 @@ export function PaymentSettings() {
           <CardDescription>Manage your billing address and information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-2">
-            <Label htmlFor="billing-name">Name</Label>
-            <Input 
-              id="billing-name" 
-              value={paymentData.billingAddress.name} 
-              onChange={(e) => updateBillingField('name', e.target.value)}
-            />
-          </div>
 
           <div className="grid gap-2">
             <Label htmlFor="billing-address">Address</Label>
