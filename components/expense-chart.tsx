@@ -12,7 +12,6 @@ import { UserSettings } from "@/types/userSettings";
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function ExpenseChart() {
-  const [expenses, setExpenses] = useState<DBExpense[]>([]);
   const [chartData, setChartData] = useState<Array<{name: string, total: number}>>([]);
   const { userSettings: dbUserSettings } = useAuth();
   const userSettings = dbUserSettings as unknown as UserSettings;
@@ -21,7 +20,6 @@ export function ExpenseChart() {
     const fetchExpenses = async () => {
       try {
         const expenses = await ExpenseService.getExpenses();
-        setExpenses(expenses);
         
         processExpensesForChart(expenses);
       } catch (error) {
@@ -54,7 +52,7 @@ export function ExpenseChart() {
     
     const data = Array.from(monthlyTotals.entries())
       .map(([key, total]) => {
-        const [year, month] = key.split('-').map(Number);
+        const [month] = key.split('-').map(Number);
         return {
           name: monthNames[month],
           yearMonth: key,

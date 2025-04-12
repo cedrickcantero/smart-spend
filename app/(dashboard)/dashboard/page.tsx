@@ -11,13 +11,11 @@ import { useState, useEffect } from "react"
 import { DashboardData } from "@/lib/services/dashboard-service"
 import { formatMoney } from "@/lib/utils"
 import { UserSettings } from "@/types/userSettings"
-
+import { toast } from "@/hooks/use-toast"
 export default function DashboardPage() {
   const { user, userSettings: dbUserSettings } = useAuth()
   const userSettings = dbUserSettings as unknown as UserSettings
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -30,10 +28,14 @@ export default function DashboardPage() {
       try {
         const response = await DashboardService.getDashboardData()
         setDashboardData(response)
-        setIsLoading(false)
       } catch (error) {
-        setError(error as string)
-        setIsLoading(false)
+        const err = error as Error;
+
+        toast({
+          title: "Error",
+          description: err.message,
+          variant: "destructive"
+        })
       }
     }
   }

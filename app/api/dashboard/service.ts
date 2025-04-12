@@ -1,6 +1,5 @@
 import { api } from "@/lib/services/api-service";
 import { DashboardData } from "@/lib/services/dashboard-service";
-import { DBExpense } from "@/types/supabase";
 
 
 export const DashboardService = {
