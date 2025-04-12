@@ -460,7 +460,8 @@ export function CustomDataTable({
       case "number":
         return Number(value).toLocaleString();
       case "money":
-        return formatMoney(value, (userSettings?.settings as unknown as UserSettings)?.preferences?.currency || "USD");
+        const typedSettings = userSettings as unknown as UserSettings;
+        return formatMoney(value, typedSettings?.preferences?.currency || "USD");
       case "date":
         if (typeof value === 'number') {
           // Handle Excel date serial numbers
