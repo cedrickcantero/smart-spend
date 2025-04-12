@@ -354,7 +354,6 @@ export default function CalendarPage() {
           open={editEventOpen}
           onOpenChange={handleEditModalClose}
           event={selectedEvent}
-          onEventUpdated={handleEventUpdated}
           fetchEvents={fetchEvents}
           categories={categories}
         />

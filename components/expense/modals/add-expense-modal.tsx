@@ -23,7 +23,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { DBExpense, DBCategory } from "@/types/supabase"
+import { DBCategory } from "@/types/supabase"
 import { ExpenseService } from "@/app/api/expense/service"
 
 const paymentMethods = [
@@ -41,21 +41,32 @@ interface AddExpenseModalProps {
   categories: DBCategory[]
 }
 
+type ExpenseFormData = {
+  amount: number;
+  merchant: string;
+  category_id: string | null;
+  date: string;
+  description: string | null;
+  payment_method: string | null;
+  is_tax_deductible: boolean;
+  receipt_url: string | null;
+};
+
 export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories }: AddExpenseModalProps) {
   const { toast } = useToast()
     const [isSubmitting, setIsSubmitting] = useState(false)
   const [amount, setAmount] = useState("")
   const [merchant, setMerchant] = useState("")
   const [date, setDate] = useState<Date>(new Date())
-  const [expenseData, setExpenseData] = useState<DBExpense>({
+  const [expenseData, setExpenseData] = useState<ExpenseFormData>({
     amount: 0,
     merchant: "",
-    category_id: "",
-    date: new Date(),
-    description: "",
-    payment_method: "",
+    category_id: null,
+    date: format(new Date(), 'yyyy-MM-dd'),
+    description: null,
+    payment_method: null,
     is_tax_deductible: false,
-    receipt_url: "",
+    receipt_url: null,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,12 +110,12 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
     setExpenseData({
       amount: 0,
       merchant: "",
-      category_id: "",
-      date: new Date(),
-      description: "",
-      payment_method: "",
+      category_id: null,
+      date: format(new Date(), 'yyyy-MM-dd'),
+      description: null,
+      payment_method: null,
       is_tax_deductible: false,
-      receipt_url: "",
+      receipt_url: null,
     })
     setAmount("")
     setMerchant("")
@@ -158,7 +169,7 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
               <Label htmlFor="category" className="text-right">
                 Category*
               </Label>
-              <Select value={expenseData.category_id} onValueChange={(value) => setExpenseData({ ...expenseData, category_id: value })} required>
+              <Select value={expenseData.category_id || ""} onValueChange={(value) => setExpenseData({ ...expenseData, category_id: value })} required>
                 <SelectTrigger id="category" className="col-span-3">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -189,7 +200,12 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={date} onSelect={(date) => date && setDate(date)} initialFocus />
+                  <Calendar mode="single" selected={date} onSelect={(date) => {
+                    if (date) {
+                      setDate(date);
+                      setExpenseData({ ...expenseData, date: format(date, 'yyyy-MM-dd') });
+                    }
+                  }} initialFocus />
                 </PopoverContent>
               </Popover>
             </div>
@@ -197,7 +213,7 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
               <Label htmlFor="payment_method" className="text-right">
                 Payment
               </Label>
-              <Select value={expenseData.payment_method} onValueChange={(value) => setExpenseData({ ...expenseData, payment_method: value })}>
+              <Select value={expenseData.payment_method || ""} onValueChange={(value) => setExpenseData({ ...expenseData, payment_method: value })}>
                 <SelectTrigger id="payment_method" className="col-span-3">
                   <SelectValue placeholder="Select payment method" />
                 </SelectTrigger>
@@ -218,7 +234,7 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
                 id="description"
                 placeholder="Additional details"
                 className="col-span-3"
-                value={expenseData.description}
+                value={expenseData.description || ""}
                 onChange={(e) => setExpenseData({ ...expenseData, description: e.target.value })}
               />
             </div>
@@ -231,7 +247,7 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
                 type="url"
                 placeholder="https://example.com/receipt"
                 className="col-span-3"
-                value={expenseData.receipt_url}
+                value={expenseData.receipt_url || ""}
                 onChange={(e) => setExpenseData({ ...expenseData, receipt_url: e.target.value })}
               />
             </div>

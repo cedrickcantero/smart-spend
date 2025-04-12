@@ -297,8 +297,6 @@ export default function ReportsPage() {
                           className="h-full rounded-full"
                           style={{
                             width: `${(category.value / totalExpenses) * 100}%`,
-
-                            width: `${(category.value / totalExpenses) * 100}%`,
                             backgroundColor: category.color,
                           }}
                         />

@@ -31,3 +31,42 @@ export async function DELETE(
         return NextResponse.json({ error: 'Failed to delete expense' }, { status: 500 });
     }
 }
+
+export async function PUT(
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
+    try {
+
+        
+        const { id } = await context.params;
+
+        const userId = await getAuthenticatedUserId(request);
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        const supabase = await createClient();
+        const body = await request.json();
+        
+        if (body.user_id && body.user_id !== userId) {
+            return NextResponse.json({ error: 'Unauthorized - Cannot modify another user\'s category' }, { status: 403 });
+        }
+
+        const expenseData = {   
+            ...body,
+            id: id,
+            user_id: userId
+        };
+
+        const expense = await ExpenseService.updateExpense(id, expenseData, supabase);
+
+        if (!expense) {
+            return NextResponse.json({ error: 'Expense not found' }, { status: 404 });
+        }
+
+        return NextResponse.json(expense);
+    } catch (error) {
+        console.error('Error updating expense:', error);
+        return NextResponse.json({ error: 'Failed to update expense' }, { status: 500 });
+    }
+}

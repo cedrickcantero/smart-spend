@@ -6,9 +6,15 @@ import { CategoriesService } from "@/lib/services/categories-service";
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await context.params;
+
+        if (!id) {
+            return NextResponse.json({ error: 'Category ID is required' }, { status: 400 });
+        }
+
         const userId = await getAuthenticatedUserId(request);
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,7 +29,7 @@ export async function PUT(
         
         const categoryData = {
             ...body,
-            id: params.id,
+            id: id,
             user_id: userId,
             name: "",
             created_at: new Date().toISOString(),
@@ -46,8 +52,8 @@ export async function PUT(
 }
 
 export async function DELETE(
-    request: NextRequest,context: 
-    { params: { id: string } }
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
 

@@ -27,7 +27,7 @@ export const ExpenseService = {
       throw error;
     }
   },
-  createExpense: async (expense: DBExpense): Promise<DBExpense> => {
+  createExpense: async (expense: Omit<DBExpense, 'user_id' | 'created_at' | 'updated_at' | 'id'>): Promise<DBExpense> => {
     try {
       return await api.post<DBExpense>("/api/expense", expense);
     } catch (error) {

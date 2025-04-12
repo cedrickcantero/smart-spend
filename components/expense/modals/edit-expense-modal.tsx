@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 
@@ -60,6 +60,25 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
     user_id: expense.user_id
   })
 
+  useEffect(() => {
+    if (open) {
+      setExpenseData({
+        id: expense.id,
+        amount: expense.amount,
+        merchant: expense.merchant,
+        category_id: expense.category_id,
+        date: expense.date,
+        payment_method: expense.payment_method,
+        description: expense.description,
+        is_tax_deductible: expense.is_tax_deductible,
+        receipt_url: expense.receipt_url,
+        created_at: expense.created_at,
+        updated_at: expense.updated_at,
+        user_id: expense.user_id
+      });
+    }
+  }, [expense, open]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -71,8 +90,8 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
 
       await ExpenseService.updateExpense(expenseData)
       toast({
-        title: "Expense added",
-        description: `$${expenseData.amount} expense to ${expenseData.merchant} has been added successfully.`,
+        title: "Expense updated",
+        description: `$${expenseData.amount} expense to ${expenseData.merchant} has been updated successfully.`,
         variant: "success",
       })
       resetForm()
@@ -83,7 +102,7 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
 
       toast({
         title: "Error",
-        description: err.message || "Failed to add expense. Please try again.",
+        description: err.message || "Failed to update expense. Please try again.",
         variant: "destructive",
       })
     } finally {
