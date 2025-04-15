@@ -1,108 +1,88 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ArrowRight, Check, CreditCard, Edit, Plus, Trash2, TrendingDown, TrendingUp, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { AddBudgetModal } from "@/components/add-budget-modal"
-
-// Mock budget data
-const budgets = [
-  {
-    id: 1,
-    category: "Food & Dining",
-    allocated: 500,
-    spent: 420.32,
-    remaining: 79.68,
-    status: "on-track", // on-track, warning, exceeded
-    icon: "🍔",
-  },
-  {
-    id: 2,
-    category: "Transportation",
-    allocated: 300,
-    spent: 250,
-    remaining: 50,
-    status: "on-track",
-    icon: "🚗",
-  },
-  {
-    id: 3,
-    category: "Entertainment",
-    allocated: 200,
-    spent: 180,
-    remaining: 20,
-    status: "warning",
-    icon: "🎬",
-  },
-  {
-    id: 4,
-    category: "Shopping",
-    allocated: 150,
-    spent: 154,
-    remaining: -4,
-    status: "exceeded",
-    icon: "🛍️",
-  },
-  {
-    id: 5,
-    category: "Utilities",
-    allocated: 250,
-    spent: 210.5,
-    remaining: 39.5,
-    status: "on-track",
-    icon: "💡",
-  },
-  {
-    id: 6,
-    category: "Health",
-    allocated: 150,
-    spent: 132.5,
-    remaining: 17.5,
-    status: "warning",
-    icon: "💊",
-  },
-]
-
-// Mock savings goals
-const savingsGoals = [
-  {
-    id: 1,
-    name: "Vacation Fund",
-    target: 5000,
-    current: 2340,
-    deadline: "2023-12-31",
-    color: "bg-green-500",
-  },
-  {
-    id: 2,
-    name: "Emergency Fund",
-    target: 10000,
-    current: 4200,
-    deadline: "2023-12-31",
-    color: "bg-blue-500",
-  },
-  {
-    id: 3,
-    name: "New Car Fund",
-    target: 15000,
-    current: 1800,
-    deadline: "2024-06-30",
-    color: "bg-yellow-500",
-  },
-]
-
-// Calculate total budget stats
-const totalAllocated = budgets.reduce((sum, budget) => sum + budget.allocated, 0)
-const totalSpent = budgets.reduce((sum, budget) => sum + budget.spent, 0)
-const totalRemaining = totalAllocated - totalSpent
+import { AddBudgetModal } from "@/components/budget/modals/add-budget-modal"
+import { EditBudgetModal } from "@/components/budget/modals/edit-budget-modal"
+import { BudgetService, BudgetWithCategory } from "@/app/api/budget/service"
+import { useToast } from "@/hooks/use-toast"
+import { formatMoney } from "@/lib/utils"
+import { DBBudget } from "@/types/supabase"
+import { useAuth } from "@/lib/auth-context"
+import { UserSettings } from "@/types/userSettings"
 
 export default function BudgetsPage() {
   const [activeTab, setActiveTab] = useState("monthly")
   const [addBudgetOpen, setAddBudgetOpen] = useState(false)
+  const [editBudgetOpen, setEditBudgetOpen] = useState(false)
+  const [selectedBudget, setSelectedBudget] = useState<DBBudget | null>(null)
+  const [budgets, setBudgets] = useState<BudgetWithCategory[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
+  const { userSettings: dbUserSettings } = useAuth()
+  const userSettings = dbUserSettings as unknown as UserSettings
+  const userCurrency = userSettings?.preferences?.currency || "USD"
+
+  // Calculate budget summary
+  const totalAllocated = budgets.reduce((sum, budget) => sum + budget.amount, 0)
+  const totalSpent = budgets.reduce((sum, budget) => sum + (budget.spent || 0), 0)
+  const totalRemaining = totalAllocated - totalSpent
+  
+  // Calculate daily target (remaining budget divided by days left in month)
+  const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()
+  const today = new Date().getDate()
+  const daysRemaining = Math.max(1, daysInMonth - today + 1)
+  const dailyTarget = totalRemaining > 0 ? totalRemaining / daysRemaining : 0
+
+  useEffect(() => {
+    fetchBudgets()
+  }, [])
+
+  const fetchBudgets = async () => {
+    setIsLoading(true)
+    try {
+      const fetchedBudgets = await BudgetService.getBudgets()
+      setBudgets(fetchedBudgets)
+    } catch (error) {
+      console.error("Error fetching budgets:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load budgets. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleEditBudget = (budget: DBBudget) => {
+    setSelectedBudget(budget)
+    setEditBudgetOpen(true)
+  }
+
+  const handleDeleteBudget = async (budgetId: string) => {
+    try {
+      await BudgetService.deleteBudget(budgetId)
+      toast({
+        title: "Budget deleted",
+        description: "The budget has been successfully deleted.",
+        variant: "success",
+      })
+      fetchBudgets()
+    } catch (error) {
+      console.error("Error deleting budget:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete budget. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
   // Helper function to determine progress color
   const getProgressColor = (status: string) => {
@@ -116,6 +96,12 @@ export default function BudgetsPage() {
       default:
         return "bg-blue-500"
     }
+  }
+
+  // Helper function to format date
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString();
   }
 
   return (
@@ -135,7 +121,7 @@ export default function BudgetsPage() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalAllocated.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatMoney(totalAllocated, userCurrency)}</div>
             <p className="text-xs text-muted-foreground">For current month</p>
           </CardContent>
         </Card>
@@ -146,15 +132,15 @@ export default function BudgetsPage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalSpent.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatMoney(totalSpent, userCurrency)}</div>
             <div className="mt-1 h-2 w-full rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-primary"
-                style={{ width: `${(totalSpent / totalAllocated) * 100}%` }}
+                style={{ width: `${totalAllocated > 0 ? (totalSpent / totalAllocated) * 100 : 0}%` }}
               />
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              {Math.round((totalSpent / totalAllocated) * 100)}% of total budget
+              {totalAllocated > 0 ? Math.round((totalSpent / totalAllocated) * 100) : 0}% of total budget
             </p>
           </CardContent>
         </Card>
@@ -165,9 +151,9 @@ export default function BudgetsPage() {
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRemaining.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatMoney(totalRemaining, userCurrency)}</div>
             <p className="text-xs text-muted-foreground">
-              {Math.round((totalRemaining / totalAllocated) * 100)}% of budget left
+              {totalAllocated > 0 ? Math.round((totalRemaining / totalAllocated) * 100) : 0}% of budget left
             </p>
           </CardContent>
         </Card>
@@ -178,7 +164,7 @@ export default function BudgetsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$66.67</div>
+            <div className="text-2xl font-bold">{formatMoney(dailyTarget, userCurrency)}</div>
             <p className="text-xs text-muted-foreground">To stay within budget</p>
           </CardContent>
         </Card>
@@ -192,79 +178,114 @@ export default function BudgetsPage() {
         </TabsList>
 
         <TabsContent value="monthly" className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {budgets.map((budget) => (
-              <Card key={budget.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <span>{budget.icon}</span> {budget.category}
-                    </CardTitle>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+          {isLoading ? (
+            <div className="flex justify-center p-8">Loading budgets...</div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {budgets.filter(budget => budget.period === 'monthly').map((budget) => (
+                <Card key={budget.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <span>{budget.icon}</span> {budget.budget_name || 'Uncategorized'}
+                      </CardTitle>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleEditBudget(budget)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleDeleteBudget(budget.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <CardDescription>
-                    ${budget.spent.toFixed(2)} of ${budget.allocated.toFixed(2)}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pb-2">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Progress</span>
-                      <span>{Math.round((budget.spent / budget.allocated) * 100)}%</span>
+                    <CardDescription>
+                      {formatMoney(budget.spent || 0, userCurrency)} of {formatMoney(budget.amount, userCurrency)}
+                    </CardDescription>
+                    { budget.start_date && budget.end_date && (
+                      <CardDescription className="text-xs mt-1">
+                        {formatDate(budget.start_date)} - {formatDate(budget.end_date)}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent className="pb-2">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Progress</span>
+                        <span>{budget.amount > 0 ? Math.round(((budget.spent || 0) / budget.amount) * 100) : 0}%</span>
+                      </div>
+                      <Progress
+                        value={budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0}
+                        className="h-2"
+                        indicatorClassName={getProgressColor(budget.status || 'default')}
+                      />
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Remaining</span>
+                        <span className={(budget.remaining || 0) < 0 ? "text-red-500 font-medium" : ""}>
+                          {formatMoney(budget.remaining || 0, userCurrency)}
+                        </span>
+                      </div>
                     </div>
-                    <Progress
-                      value={(budget.spent / budget.allocated) * 100}
-                      className="h-2"
-                      indicatorClassName={getProgressColor(budget.status)}
-                    />
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Remaining</span>
-                      <span className={budget.remaining < 0 ? "text-red-500 font-medium" : ""}>
-                        ${budget.remaining.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-1">
-                  {budget.status === "on-track" && (
-                    <Badge variant="outline" className="w-full justify-center text-green-500 border-green-500 gap-1">
-                      <Check className="h-3 w-3" /> On Track
-                    </Badge>
-                  )}
-                  {budget.status === "warning" && (
-                    <Badge variant="outline" className="w-full justify-center text-yellow-500 border-yellow-500 gap-1">
-                      <TrendingUp className="h-3 w-3" /> Getting Close
-                    </Badge>
-                  )}
-                  {budget.status === "exceeded" && (
-                    <Badge variant="outline" className="w-full justify-center text-red-500 border-red-500 gap-1">
-                      <TrendingUp className="h-3 w-3" /> Exceeded
-                    </Badge>
-                  )}
-                </CardFooter>
-              </Card>
-            ))}
+                  </CardContent>
+                  <CardFooter className="pt-1">
+                    {budget.status === "on-track" && (
+                      <Badge variant="outline" className="w-full justify-center text-green-500 border-green-500 gap-1">
+                        <Check className="h-3 w-3" /> On Track
+                      </Badge>
+                    )}
+                    {budget.status === "warning" && (
+                      <Badge variant="outline" className="w-full justify-center text-yellow-500 border-yellow-500 gap-1">
+                        <TrendingUp className="h-3 w-3" /> Getting Close
+                      </Badge>
+                    )}
+                    {budget.status === "exceeded" && (
+                      <Badge variant="outline" className="w-full justify-center text-red-500 border-red-500 gap-1">
+                        <TrendingUp className="h-3 w-3" /> Exceeded
+                      </Badge>
+                    )}
+                    {!budget.status && (
+                      <Badge variant="outline" className="w-full justify-center text-blue-500 border-blue-500 gap-1">
+                        <TrendingUp className="h-3 w-3" /> Not Tracked
+                      </Badge>
+                    )}
+                  </CardFooter>
+                </Card>
+              ))}
 
-            <Card className="flex flex-col items-center justify-center p-6 border-dashed">
-              <Plus className="h-8 w-8 text-muted-foreground mb-2" />
-              <h3 className="font-medium text-center">Create New Budget</h3>
-              <p className="text-sm text-muted-foreground text-center mt-1 mb-4">Set up a budget for a new category</p>
-              <Button variant="outline" onClick={() => setAddBudgetOpen(true)}>
-                Add Budget
-              </Button>
-            </Card>
-          </div>
+              <Card className="flex flex-col items-center justify-center p-6 border-dashed">
+                <Plus className="h-8 w-8 text-muted-foreground mb-2" />
+                <h3 className="font-medium text-center">Create New Budget</h3>
+                <p className="text-sm text-muted-foreground text-center mt-1 mb-4">Set up a budget for a new category</p>
+                <Button variant="outline" onClick={() => setAddBudgetOpen(true)}>
+                  Add Budget
+                </Button>
+              </Card>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="savings" className="mt-4 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Savings Goals</CardTitle>
+              <CardDescription>Set and track your savings goals</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-center p-8 text-muted-foreground">
+                Savings goals feature coming soon
+              </div>
+            </CardContent>
+          </Card>
+          {/* <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {savingsGoals.map((goal) => (
               <Card key={goal.id}>
                 <CardHeader>
@@ -275,7 +296,7 @@ export default function BudgetsPage() {
                     </Button>
                   </div>
                   <CardDescription>
-                    Target: ${goal.target.toFixed(2)} by {new Date(goal.deadline).toLocaleDateString()}
+                    Target: {formatMoney(goal.target, userCurrency)} by {new Date(goal.deadline).toLocaleDateString()}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -283,7 +304,7 @@ export default function BudgetsPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Progress</span>
                       <span className="text-sm font-medium">
-                        ${goal.current.toFixed(2)} / ${goal.target.toFixed(2)}
+                        {formatMoney(goal.current, userCurrency)} / {formatMoney(goal.target, userCurrency)}
                       </span>
                     </div>
                     <div className="h-2 w-full rounded-full bg-muted">
@@ -316,7 +337,7 @@ export default function BudgetsPage() {
               <p className="text-sm text-muted-foreground text-center mt-1 mb-4">Set up a new savings target</p>
               <Button variant="outline">Add Goal</Button>
             </Card>
-          </div>
+          </div> */}
         </TabsContent>
 
         <TabsContent value="annual" className="mt-4">
@@ -333,7 +354,19 @@ export default function BudgetsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      <AddBudgetModal open={addBudgetOpen} onOpenChange={setAddBudgetOpen} />
+      <AddBudgetModal 
+        open={addBudgetOpen} 
+        onOpenChange={setAddBudgetOpen} 
+        onBudgetAdded={fetchBudgets}
+      />
+      {selectedBudget && (
+        <EditBudgetModal
+          open={editBudgetOpen}
+          onOpenChange={setEditBudgetOpen}
+          onBudgetUpdated={fetchBudgets}
+          budget={selectedBudget}
+        />
+      )}
     </div>
   )
 }

@@ -12,34 +12,49 @@ export type Database = {
       budgets: {
         Row: {
           amount: number
+          budget_name: string | null
           category_id: string | null
           created_at: string
           end_date: string | null
+          icon: string | null
           id: string
           period: string
+          remaining: number | null
+          spent: number | null
           start_date: string
+          status: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           amount: number
+          budget_name?: string | null
           category_id?: string | null
           created_at?: string
           end_date?: string | null
+          icon?: string | null
           id?: string
           period?: string
+          remaining?: number | null
+          spent?: number | null
           start_date?: string
+          status?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           amount?: number
+          budget_name?: string | null
           category_id?: string | null
           created_at?: string
           end_date?: string | null
+          icon?: string | null
           id?: string
           period?: string
+          remaining?: number | null
+          spent?: number | null
           start_date?: string
+          status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -272,52 +287,52 @@ export type Database = {
       }
       subscriptions: {
         Row: {
-          id: string
-          user_id: string
-          name: string
-          description: string | null
           amount: number
           billing_cycle: string
-          next_billing_date: string
           category_id: string | null
-          is_active: boolean
-          payment_method: string | null
-          website: string | null
-          notes: string | null
           created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          next_billing_date: string
+          notes: string | null
+          payment_method: string | null
           updated_at: string
+          user_id: string
+          website: string | null
         }
         Insert: {
-          id?: string
-          user_id: string
-          name: string
-          description?: string | null
           amount: number
           billing_cycle: string
-          next_billing_date: string
           category_id?: string | null
-          is_active?: boolean
-          payment_method?: string | null
-          website?: string | null
-          notes?: string | null
           created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          next_billing_date: string
+          notes?: string | null
+          payment_method?: string | null
           updated_at?: string
+          user_id: string
+          website?: string | null
         }
         Update: {
-          id?: string
-          user_id?: string
-          name?: string
-          description?: string | null
           amount?: number
           billing_cycle?: string
-          next_billing_date?: string
           category_id?: string | null
-          is_active?: boolean
-          payment_method?: string | null
-          website?: string | null
-          notes?: string | null
           created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          next_billing_date?: string
+          notes?: string | null
+          payment_method?: string | null
           updated_at?: string
+          user_id?: string
+          website?: string | null
         }
         Relationships: [
           {
@@ -326,7 +341,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       user_settings: {

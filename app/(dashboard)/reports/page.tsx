@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowDown, ArrowUp, Calendar, Download, FileText, PieChart, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ExpenseChart } from "@/components/expense-chart"
+import { ReportService } from "@/app/api/reports/service"
 
 // Import recharts components
 import {
@@ -21,7 +22,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-
+import { UserSettings } from "@/types/userSettings"
+import { useAuth } from "@/lib/auth-context"
+import { ReportSummary, CategoryBreakdown, ExpenseTrend, MonthlyComparison, TopExpense } from "@/lib/services/reports-service"
+import { formatMoney } from "@/lib/utils"
 // Mock data for category breakdown
 const categoryData = [
   { name: "Food & Dining", value: 420.32, color: "#0ea5e9" },
@@ -49,6 +53,36 @@ const totalExpenses = categoryData.reduce((sum, item) => sum + item.value, 0)
 
 export default function ReportsPage() {
   const [timeframe, setTimeframe] = useState("month")
+  const [reportSummary, setReportSummary] = useState<ReportSummary | null>(null)
+  const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([])
+  const [expenseTrends, setExpenseTrends] = useState<ExpenseTrend[]>([])
+  const [monthlyComparison, setMonthlyComparison] = useState<MonthlyComparison[]>([])
+  const [topExpenses, setTopExpenses] = useState<TopExpense[]>([])
+  const { userSettings: dbUserSettings } = useAuth()
+  const userSettings = dbUserSettings as unknown as UserSettings
+  const userCurrency = userSettings?.preferences?.currency || "USD"
+
+  useEffect(() => {
+    const fetchReportData = async () => {
+      try {
+        const summary = await ReportService.getReportSummary(timeframe)
+        const categories = await ReportService.getCategoryBreakdown(timeframe)
+        const trends = await ReportService.getExpenseTrends(timeframe)
+        const comparison = await ReportService.getMonthlyComparison()
+        const top = await ReportService.getTopExpenses(timeframe, 5)
+        
+        setReportSummary(summary)
+        setCategoryBreakdown(categories)
+        setExpenseTrends(trends)
+        setMonthlyComparison(comparison)
+        setTopExpenses(top)
+      } catch (error) {
+        console.error("Error fetching report data:", error)
+      }
+    }
+    
+    fetchReportData()
+  }, [timeframe])
 
   return (
     <div className="flex flex-col gap-4">
@@ -85,7 +119,7 @@ export default function ReportsPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalExpenses.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatMoney(reportSummary?.totalExpenses || 0, userCurrency)}</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-green-500 inline-flex items-center">
                 <ArrowDown className="mr-1 h-3 w-3" />
@@ -102,7 +136,7 @@ export default function ReportsPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$92.01</div>
+            <div className="text-2xl font-bold">{formatMoney(reportSummary?.averageDaily || 0, userCurrency)}</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-red-500 inline-flex items-center">
                 <ArrowUp className="mr-1 h-3 w-3" />
@@ -119,10 +153,10 @@ export default function ReportsPage() {
             <PieChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Housing</div>
+            <div className="text-2xl font-bold">{categoryBreakdown[0].name}</div>
             <p className="text-xs text-muted-foreground">
-              ${categoryData.find((c) => c.name === "Housing")?.value.toFixed(2)} (
-              {Math.round(((categoryData.find((c) => c.name === "Housing")?.value || 0) / totalExpenses) * 100)}% of
+              {formatMoney(categoryBreakdown[0].value, userCurrency)} (
+              {Math.round(((categoryBreakdown[0].value || 0) / totalExpenses) * 100)}% of
               total)
             </p>
           </CardContent>
@@ -134,11 +168,11 @@ export default function ReportsPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">32</div>
+            <div className="text-2xl font-bold">{reportSummary?.transactionCount}</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-green-500 inline-flex items-center">
                 <ArrowDown className="mr-1 h-3 w-3" />
-                8.1%
+                {reportSummary?.previousChange?.toFixed(2)}%
               </span>{" "}
               vs previous {timeframe}
             </p>
@@ -151,7 +185,7 @@ export default function ReportsPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="trends">Trends</TabsTrigger>
-          <TabsTrigger value="comparison">Comparison</TabsTrigger>
+          {/* <TabsTrigger value="comparison">Comparison</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 mt-4">
@@ -186,7 +220,7 @@ export default function ReportsPage() {
                         label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                         labelLine={false}
                       >
-                        {categoryData.map((entry, index) => (
+                        {categoryBreakdown.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -204,70 +238,15 @@ export default function ReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center">
-                    <div className="mr-2 h-4 w-4 rounded-full bg-blue-500" />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">Rent Payment</div>
-                        <div>$1,200.00</div>
+                  {topExpenses.map((expense) => (
+                    <div key={expense.title} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 rounded-full" style={{ backgroundColor: expense.color }} />
+                        <div className="font-medium">{expense.title}</div>
                       </div>
-                      <div className="mt-1 h-2 w-full rounded-full bg-muted">
-                        <div className="h-full w-[100%] rounded-full bg-blue-500" />
-                      </div>
+                      <div className="font-medium">{formatMoney(expense.amount, userCurrency)}</div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <div className="mr-2 h-4 w-4 rounded-full bg-green-500" />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">Grocery Store</div>
-                        <div>$87.32</div>
-                      </div>
-                      <div className="mt-1 h-2 w-full rounded-full bg-muted">
-                        <div className="h-full w-[7%] rounded-full bg-green-500" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <div className="mr-2 h-4 w-4 rounded-full bg-purple-500" />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">Electric Bill</div>
-                        <div>$85.42</div>
-                      </div>
-                      <div className="mt-1 h-2 w-full rounded-full bg-muted">
-                        <div className="h-full w-[7%] rounded-full bg-purple-500" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <div className="mr-2 h-4 w-4 rounded-full bg-yellow-500" />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">Gym Membership</div>
-                        <div>$50.00</div>
-                      </div>
-                      <div className="mt-1 h-2 w-full rounded-full bg-muted">
-                        <div className="h-full w-[4%] rounded-full bg-yellow-500" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center">
-                    <div className="mr-2 h-4 w-4 rounded-full bg-red-500" />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">Gas Station</div>
-                        <div>$45.23</div>
-                      </div>
-                      <div className="mt-1 h-2 w-full rounded-full bg-muted">
-                        <div className="h-full w-[3.5%] rounded-full bg-red-500" />
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -282,14 +261,14 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-8">
-                {categoryData.map((category) => (
+                {categoryBreakdown.map((category) => (
                   <div key={category.name} className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="h-4 w-4 rounded-full" style={{ backgroundColor: category.color }} />
                         <h3 className="font-medium">{category.name}</h3>
                       </div>
-                      <div className="font-medium">${category.value.toFixed(2)}</div>
+                      <div className="font-medium">{formatMoney(category.value, userCurrency)}</div>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-full rounded-full bg-muted">
@@ -323,8 +302,8 @@ export default function ReportsPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={monthlyComparisonData}>
                     <XAxis dataKey="name" />
-                    <YAxis tickFormatter={(value) => `$${value}`} />
-                    <Tooltip formatter={(value) => [`$${value}`, "Amount"]} />
+                    <YAxis tickFormatter={(value) => formatMoney(value, userCurrency)} />
+                    <Tooltip formatter={(value: number) => [formatMoney(value, userCurrency), "Amount"]} />
                     <Legend />
                     <Bar name="Current Year" dataKey="current" fill="#0ea5e9" />
                     <Bar name="Previous Year" dataKey="previous" fill="#94a3b8" />
@@ -334,13 +313,13 @@ export default function ReportsPage() {
             </CardContent>
             <CardFooter>
               <p className="text-sm text-muted-foreground">
-                Your spending is trending 7.2% higher compared to the same period last year.
+                Your spending is trending {reportSummary?.previousChange?.toFixed(2)}% higher compared to the same period last year.
               </p>
             </CardFooter>
           </Card>
         </TabsContent>
 
-        <TabsContent value="comparison" className="mt-4">
+        {/* <TabsContent value="comparison" className="mt-4">
           <Card>
             <CardHeader>
               <CardTitle>Month-to-Month Comparison</CardTitle>
@@ -422,7 +401,7 @@ export default function ReportsPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   )

@@ -13,6 +13,7 @@ export type DBSavingsGoal = Database['public']['Tables']['savings_goals']['Row']
 export type DBSubscription = Database['public']['Tables']['subscriptions']['Row']
 export type DBUserSettings = Database['public']['Tables']['user_settings']['Row'];
 
+
 // Insert types
 export type DBBudgetInsert = Database['public']['Tables']['budgets']['Insert']
 export type DBCalendarEventInsert = Database['public']['Tables']['calendar_events']['Insert']

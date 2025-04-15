@@ -46,7 +46,17 @@ CREATE TABLE budgets (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
     amount DECIMAL(12, 2) NOT NULL,
+    spent DECIMAL(12, 2) DEFAULT 0,
+    remaining DECIMAL(12, 2) GENERATED ALWAYS AS (amount - spent) STORED,
     period TEXT NOT NULL DEFAULT 'monthly', -- 'weekly', 'monthly', 'quarterly', 'yearly'
+    status TEXT GENERATED ALWAYS AS (
+        CASE 
+            WHEN spent >= amount THEN 'exceeded'
+            WHEN spent >= (amount * 0.8) THEN 'warning'
+            ELSE 'on-track'
+        END
+    ) STORED,
+    icon TEXT,
     start_date DATE NOT NULL DEFAULT CURRENT_DATE,
     end_date DATE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
