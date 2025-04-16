@@ -62,7 +62,7 @@ export function AddRecurringModal({
   const { user } = useAuth()
   const [recurringData, setRecurringData] = useState({
     name: "",
-    amount: 0,
+    amount: "",
     category_id: "",
     due_day: "",
     frequency: "monthly",
@@ -105,7 +105,7 @@ export function AddRecurringModal({
     setIsSubmitting(true)
     try {
       // Validate form
-      if (!recurringData.name || !recurringData.amount || !recurringData.frequency) {
+      if (!recurringData.name || recurringData.amount === "" || !recurringData.frequency) {
         throw new Error("Please fill in all required fields")
       }
 
@@ -116,6 +116,7 @@ export function AddRecurringModal({
 
       await RecurringService.createRecurringExpense({
         ...recurringData,
+        amount: parseFloat(recurringData.amount as string),
         due_day: recurringData.due_day ? parseInt(recurringData.due_day) : null,
         user_id: user?.id || "",
         next_due_date: recurringData.next_due_date.toISOString(),
@@ -127,7 +128,7 @@ export function AddRecurringModal({
       })
       setRecurringData({
         name: "",
-        amount: 0,
+        amount: "",
         category_id: "",
         due_day: "",
         frequency: "monthly",
@@ -189,7 +190,7 @@ export function AddRecurringModal({
                   placeholder="19.99"
                   className="pl-8"
                   value={recurringData.amount}
-                  onChange={(e) => handleChange("amount", parseFloat(e.target.value))}
+                  onChange={(e) => handleChange("amount", e.target.value)}
                   required
                 />
               </div>

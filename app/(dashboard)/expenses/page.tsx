@@ -21,7 +21,6 @@ export default function ExpensesPage() {
   const [openDeleteExpenseModal, setOpenDeleteExpenseModal] = useState(false)
   const [selectedExpenseToDelete, setSelectedExpenseToDelete] = useState<DBExpense | null>(null)
 
-  // API calls with useCallback to prevent unnecessary recreations
   const fetchExpenses = useCallback(async () => {
     try {
       const expenses = await ExpenseService.getExpenses();

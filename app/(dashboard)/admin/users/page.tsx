@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { supabase } from "@/lib/supabase/client"
 import { isCurrentUserAdmin } from "@/lib/auth"
 import { toast } from "sonner"
+import { UserSettingsService } from "@/lib/services/user-settings-service"
 
 type User = {
   id: string
@@ -17,7 +18,7 @@ type User = {
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>([])
+  const [users] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
@@ -42,24 +43,7 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      // This is a simplified approach
-      // In a real application, you would use the admin API or a server function
-      const { data: userSettings, error: settingsError } = await supabase
-        .from('user_settings')
-        .select('user_id, settings')
-      
-      if (settingsError) throw settingsError
-      
-      // Get user details from auth.users (this would require a server function in a real app)
-      // For demo purposes, we'll create mock data based on user_settings
-      const formattedUsers = userSettings.map(setting => ({
-        id: setting.user_id,
-        email: `user_${setting.user_id.substring(0, 6)}@example.com`, // Mock email
-        created_at: new Date().toISOString(), // Mock creation date
-        role: setting.settings?.role || 'user'
-      }))
-      
-      setUsers(formattedUsers)
+    
     } catch (error) {
       console.error('Error fetching users:', error)
       toast.error('Failed to load users')
@@ -70,25 +54,25 @@ export default function AdminUsersPage() {
 
   const handlePromoteToAdmin = async (userId: string) => {
     try {
-      const { data: userSettings, error: fetchError } = await supabase
-        .from('user_settings')
-        .select('settings')
-        .eq('user_id', userId)
-        .single()
+      // Get user settings with the direct service
+      const userSettings = await UserSettingsService.getUserSettings(userId, supabase)
       
-      if (fetchError) throw fetchError
+      if ('error' in userSettings) {
+        throw new Error(userSettings.error)
+      }
       
+      // Update the role to admin
       const updatedSettings = {
-        ...userSettings.settings,
+        ...userSettings,
         role: 'admin'
       }
       
-      const { error } = await supabase
-        .from('user_settings')
-        .update({ settings: updatedSettings })
-        .eq('user_id', userId)
+      // Update the settings
+      const result = await UserSettingsService.updateUserSettings(userId, updatedSettings, supabase)
       
-      if (error) throw error
+      if ('error' in result) {
+        throw new Error(result.error)
+      }
       
       toast.success('User promoted to admin')
       fetchUsers()
@@ -100,25 +84,25 @@ export default function AdminUsersPage() {
 
   const handleDemoteToUser = async (userId: string) => {
     try {
-      const { data: userSettings, error: fetchError } = await supabase
-        .from('user_settings')
-        .select('settings')
-        .eq('user_id', userId)
-        .single()
+      // Get user settings with the direct service
+      const userSettings = await UserSettingsService.getUserSettings(userId, supabase)
       
-      if (fetchError) throw fetchError
+      if ('error' in userSettings) {
+        throw new Error(userSettings.error)
+      }
       
+      // Update the role to user
       const updatedSettings = {
-        ...userSettings.settings,
+        ...userSettings,
         role: 'user'
       }
       
-      const { error } = await supabase
-        .from('user_settings')
-        .update({ settings: updatedSettings })
-        .eq('user_id', userId)
+      // Update the settings
+      const result = await UserSettingsService.updateUserSettings(userId, updatedSettings, supabase)
       
-      if (error) throw error
+      if ('error' in result) {
+        throw new Error(result.error)
+      }
       
       toast.success('User demoted to regular user')
       fetchUsers()
@@ -208,4 +192,20 @@ export default function AdminUsersPage() {
       </Card>
     </div>
   )
-} 
+}
+
+/*
+ * IMPORTANT: You need to create the following RPC function in Supabase SQL Editor:
+ *
+ * CREATE OR REPLACE FUNCTION get_user_emails(user_ids UUID[])
+ * RETURNS TABLE (id UUID, email TEXT, created_at TIMESTAMPTZ) 
+ * SECURITY DEFINER
+ * AS $$
+ * BEGIN
+ *   RETURN QUERY
+ *   SELECT au.id, au.email, au.created_at
+ *   FROM auth.users au
+ *   WHERE au.id = ANY(user_ids);
+ * END;
+ * $$ LANGUAGE plpgsql;
+ */ 

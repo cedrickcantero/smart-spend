@@ -91,7 +91,7 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
 
       toast({
         title: "Expense added",
-        description: `$${userCurrency} ${amount}  expense to ${merchant} has been added successfully.`,
+        description: `${userCurrency} ${amount}  expense to ${merchant} has been added successfully.`,
         variant: "success",
       })
 

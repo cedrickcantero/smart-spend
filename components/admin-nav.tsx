@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { isCurrentUserAdmin } from "@/lib/auth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Palette, Users, Settings } from "lucide-react"
+import { Palette} from "lucide-react"
 
 export function AdminNav() {
   const [isAdmin, setIsAdmin] = useState(false)
@@ -42,18 +42,18 @@ export function AdminNav() {
       icon: Palette,
       description: "Manage system colors"
     },
-    {
-      name: "Users",
-      href: "/admin/users",
-      icon: Users,
-      description: "Manage user accounts"
-    },
-    {
-      name: "Settings",
-      href: "/admin/settings",
-      icon: Settings,
-      description: "System settings"
-    }
+    // {
+    //   name: "Users",
+    //   href: "/admin/users",
+    //   icon: Users,
+    //   description: "Manage user accounts"
+    // },
+    // {
+    //   name: "Settings",
+    //   href: "/admin/settings",
+    //   icon: Settings,
+    //   description: "System settings"
+    // }
   ]
 
   return (

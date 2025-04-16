@@ -11,9 +11,9 @@ export const ColorService = {
     }
   },
 
-  createColor: async (color: DBColor): Promise<DBColor> => {
+  createColor: async (color: DBColor): Promise<Omit<DBColor, 'id'>> => {
     try {
-      return await api.post<DBColor>("/api/color", color);
+      return await api.post<Omit<DBColor, 'id'>>("/api/color", color);
     } catch (error) {
       console.error("Error creating color:", error);
       throw error;

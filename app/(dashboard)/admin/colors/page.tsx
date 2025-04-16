@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase/client"
 import { DBColor } from "@/types/supabase"
 import { isCurrentUserAdmin } from "@/lib/auth"
 import { toast } from "sonner"
-
+import { ColorService } from "@/app/api/color/service"
 export default function ColorsAdminPage() {
   const [colors, setColors] = useState<DBColor[]>([])
   const [loading, setLoading] = useState(true)
@@ -19,12 +19,42 @@ export default function ColorsAdminPage() {
     name: "",
     hex_value: "#000000",
     tailwind_key: ""
+
   })
   const router = useRouter()
+  const unmountedRef = useRef(false)
+
+  // Use memoized fetchColors function to prevent unnecessary re-renders
+  const fetchColors = useCallback(async () => {
+    if (unmountedRef.current) return
+    
+    setLoading(true)
+    try {
+      const colors = await ColorService.getColors()
+    
+      if (!unmountedRef.current) {
+        setColors(colors || [])
+      }
+    } catch (error) {
+      console.error('Error fetching colors:', error)
+      if (!unmountedRef.current) {
+        toast.error('Failed to load colors')
+      }
+    } finally {
+      if (!unmountedRef.current) {
+        setLoading(false)
+      }
+    }
+  }, [])
 
   useEffect(() => {
+    unmountedRef.current = false
+    
     const checkAccess = async () => {
       const adminAccess = await isCurrentUserAdmin()
+      
+      if (unmountedRef.current) return
+      
       setIsAdmin(adminAccess)
       
       if (!adminAccess) {
@@ -37,40 +67,24 @@ export default function ColorsAdminPage() {
     }
     
     checkAccess()
-  }, [router])
-
-  const fetchColors = async () => {
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('colors')
-        .select('*')
-        .order('name')
-      
-      if (error) throw error
-      
-      setColors(data || [])
-    } catch (error) {
-      console.error('Error fetching colors:', error)
-      toast.error('Failed to load colors')
-    } finally {
-      setLoading(false)
+    
+    // Cleanup function to prevent memory leaks and state updates after unmount
+    return () => {
+      unmountedRef.current = true
     }
-  }
+  }, [router, fetchColors])
 
   const handleAddColor = async () => {
     if (!newColor.name || !newColor.hex_value || !newColor.tailwind_key) {
       toast.error('Please fill in all fields')
       return
     }
+
+
     
     try {
-      const { error } = await supabase
-        .from('colors')
-        .insert([newColor])
-      
-      if (error) throw error
-      
+
+      await ColorService.createColor(newColor as DBColor)
       toast.success('Color added successfully')
       setNewColor({
         name: "",
@@ -174,7 +188,7 @@ export default function ColorsAdminPage() {
                 <div>Tailwind Key</div>
                 <div></div>
               </div>
-              <div className="divide-y">
+              <div className="divide-y max-h-[400px] overflow-auto">
                 {loading ? (
                   <div className="p-4 text-center">Loading colors...</div>
                 ) : colors.length === 0 ? (
