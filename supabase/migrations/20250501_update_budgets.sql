@@ -3,6 +3,7 @@
 -- Add remaining column if it doesn't exist
 ALTER TABLE budgets 
 ADD COLUMN IF NOT EXISTS remaining DECIMAL(12, 2) GENERATED ALWAYS AS (amount - spent) STORED;
+ADD COLUMN IF NOT EXISTS budget_name TEXT;
 
 -- Add status column based on budget usage
 ALTER TABLE budgets

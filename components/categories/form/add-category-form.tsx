@@ -31,8 +31,6 @@ const CATEGORY_ICONS = [
   "🧾",
   "💸",
   "💵",
-  "💰",
-  "💳",
 ]
 
 // Default colors in case API fetch fails

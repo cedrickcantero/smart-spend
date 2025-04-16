@@ -12,9 +12,10 @@ import { EditBudgetModal } from "@/components/budget/modals/edit-budget-modal"
 import { BudgetService, BudgetWithCategory } from "@/app/api/budget/service"
 import { useToast } from "@/hooks/use-toast"
 import { formatMoney } from "@/lib/utils"
-import { DBBudget } from "@/types/supabase"
+import { DBBudget, DBExpense } from "@/types/supabase"
 import { useAuth } from "@/lib/auth-context"
 import { UserSettings } from "@/types/userSettings"
+import { ExpenseService } from "@/app/api/expense/service"
 
 export default function BudgetsPage() {
   const [activeTab, setActiveTab] = useState("monthly")
@@ -22,15 +23,63 @@ export default function BudgetsPage() {
   const [editBudgetOpen, setEditBudgetOpen] = useState(false)
   const [selectedBudget, setSelectedBudget] = useState<DBBudget | null>(null)
   const [budgets, setBudgets] = useState<BudgetWithCategory[]>([])
+  const [expenses, setExpenses] = useState<DBExpense[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
   const { userSettings: dbUserSettings } = useAuth()
   const userSettings = dbUserSettings as unknown as UserSettings
   const userCurrency = userSettings?.preferences?.currency || "USD"
 
-  // Calculate budget summary
-  const totalAllocated = budgets.reduce((sum, budget) => sum + budget.amount, 0)
-  const totalSpent = budgets.reduce((sum, budget) => sum + (budget.spent || 0), 0)
+  // Calculate expenses per category
+  const getExpensesByCategory = () => {
+    const expensesByCategory: Record<string, number> = {};
+    
+    expenses.forEach(expense => {
+      if (expense.category_id) {
+        if (!expensesByCategory[expense.category_id]) {
+          expensesByCategory[expense.category_id] = 0;
+        }
+        expensesByCategory[expense.category_id] += expense.amount || 0;
+      }
+    });
+    
+    return expensesByCategory;
+  };
+
+  // Update budgets with expense data
+  const updateBudgetsWithExpenseData = () => {
+    const expensesByCategory = getExpensesByCategory();
+    
+    const updatedBudgets = budgets.map(budget => {
+      const categoryId = budget.category_id;
+      const spentAmount = categoryId ? expensesByCategory[categoryId] || 0 : 0;
+      const remainingAmount = budget.amount - spentAmount;
+      
+      // Determine budget status based on percentage spent
+      let status = "on-track";
+      const percentSpent = budget.amount > 0 ? (spentAmount / budget.amount) * 100 : 0;
+      
+      if (percentSpent >= 100) {
+        status = "exceeded";
+      } else if (percentSpent >= 75) {
+        status = "warning";
+      }
+      
+      return {
+        ...budget,
+        spent: spentAmount,
+        remaining: remainingAmount,
+        status
+      };
+    });
+    
+    return updatedBudgets;
+  };
+
+  // Calculate budget summary from the updated budgets
+  const processedBudgets = expenses.length && budgets.length ? updateBudgetsWithExpenseData() : budgets;
+  const totalAllocated = processedBudgets.reduce((sum, budget) => sum + budget.amount, 0)
+  const totalSpent = processedBudgets.reduce((sum, budget) => sum + (budget.spent || 0), 0)
   const totalRemaining = totalAllocated - totalSpent
   
   // Calculate daily target (remaining budget divided by days left in month)
@@ -39,9 +88,20 @@ export default function BudgetsPage() {
   const daysRemaining = Math.max(1, daysInMonth - today + 1)
   const dailyTarget = totalRemaining > 0 ? totalRemaining / daysRemaining : 0
 
+  console.log("budgets", processedBudgets)
+  console.log("totalAllocated", totalAllocated)
+  console.log("totalSpent", totalSpent)
+  console.log("totalRemaining", totalRemaining)
+  console.log("dailyTarget", dailyTarget)
+
   useEffect(() => {
-    fetchBudgets()
+    Promise.all([fetchBudgets(), fetchExpenses()])
   }, [])
+
+  const fetchExpenses = async () => {
+    const fetchedExpenses = await ExpenseService.getExpenses()
+    setExpenses(fetchedExpenses)
+  }
 
   const fetchBudgets = async () => {
     setIsLoading(true)
@@ -182,7 +242,7 @@ export default function BudgetsPage() {
             <div className="flex justify-center p-8">Loading budgets...</div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {budgets.filter(budget => budget.period === 'monthly').map((budget) => (
+              {processedBudgets.filter(budget => budget.period === 'monthly').map((budget) => (
                 <Card key={budget.id}>
                   <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
