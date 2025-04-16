@@ -2,15 +2,21 @@ import {
   BadgeDollarSign,
   BarChart3,
   Calendar,
-  FileText,
   Home,
   Package,
-  Receipt, } from "lucide-react";
+  Receipt,
+  ReceiptText,
+  Repeat,
+  CreditCard,
+  ShieldCheck,
+  Users,
+  Palette,
+  Settings } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 export interface SubMenuItem {
   title: string;
-  url: string;
+  url?: string;
   icon: LucideIcon;
 }
 
@@ -23,28 +29,50 @@ export interface SidebarItem {
 }
 
 export const sidebarItems: SidebarItem[] = [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: Home,
-    },
+  {
+    title: "Admin",
+    icon: ShieldCheck,
+    permission: ["admin"],
+    submenu: [
+      {
+        title: "Colors",
+        url: "/admin/colors",
+        icon: Palette,
+      },
+      {
+        title: "Users",
+        url: "/admin/users",
+        icon: Users,
+      },
+      {
+        title: "Settings",
+        url: "/admin/settings",
+        icon: Settings,
+      }
+    ],
+  },
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: Home,
+  },
     {
       title: "Expenses",
       submenu: [
         {
           title: "All Expenses",
           url: "/expenses",
-          icon: Receipt,
+          icon: ReceiptText,
         },
         {
           title: "Recurring",
           url: "/recurring",
-          icon: Receipt,
+          icon: Repeat,
         },
         {
           title: "Subscriptions",
           url: "/subscriptions",
-          icon: Receipt,
+          icon: CreditCard,
         },
       ],
       icon: Receipt,
@@ -73,5 +101,5 @@ export const sidebarItems: SidebarItem[] = [
       title: "Categories",
       url: "/categories",
       icon: Package,
-    }, 
+    },
   ]

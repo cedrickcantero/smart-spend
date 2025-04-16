@@ -9,10 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AddEventModal } from "@/components/calendar/modals/add-event-modal"
 import { useAuth } from "@/lib/auth-context"
 import { CalendarService } from "@/app/api/calendar/service"
-import { DBCalendarEvent, DBCategory } from "@/types/supabase"
+import { DBCalendarEvent, DBCategory, DBColor } from "@/types/supabase"
 import { EditEventModal } from "@/components/calendar/modals/edit-event-modal"
 import { CategoriesService } from "@/app/api/categories/service"
+import { formatMoney } from "@/lib/utils"
+import { UserSettings } from "@/types/userSettings"
 
+// Extended type that includes colorObj property
+interface CalendarEventWithColor extends DBCalendarEvent {
+  colorObj?: DBColor | null;
+}
 
 export default function CalendarPage() {
   const today = new Date()
@@ -21,18 +27,20 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState("month")
   const [addEventOpen, setAddEventOpen] = useState(false)
-  const [calendarEvents, setCalendarEvents] = useState<DBCalendarEvent[]>([])
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEventWithColor[]>([])
   const [editEventOpen, setEditEventOpen] = useState(false)
-  const [selectedEvent, setSelectedEvent] = useState<DBCalendarEvent | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithColor | null>(null)
   const [categories, setCategories] = useState<DBCategory[]>([])
-  const { user } = useAuth()
+  const { user, userSettings: dbUserSettings } = useAuth()
+  const userSettings = dbUserSettings as unknown as UserSettings
+  const userCurrency = userSettings?.preferences?.currency || "USD"
 
   const fetchEvents = async () => {
     if (!user) return
     
     try {
       const response = await CalendarService.getCalendarEvents()
-      setCalendarEvents(response)
+      setCalendarEvents(response as CalendarEventWithColor[])
     } catch (error) {
       console.error('Error fetching calendar events:', error)
       setCalendarEvents([])
@@ -57,7 +65,7 @@ export default function CalendarPage() {
     return new Date(year, month, 1).getDay()
   }
 
-  const getEventsForDate = (dateString: string, events: DBCalendarEvent[]) => {
+  const getEventsForDate = (dateString: string, events: CalendarEventWithColor[]) => {
     return events.filter((event) => event.date === dateString)
   }
 
@@ -106,7 +114,6 @@ export default function CalendarPage() {
 
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate, calendarEvents) : []
 
-  // Get the current week dates
   const getWeekDates = () => {
     const today = new Date(currentYear, currentMonth, selectedDate ? new Date(selectedDate).getDate() : new Date().getDate())
     const day = today.getDay()
@@ -136,7 +143,7 @@ export default function CalendarPage() {
     setAddEventOpen(true)
   }
 
-  const handleEventUpdated = async (event: DBCalendarEvent) => {
+  const handleEventUpdated = async (event: CalendarEventWithColor) => {
     const latestEvent = calendarEvents.find(e => e.id === event.id);
     if (latestEvent) {
       setSelectedEvent(latestEvent);
@@ -191,7 +198,6 @@ export default function CalendarPage() {
             </Button>
           </div>
         </div>
-
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardHeader className="pb-2">
@@ -247,7 +253,8 @@ export default function CalendarPage() {
                               day.events.slice(0, 3).map((event) => (
                                 <div
                                   key={event.id}
-                                  className={`text-xs px-1 py-0.5 rounded truncate ${event.color} text-white`}
+                                  className="text-xs px-1 py-0.5 rounded truncate text-white"
+                                  style={{ backgroundColor: (event.colorObj?.hex_value || event.color || '#888888') }}
                                 >
                                   {event.title}
                                 </div>
@@ -262,7 +269,6 @@ export default function CalendarPage() {
                   ))}
                 </div>
               )}
-              
               {viewMode === "week" && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-7 gap-1">
@@ -283,7 +289,6 @@ export default function CalendarPage() {
                       </div>
                     ))}
                   </div>
-                  
                   <div className="border rounded-md p-4 space-y-4">
                     <h3 className="font-medium text-lg">
                       {selectedDate 
@@ -300,7 +305,10 @@ export default function CalendarPage() {
                         {selectedDateEvents.map((event) => (
                           <div key={event.id} className="flex items-center justify-between p-2 border-b">
                             <div className="flex items-center gap-2">
-                              <div className={`${event.color} w-3 h-3 rounded-full`} />
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: (event.colorObj?.hex_value || event.color || '#888888') }}
+                              />
                               <div>
                                 <p className="font-medium">{event.title}</p>
                                 <Badge variant="outline" className="font-normal text-xs">
@@ -309,7 +317,7 @@ export default function CalendarPage() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium">${event.amount?.toFixed(2) || "0.00"}</span>
+                              <span className="font-medium">{formatMoney(event.amount || 0, userCurrency)}</span>
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
@@ -337,7 +345,6 @@ export default function CalendarPage() {
                   </div>
                 </div>
               )}
-              
               {viewMode === "day" && (
                 <div className="space-y-4">
                   <div className="flex justify-center space-x-1">
@@ -393,11 +400,14 @@ export default function CalendarPage() {
                       <div className="space-y-3">
                         {selectedDateEvents.map((event) => (
                           <div key={event.id} className="flex items-start p-3 rounded-md border">
-                            <div className={`${event.color} w-2 mr-3 h-full self-stretch rounded-full`} />
+                            <div 
+                              className="w-2 mr-3 h-full self-stretch rounded-full" 
+                              style={{ backgroundColor: (event.colorObj?.hex_value || event.color || '#888888') }} 
+                            />
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
                                 <h4 className="font-medium">{event.title}</h4>
-                                <span className="font-medium">${event.amount?.toFixed(2) || "0.00"}</span>
+                                <span className="font-medium">{formatMoney(event.amount || 0, userCurrency)}</span>
                               </div>
                               <div className="flex items-center justify-between mt-1">
                                 <Badge variant="outline" className="font-normal">
@@ -442,7 +452,6 @@ export default function CalendarPage() {
               )}
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>
@@ -465,11 +474,14 @@ export default function CalendarPage() {
                   <div className="space-y-4">
                     {selectedDateEvents.map((event) => (
                       <div key={event.id} className="flex items-start gap-2 p-2 rounded-md border">
-                        <div className={`w-2 h-full self-stretch rounded-full ${event.color}`} />
+                        <div 
+                          className="w-2 h-full self-stretch rounded-full" 
+                          style={{ backgroundColor: (event.colorObj?.hex_value || event.color || '#888888') }}
+                        />
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <h4 className="font-medium">{event.title}</h4>
-                            <span className="font-medium">${event.amount?.toFixed(2) || "0.00"}</span>
+                            <span className="font-medium">{formatMoney(event.amount || 0, userCurrency)}</span>
                           </div>
                           <div className="text-sm text-muted-foreground">
                             <Badge variant="outline" className="font-normal">
@@ -501,7 +513,6 @@ export default function CalendarPage() {
             </CardContent>
           </Card>
         </div>
-
         <Card>
           <CardHeader>
             <CardTitle>Upcoming Expenses</CardTitle>
@@ -514,14 +525,14 @@ export default function CalendarPage() {
                 <div key={event.id} className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                    <div className={`${event.color} w-3 h-3 rounded-full`} />
+                    <div className="bg-[\#eab308] w-3 h-3 rounded-full"></div>
                     <div>
                       <p className="font-medium">{event.title}</p>
                       <p className="text-sm text-muted-foreground">{event.date}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">${event.amount?.toFixed(2) || "0.00"}</span>
+                    <span className="font-medium">{formatMoney(event.amount || 0, userCurrency)}</span>
                     <Button 
                       variant="ghost" 
                       size="icon" 

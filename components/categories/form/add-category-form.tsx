@@ -1,14 +1,12 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { DBCategory } from "@/types/supabase"
-
+import { DBCategory, DBColor } from "@/types/supabase"
 
 const CATEGORY_ICONS = [
   "🍔",
@@ -37,20 +35,14 @@ const CATEGORY_ICONS = [
   "💳",
 ]
 
-// Color options for categories
-const COLOR_OPTIONS = [
-  { value: "#0ea5e9", label: "Blue" },
-  { value: "#22c55e", label: "Green" },
-  { value: "#ef4444", label: "Red" },
-  { value: "#eab308", label: "Yellow" },
-  { value: "#8b5cf6", label: "Purple" },
-  { value: "#ec4899", label: "Pink" },
-  { value: "#f97316", label: "Orange" },
-  { value: "#6366f1", label: "Indigo" },
-  { value: "#94a3b8", label: "Gray" },
-  { value: "#000000", label: "Black" },
-  { value: "#ffffff", label: "White" },
-]
+// Default colors in case API fetch fails
+const DEFAULT_COLORS = [
+  { id: "1", name: "Red", hex_value: "#ef4444", tailwind_key: "red-500", created_at: "", updated_at: "" },
+  { id: "2", name: "Blue", hex_value: "#3b82f6", tailwind_key: "blue-500", created_at: "", updated_at: "" },
+  { id: "3", name: "Green", hex_value: "#22c55e", tailwind_key: "green-500", created_at: "", updated_at: "" },
+  { id: "4", name: "Yellow", hex_value: "#eab308", tailwind_key: "yellow-500", created_at: "", updated_at: "" },
+  { id: "5", name: "Purple", hex_value: "#a855f7", tailwind_key: "purple-500", created_at: "", updated_at: "" },
+];
 
 interface AddCategoryFormProps {
   category?: DBCategory
@@ -61,8 +53,49 @@ interface AddCategoryFormProps {
 export function AddCategoryForm({ category, onSubmit, onCancel }: AddCategoryFormProps) {
   const [name, setName] = useState(category?.name || "")
   const [icon, setIcon] = useState<string | null>(category?.icon || "🍔")
-  const [color, setColor] = useState<string | null>(category?.color || "#0ea5e9")
+  const [colorId, setColorId] = useState<string | null>(category?.color || null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [colors, setColors] = useState<DBColor[]>(DEFAULT_COLORS)
+  const [isLoadingColors, setIsLoadingColors] = useState(true)
+
+  // Fetch colors from the API
+  useEffect(() => {
+    const fetchColors = async () => {
+      try {
+        setIsLoadingColors(true)
+        const response = await fetch('/api/color');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch colors');
+        }
+        
+        const data = await response.json();
+        
+        if (data && Array.isArray(data)) {
+          setColors(data);
+          
+          // If we don't have a color selected yet, set the first one
+          if (!colorId && data.length > 0) {
+            setColorId(data[0].id);
+          }
+          
+          // If category has a hex value instead of an ID, find the matching color
+          if (category?.color && !category.color.startsWith('-')) {
+            const matchingColor = data.find(c => c.hex_value === category.color);
+            if (matchingColor) {
+              setColorId(matchingColor.id);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching colors:', error);
+      } finally {
+        setIsLoadingColors(false);
+      }
+    };
+    
+    fetchColors();
+  }, [category]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -74,27 +107,29 @@ export function AddCategoryForm({ category, onSubmit, onCancel }: AddCategoryFor
     setIsSubmitting(true)
 
     try {
+      // Find the selected color's hex value for display purposes
+      
       if (category) {
         // Update existing category
         await onSubmit({
           ...category,
           name,
           icon,
-          color,
+          color: colorId, // Store color ID for reference
         })
       } else {
         // Add new category
         await onSubmit({
           name,
           icon,
-          color,
+          color: colorId, // Store color ID for reference
         } as DBCategory)
       }
     } finally {
       setIsSubmitting(false)
     }
   }
-
+  
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -127,21 +162,29 @@ export function AddCategoryForm({ category, onSubmit, onCancel }: AddCategoryFor
 
       <div className="space-y-2">
         <Label>Color</Label>
-        <RadioGroup value={color || ""} onValueChange={setColor} className="grid grid-cols-3 gap-2">
-          {COLOR_OPTIONS.map((colorOption) => (
-            <div key={colorOption.value} className="flex items-center space-x-2">
-              <RadioGroupItem value={colorOption.value} id={colorOption.value} className="sr-only" />
-              <Label
-                htmlFor={colorOption.value}
-                className="flex cursor-pointer items-center gap-2 rounded-md border border-muted p-2 hover:bg-muted"
-              >
-                <div className="h-4 w-4 rounded-full" style={{ backgroundColor: colorOption.value }} />
-                <span className="text-sm">{colorOption.label}</span>
-                {color === colorOption.value && <Check className="ml-auto h-4 w-4 text-primary" />}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
+        {isLoadingColors ? (
+          <div className="text-sm text-muted-foreground">Loading colors...</div>
+        ) : (
+          <RadioGroup 
+            value={colorId || ""} 
+            onValueChange={setColorId} 
+            className="grid grid-cols-3 gap-2"
+          >
+            {colors.map((colorOption) => (
+              <div key={colorOption.id} className="flex items-center space-x-2">
+                <RadioGroupItem value={colorOption.id} id={colorOption.id} className="sr-only" />
+                <Label
+                  htmlFor={colorOption.id}
+                  className="flex cursor-pointer items-center gap-2 rounded-md border border-muted p-2 hover:bg-muted"
+                >
+                  <div className="h-4 w-4 rounded-full" style={{ backgroundColor: colorOption.hex_value }} />
+                  <span className="text-sm">{colorOption.name}</span>
+                  {colorId === colorOption.id && <Check className="ml-auto h-4 w-4 text-primary" />}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

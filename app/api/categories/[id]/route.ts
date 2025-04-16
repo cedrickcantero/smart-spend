@@ -77,7 +77,8 @@ export async function DELETE(
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             icon: null,
-            color: null
+            color: null,
+            color_label: null
         };
         
         await CategoriesService.deleteCategory(categoryData, supabase);

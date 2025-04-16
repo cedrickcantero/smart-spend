@@ -116,6 +116,7 @@ export type Database = {
       categories: {
         Row: {
           color: string | null
+          color_label: string | null
           created_at: string
           icon: string | null
           id: string
@@ -125,6 +126,7 @@ export type Database = {
         }
         Insert: {
           color?: string | null
+          color_label?: string | null
           created_at?: string
           icon?: string | null
           id?: string
@@ -134,12 +136,40 @@ export type Database = {
         }
         Update: {
           color?: string | null
+          color_label?: string | null
           created_at?: string
           icon?: string | null
           id?: string
           name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      colors: {
+        Row: {
+          id: string
+          name: string
+          hex_value: string
+          tailwind_key: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          hex_value: string
+          tailwind_key: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          hex_value?: string
+          tailwind_key?: string
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { BudgetService } from '@/lib/services/budget-service';
-import { DBBudgetInsert, DBBudgetUpdate, DBCalendarEventInsert } from '@/types/supabase';
+import { DBBudgetInsert} from '@/types/supabase';
 import { getAuthenticatedUserId } from '@/lib/server/auth';
 import { createClient } from '@/lib/supabase/server';
-import { calendarService } from '@/lib/services/calendar-service';
 
 // GET all budgets
 export async function GET(request: NextRequest) {

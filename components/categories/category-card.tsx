@@ -3,10 +3,10 @@
 import { Pencil, Trash2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { DBCategory } from "@/types/supabase"
+import { DBCategory, DBColor } from "@/types/supabase"
 
 interface CategoryCardProps {
-  category: DBCategory
+  category: DBCategory & { colorObj?: DBColor }
   onEdit: () => void
   onDelete: () => void
 }
@@ -19,7 +19,7 @@ export function CategoryCard({ category, onEdit, onDelete }: CategoryCardProps) 
           <div className="flex items-center gap-3">
             <div
               className="flex h-10 w-10 items-center justify-center rounded-full text-xl"
-              style={{ backgroundColor: category.color || "#0ea5e9", color: "white" }}
+              style={{ backgroundColor: category.colorObj?.hex_value || "#0ea5e9", color: "white" }}
             >
               {category.icon || "📦"}
             </div>

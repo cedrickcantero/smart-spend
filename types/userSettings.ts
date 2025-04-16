@@ -1,4 +1,5 @@
 export interface UserSettings {
+    role: string;
     email: {
       productUpdates: boolean;
       marketingEmails: boolean;

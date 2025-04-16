@@ -269,4 +269,4 @@ WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own recurring bills"
 ON recurring_bills FOR DELETE
-USING (auth.uid() = user_id);
+USING (auth.uid() = user_id); 

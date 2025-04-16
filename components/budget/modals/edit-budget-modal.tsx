@@ -81,7 +81,7 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
       
       // Convert from record to array
       if (typeof data === 'object' && !Array.isArray(data)) {
-        // If data is in format { id1: {name, icon}, id2: {name, icon}, ... }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const categoriesArray = Object.entries(data).map(([id, details]: [string, any]) => ({
           id,
           name: details.name,

@@ -1,6 +1,5 @@
 import { api } from "@/lib/services/api-service";
 import { DBBudget } from "@/types/supabase";
-import { formatMoney } from "@/lib/utils";
 
 // Budget category icons mapping
 const categoryIcons: Record<string, string> = {

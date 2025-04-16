@@ -1,15 +1,22 @@
-create table user_settings (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade,
-  settings jsonb default '{}',
-  created_at timestamp default now(),
-  updated_at timestamp default now()
+-- Create user settings table for storing user preferences and configurations
+CREATE TABLE IF NOT EXISTS user_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  settings JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Enable row level security
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
 
-alter table user_settings enable row level security;
+-- Allow users to manage only their own settings
+CREATE POLICY "Allow users to manage own settings"
+  ON user_settings
+  FOR ALL
+  USING (auth.uid() = user_id);
 
-create policy "Allow user to manage own settings"
-on user_settings
-for all
-using (auth.uid() = user_id);
+-- Create updated_at trigger
+CREATE TRIGGER update_user_settings_updated_at
+BEFORE UPDATE ON user_settings
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column(); 

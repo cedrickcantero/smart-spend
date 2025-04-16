@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ExpenseChart } from "@/components/expense-chart"
 import { ReportService } from "@/app/api/reports/service"
 
-// Import recharts components
 import {
   PieChart as RechartsPieChart,
   Pie,
@@ -24,38 +23,14 @@ import {
 } from "recharts"
 import { UserSettings } from "@/types/userSettings"
 import { useAuth } from "@/lib/auth-context"
-import { ReportSummary, CategoryBreakdown, ExpenseTrend, MonthlyComparison, TopExpense } from "@/lib/services/reports-service"
+import { ReportSummary, CategoryBreakdown, TopExpense, MonthlyComparison } from "@/lib/services/reports-service"
 import { formatMoney } from "@/lib/utils"
-// Mock data for category breakdown
-const categoryData = [
-  { name: "Food & Dining", value: 420.32, color: "#0ea5e9" },
-  { name: "Housing", value: 1550.0, color: "#3b82f6" },
-  { name: "Transportation", value: 250.0, color: "#22c55e" },
-  { name: "Entertainment", value: 180.0, color: "#eab308" },
-  { name: "Shopping", value: 154.0, color: "#ef4444" },
-  { name: "Utilities", value: 210.5, color: "#8b5cf6" },
-  { name: "Health", value: 132.5, color: "#ec4899" },
-  { name: "Other", value: 95.0, color: "#94a3b8" },
-]
-
-// Mock data for monthly comparison
-const monthlyComparisonData = [
-  { name: "Jan", current: 2580, previous: 2350 },
-  { name: "Feb", current: 2690, previous: 2480 },
-  { name: "Mar", current: 3100, previous: 2800 },
-  { name: "Apr", current: 2854, previous: 2650 },
-  { name: "May", current: 0, previous: 2900 },
-  { name: "Jun", current: 0, previous: 3200 },
-]
-
-// Calculate total expenses
-const totalExpenses = categoryData.reduce((sum, item) => sum + item.value, 0)
 
 export default function ReportsPage() {
   const [timeframe, setTimeframe] = useState("month")
   const [reportSummary, setReportSummary] = useState<ReportSummary | null>(null)
   const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([])
-  const [expenseTrends, setExpenseTrends] = useState<ExpenseTrend[]>([])
+  // const [expenseTrends, setExpenseTrends] = useState<ExpenseTrend[]>([])
   const [monthlyComparison, setMonthlyComparison] = useState<MonthlyComparison[]>([])
   const [topExpenses, setTopExpenses] = useState<TopExpense[]>([])
   const { userSettings: dbUserSettings } = useAuth()
@@ -67,13 +42,13 @@ export default function ReportsPage() {
       try {
         const summary = await ReportService.getReportSummary(timeframe)
         const categories = await ReportService.getCategoryBreakdown(timeframe)
-        const trends = await ReportService.getExpenseTrends(timeframe)
+        // const trends = await ReportService.getExpenseTrends(timeframe)
         const comparison = await ReportService.getMonthlyComparison()
         const top = await ReportService.getTopExpenses(timeframe, 5)
         
         setReportSummary(summary)
         setCategoryBreakdown(categories)
-        setExpenseTrends(trends)
+        // setExpenseTrends(trends)
         setMonthlyComparison(comparison)
         setTopExpenses(top)
       } catch (error) {
@@ -156,7 +131,7 @@ export default function ReportsPage() {
             <div className="text-2xl font-bold">{categoryBreakdown[0]?.name}</div>
             <p className="text-xs text-muted-foreground">
               {formatMoney(categoryBreakdown[0]?.value || 0, userCurrency)} (
-              {Math.round(((categoryBreakdown[0]?.value || 0) / totalExpenses) * 100)}% of
+              {Math.round(((categoryBreakdown[0]?.value || 0) / (reportSummary?.totalExpenses || 0)) * 100)}% of
               total)
             </p>
           </CardContent>
@@ -210,7 +185,7 @@ export default function ReportsPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
                       <Pie
-                        data={categoryData}
+                        data={categoryBreakdown}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -275,13 +250,13 @@ export default function ReportsPage() {
                         <div
                           className="h-full rounded-full"
                           style={{
-                            width: `${(category.value / totalExpenses) * 100}%`,
+                            width: `${(category.value / (reportSummary?.totalExpenses || 0)) * 100}%`,
                             backgroundColor: category.color,
                           }}
                         />
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {Math.round((category.value / totalExpenses) * 100)}%
+                        {Math.round((category.value / (reportSummary?.totalExpenses || 0)) * 100)}%
                       </span>
                     </div>
                   </div>
@@ -300,7 +275,7 @@ export default function ReportsPage() {
             <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyComparisonData} margin={{ left: 50, right: 10 }}>
+                  <BarChart data={monthlyComparison} margin={{ left: 50, right: 10 }}>
                     <XAxis dataKey="name" />
                     <YAxis width={70} tickFormatter={(value) => formatMoney(value, userCurrency)} />
                     <Tooltip formatter={(value: number) => [formatMoney(value, userCurrency), "Amount"]} />

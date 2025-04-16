@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowRight, Check, CreditCard, Edit, Plus, Trash2, TrendingDown, TrendingUp, Wallet } from "lucide-react"
+import { Check, CreditCard, Edit, Plus, Trash2, TrendingDown, TrendingUp, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"

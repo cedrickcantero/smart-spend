@@ -4,7 +4,6 @@ import type * as React from "react"
 import Link from "next/link"
 import {
   Package2,
-  Settings,
   Sparkles,
 } from "lucide-react"
 
@@ -27,13 +26,25 @@ import { sidebarItems, SidebarItem } from "@/lib/nav-items"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { isCurrentUserAdmin } from "@/lib/auth"
 
 export function AppSidebar({ children }: { children: React.ReactNode }) {
 
   const [collapsibleMenus, setCollapsibleMenus] = useState<Record<string, boolean>>({
     Expenses: true,
+    Admin: true,
   })
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const adminAccess = await isCurrentUserAdmin()
+      setIsAdmin(adminAccess)
+    }
+    
+    checkAdmin()
+  }, [])
 
   const toggleMenu = (menuTitle: string) => {
     setCollapsibleMenus(prev => ({
@@ -43,8 +54,11 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
   }
 
   const shouldShowMenuItem = (item: SidebarItem) => {
-    console.log("item", item)
-    return true;
+    // If item requires admin permission, check if user is admin
+    if (item.permission?.includes("admin")) {
+      return isAdmin
+    }
+    return true
   }
 
   return (
@@ -89,10 +103,17 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                           {item.submenu.map((subitem) => (
                             <SidebarMenuSubItem key={subitem.title}>
                               <SidebarMenuSubButton asChild>
-                                <Link href={subitem.url}>
-                                  <subitem.icon />
-                                  <span>{subitem.title}</span>
-                                </Link>
+                                {subitem.url ? (
+                                  <Link href={subitem.url}>
+                                    <subitem.icon />
+                                    <span>{subitem.title}</span>
+                                  </Link>
+                                ) : (
+                                  <div>
+                                    <subitem.icon />
+                                    <span>{subitem.title}</span>
+                                  </div>
+                                )}
                               </SidebarMenuSubButton>
                             </SidebarMenuSubItem>
                           ))}

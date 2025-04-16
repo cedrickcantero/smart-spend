@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "update-types": "npx --yes supabase@2.20.12 gen types typescript --project-id 'dblaogxfmwkksvfypvtb' --schema public > temp-schema.ts && type temp-schema.ts > types/supabase/schema.ts && del temp-schema.ts",
     "update-schema": "npx supabase gen types typescript --project-id dblaogxfmwkksvfypvtb > types/supabase/schema.ts"
   },
   "dependencies": {

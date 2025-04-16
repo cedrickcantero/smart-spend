@@ -1,7 +1,8 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { LogOut, Settings } from "lucide-react"
+import { LogOut, Settings, ShieldCheck } from "lucide-react"
+import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -17,11 +18,24 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
+import { isCurrentUserAdmin } from "@/lib/auth"
 
 export function UserNav() {
   const { user, signOut } = useAuth()
+  const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const adminAccess = await isCurrentUserAdmin()
+        setIsAdmin(adminAccess)
+      }
+    }
+    
+    checkAdmin()
+  }, [user])
 
   const handleSignOut = async () => {
     try {
@@ -45,14 +59,21 @@ export function UserNav() {
 
   const firstName = user?.user_metadata?.first_name || '';
   const lastName = user?.user_metadata?.last_name || '';
-  const fullName = `${firstName} ${lastName}`.trim() || user?.email?.split('@')[0] || 'User';
+  const fullName = `${firstName} ${lastName}` || "Anonymous User"
   
-  const initials = firstName && lastName 
-    ? `${firstName[0]}${lastName[0]}`.toUpperCase()
-    : fullName.charAt(0).toUpperCase();
+  const initials = fullName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .toUpperCase()
+    .substring(0, 2)
 
   const goToSettings = () => {
-    router.push("/settings");
+    router.push("/settings")
+  }
+
+  const goToAdmin = () => {
+    router.push("/admin/colors")
   }
 
   return (
@@ -80,6 +101,12 @@ export function UserNav() {
               <span>Settings</span>
               <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
             </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem onClick={goToAdmin}>
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                <span>Admin Dashboard</span>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>

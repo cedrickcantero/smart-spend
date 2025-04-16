@@ -1,5 +1,4 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { DBExpense } from '@/types/supabase';
 import { startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, format, parseISO, subYears } from 'date-fns';
 
 export interface CategoryBreakdown {
