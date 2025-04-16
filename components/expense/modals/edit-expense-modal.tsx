@@ -20,10 +20,12 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { cn } from "@/lib/utils"
+import { cn, getCurrencySymbol } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { DBCategory, DBExpense } from "@/types/supabase"
 import { ExpenseService } from "@/app/api/expense/service"
+import { UserSettings } from "@/types/userSettings"
+import { useAuth } from "@/lib/auth-context"
 
 const paymentMethods = [
   { value: "Credit Card", label: "Credit Card" },
@@ -44,6 +46,10 @@ interface EditExpenseModalProps {
 export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, categories }: EditExpenseModalProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const { userSettings: dbUserSettings } = useAuth()
+  const userSettings = dbUserSettings as unknown as UserSettings
+  const userCurrency = userSettings?.preferences?.currency || "USD"
 
   const [expenseData, setExpenseData] = useState<DBExpense>({
     id: expense.id,
@@ -91,7 +97,7 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
       await ExpenseService.updateExpense(expenseData)
       toast({
         title: "Expense updated",
-        description: `$${expenseData.amount} expense to ${expenseData.merchant} has been updated successfully.`,
+        description: `$${userCurrency} ${expenseData.amount} expense to ${expenseData.merchant} has been updated successfully.`,
         variant: "success",
       })
       resetForm()
@@ -141,7 +147,7 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
                 Amount*
               </Label>
               <div className="col-span-3 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{getCurrencySymbol(userCurrency)}</span>
                 <Input
                   id="amount"
                   type="number"

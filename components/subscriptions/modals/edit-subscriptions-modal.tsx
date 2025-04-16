@@ -32,6 +32,9 @@ import { Label } from "@/components/ui/label"
 import { CategoriesService } from "@/app/api/categories/service"
 import { DBCategory, DBSubscription } from "@/types/supabase"
 import { SubscriptionsService } from "@/app/api/subscriptions/service"
+import { cn, getCurrencySymbol } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
+import { UserSettings } from "@/types/userSettings"
 
 interface EditSubscriptionModalProps {
   open: boolean
@@ -65,6 +68,10 @@ export function EditSubscriptionModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
   const [categories, setCategories] = useState<DBCategory[]>([])
+  const { userSettings: dbUserSettings } = useAuth()
+  const userSettings = dbUserSettings as unknown as UserSettings
+  const userCurrency = userSettings?.preferences?.currency || "USD"
+  
   const [subscriptionData, setSubscriptionData] = useState({
     id: subscription.id,
     name: subscription.name,
@@ -180,171 +187,206 @@ export function EditSubscriptionModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Subscription</DialogTitle>
           <DialogDescription>
             Edit the subscription
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input 
-              id="name"
-              placeholder="Netflix" 
-              value={subscriptionData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Input 
-              id="description"
-              placeholder="Streaming service" 
-              value={subscriptionData.description}
-              onChange={(e) => handleChange("description", e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              placeholder="19.99"
-              value={subscriptionData.amount}
-              onChange={(e) => handleChange("amount", parseFloat(e.target.value))}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select
-              value={subscriptionData.category_id}
-              onValueChange={(value) => handleChange("category_id", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    <span className="flex items-center gap-2">
-                      <span>{category.icon}</span>
-                      <span>{category.name}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="billing_cycle">Billing Cycle</Label>
-            <Select
-              value={subscriptionData.billing_cycle}
-              onValueChange={(value) => handleChange("billing_cycle", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select billing cycle" />
-              </SelectTrigger>
-              <SelectContent>
-                {billingCycles.map((cycle) => (
-                  <SelectItem key={cycle.value} value={cycle.value}>
-                    {cycle.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="next_billing_date">Next Billing Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className="w-full pl-3 text-left font-normal"
-                  id="next_billing_date"
-                >
-                  {subscriptionData.next_billing_date ? (
-                    format(subscriptionData.next_billing_date, "PPP")
-                  ) : (
-                    <span className="text-muted-foreground">Pick a date</span>
-                  )}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={subscriptionData.next_billing_date}
-                  onSelect={(date) => handleChange("next_billing_date", date)}
-                  initialFocus
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name*
+              </Label>
+              <Input 
+                id="name"
+                placeholder="Netflix" 
+                className="col-span-3"
+                value={subscriptionData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Input 
+                id="description"
+                placeholder="Streaming service" 
+                className="col-span-3"
+                value={subscriptionData.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="amount" className="text-right">
+                Amount*
+              </Label>
+              <div className="col-span-3 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground leading-none">{getCurrencySymbol(userCurrency)}</span>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="19.99"
+                  className="pl-8"
+                  value={subscriptionData.amount}
+                  onChange={(e) => handleChange("amount", parseFloat(e.target.value))}
+                  required
                 />
-              </PopoverContent>
-            </Popover>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="payment_method">Payment Method</Label>
-            <Select
-              value={subscriptionData.payment_method}
-              onValueChange={(value) => handleChange("payment_method", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select payment method" />
-              </SelectTrigger>      
-              <SelectContent>
-                {paymentMethods.map((method) => (
-                  <SelectItem key={method.value} value={method.value}>
-                    {method.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">
+                Category
+              </Label>
+              <Select
+                value={subscriptionData.category_id}
+                onValueChange={(value) => handleChange("category_id", value)}
+              >
+                <SelectTrigger id="category" className="col-span-3">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      <span className="flex items-center gap-2">
+                        <span>{category.icon}</span>
+                        <span>{category.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="billing_cycle" className="text-right">
+                Billing Cycle*
+              </Label>
+              <Select
+                value={subscriptionData.billing_cycle}
+                onValueChange={(value) => handleChange("billing_cycle", value)}
+                required
+              >
+                <SelectTrigger id="billing_cycle" className="col-span-3">
+                  <SelectValue placeholder="Select billing cycle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {billingCycles.map((cycle) => (
+                    <SelectItem key={cycle.value} value={cycle.value}>
+                      {cycle.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="next_billing_date" className="text-right">
+                Next Billing Date
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn("col-span-3 justify-start text-left font-normal", !subscriptionData.next_billing_date && "text-muted-foreground")}
+                    id="next_billing_date"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {subscriptionData.next_billing_date ? (
+                      format(subscriptionData.next_billing_date, "PPP")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={subscriptionData.next_billing_date}
+                    onSelect={(date) => handleChange("next_billing_date", date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="payment_method" className="text-right">
+                Payment Method
+              </Label>
+              <Select
+                value={subscriptionData.payment_method}
+                onValueChange={(value) => handleChange("payment_method", value)}
+              >
+                <SelectTrigger id="payment_method" className="col-span-3">
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>      
+                <SelectContent>
+                  {paymentMethods.map((method) => (
+                    <SelectItem key={method.value} value={method.value}>
+                      {method.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="website">Website</Label>
-            <Input 
-              id="website"
-              type="url"
-              placeholder="https://example.com" 
-              value={subscriptionData.website}
-              onChange={(e) => handleChange("website", e.target.value)}
-            />
-          </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="website" className="text-right">
+                Website
+              </Label>
+              <Input 
+                id="website"
+                type="url"
+                placeholder="https://example.com" 
+                className="col-span-3"
+                value={subscriptionData.website}
+                onChange={(e) => handleChange("website", e.target.value)}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Input 
-              id="notes"
-              placeholder="Additional notes" 
-              value={subscriptionData.notes}
-              onChange={(e) => handleChange("notes", e.target.value)}
-            />
-          </div>
-          
-          <div className="flex items-center space-x-2 rounded-md border p-4">
-            <Checkbox
-              id="is_active"
-              checked={subscriptionData.is_active}
-              onCheckedChange={(checked) => 
-                handleChange("is_active", checked === true)
-              }
-            />
-            <Label htmlFor="is_active" className="cursor-pointer">
-              Active Subscription
-            </Label>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="notes" className="text-right">
+                Notes
+              </Label>
+              <Input 
+                id="notes"
+                placeholder="Additional notes" 
+                className="col-span-3"
+                value={subscriptionData.notes}
+                onChange={(e) => handleChange("notes", e.target.value)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <div className="text-right">Status</div>
+              <div className="col-span-3 flex items-center space-x-2">
+                <Checkbox
+                  id="is_active"
+                  checked={!!subscriptionData.is_active}
+                  onCheckedChange={(checked) => 
+                    handleChange("is_active", checked === true)
+                  }
+                />
+                <Label htmlFor="is_active" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+                  Active Subscription
+                </Label>
+              </div>
+            </div>
           </div>
           
           <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Updating..." : "Update"}
             </Button>

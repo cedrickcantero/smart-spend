@@ -20,11 +20,12 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { Checkbox } from "@/components/ui/checkbox"
-import { cn } from "@/lib/utils"
+import { cn, getCurrencySymbol } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { DBCategory } from "@/types/supabase"
 import { ExpenseService } from "@/app/api/expense/service"
+import { useAuth } from "@/lib/auth-context"
+import { UserSettings } from "@/types/userSettings"
 
 const paymentMethods = [
   { value: "Credit Card", label: "Credit Card" },
@@ -54,7 +55,7 @@ type ExpenseFormData = {
 
 export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories }: AddExpenseModalProps) {
   const { toast } = useToast()
-    const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [amount, setAmount] = useState("")
   const [merchant, setMerchant] = useState("")
   const [date, setDate] = useState<Date>(new Date())
@@ -68,6 +69,10 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
     is_tax_deductible: false,
     receipt_url: null,
   })
+
+  const { userSettings: dbUserSettings } = useAuth()
+  const userSettings = dbUserSettings as unknown as UserSettings
+  const userCurrency = userSettings?.preferences?.currency || "USD"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,7 +91,7 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
 
       toast({
         title: "Expense added",
-        description: `$${amount} expense to ${merchant} has been added successfully.`,
+        description: `$${userCurrency} ${amount}  expense to ${merchant} has been added successfully.`,
         variant: "success",
       })
 
@@ -135,7 +140,7 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
                 Amount*
               </Label>
               <div className="col-span-3 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{getCurrencySymbol(userCurrency)}</span>
                 <Input
                   id="amount"
                   type="number"
@@ -251,7 +256,7 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
                 onChange={(e) => setExpenseData({ ...expenseData, receipt_url: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
+            {/* <div className="grid grid-cols-4 items-center gap-4">
               <div className="text-right"></div>
               <div className="col-span-3 flex items-center space-x-2">
                 <Checkbox 
@@ -265,7 +270,7 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
                   Tax Deductible
                 </Label>
               </div>
-            </div>
+            </div> */}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

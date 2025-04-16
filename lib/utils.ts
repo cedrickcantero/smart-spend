@@ -20,3 +20,14 @@ export function formatMoney(amount: number | string, currency: string = 'USD', s
   return showSymbol ? formatted : formatted.replace(/[^0-9.-]+/g, '');
 }
 
+export function getCurrencySymbol(currency: string = 'USD'): string {
+  const formatted = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(0);
+  
+  return formatted.replace(/[\d.,\s]/g, '');
+}
+

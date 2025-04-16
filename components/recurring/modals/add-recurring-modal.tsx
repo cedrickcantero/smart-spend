@@ -34,6 +34,9 @@ import { Label } from "@/components/ui/label"
 import { CategoriesService } from "@/app/api/categories/service"
 import { DBCategory } from "@/types/supabase"
 import { useAuth } from "@/lib/auth-context"
+import { getCurrencySymbol, cn } from "@/lib/utils"
+import { UserSettings } from "@/types/userSettings"
+
 interface AddRecurringModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -67,6 +70,10 @@ export function AddRecurringModal({
     payment_method: paymentMethods[0].value,
     is_automatic: false,
   })
+
+  const { userSettings: dbUserSettings } = useAuth()
+  const userSettings = dbUserSettings as unknown as UserSettings
+  const userCurrency = userSettings?.preferences?.currency || "USD"
 
   // Fetch categories when the modal opens
   useEffect(() => {
@@ -146,154 +153,183 @@ export function AddRecurringModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Recurring Expense</DialogTitle>
           <DialogDescription>
             Create a new recurring expense or subscription
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input 
-              id="name"
-              placeholder="Netflix" 
-              value={recurringData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              placeholder="19.99"
-              value={recurringData.amount}
-              onChange={(e) => handleChange("amount", parseFloat(e.target.value))}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select
-              value={recurringData.category_id}
-              onValueChange={(value) => handleChange("category_id", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    <span className="flex items-center gap-2">
-                      <span>{category.icon}</span>
-                      <span>{category.name}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="frequency">Frequency</Label>
-            <Select
-              value={recurringData.frequency}
-              onValueChange={(value) => handleChange("frequency", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select frequency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="quarterly">Quarterly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {recurringData.frequency === "monthly" && (
-            <div className="space-y-2">
-              <Label htmlFor="due_day">Due Day (1-31)</Label>
-              <Input
-                id="due_day"
-                type="number"
-                min="1"
-                max="31"
-                placeholder="15"
-                value={recurringData.due_day}
-                onChange={(e) => handleChange("due_day", e.target.value)}
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name*
+              </Label>
+              <Input 
+                id="name"
+                placeholder="Netflix" 
+                className="col-span-3"
+                value={recurringData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+                required
               />
             </div>
-          )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="next_due_date">Next Due Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className="w-full pl-3 text-left font-normal"
-                  id="next_due_date"
-                >
-                  {recurringData.next_due_date ? (
-                    format(recurringData.next_due_date, "PPP")
-                  ) : (
-                    <span className="text-muted-foreground">Pick a date</span>
-                  )}
-                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={recurringData.next_due_date}
-                  onSelect={(date) => handleChange("next_due_date", date)}
-                  initialFocus
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="amount" className="text-right">
+                Amount*
+              </Label>
+              <div className="col-span-3 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground leading-none">{getCurrencySymbol(userCurrency)}</span>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  placeholder="19.99"
+                  className="pl-8"
+                  value={recurringData.amount}
+                  onChange={(e) => handleChange("amount", parseFloat(e.target.value))}
+                  required
                 />
-              </PopoverContent>
-            </Popover>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="payment_method">Payment Method</Label>
-            <Select
-              value={recurringData.payment_method}
-              onValueChange={(value) => handleChange("payment_method", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select payment method" />
-              </SelectTrigger>      
-              <SelectContent>
-                {paymentMethods.map((method) => (
-                  <SelectItem key={method.value} value={method.value}>
-                    {method.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center space-x-2 rounded-md border p-4">
-            <Checkbox
-              id="is_automatic"
-              checked={recurringData.is_automatic}
-              onCheckedChange={(checked) => 
-                handleChange("is_automatic", checked === true)
-              }
-            />
-            <Label htmlFor="is_automatic" className="cursor-pointer">
-              Automatic Payment
-            </Label>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="category" className="text-right">
+                Category
+              </Label>
+              <Select
+                value={recurringData.category_id}
+                onValueChange={(value) => handleChange("category_id", value)}
+              >
+                <SelectTrigger id="category" className="col-span-3">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      <span className="flex items-center gap-2">
+                        <span>{category.icon}</span>
+                        <span>{category.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="frequency" className="text-right">
+                Frequency*
+              </Label>
+              <Select
+                value={recurringData.frequency}
+                onValueChange={(value) => handleChange("frequency", value)}
+                required
+              >
+                <SelectTrigger id="frequency" className="col-span-3">
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {recurringData.frequency === "monthly" && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="due_day" className="text-right">
+                  Due Day (1-31)
+                </Label>
+                <Input
+                  id="due_day"
+                  type="number"
+                  min="1"
+                  max="31"
+                  placeholder="15"
+                  className="col-span-3"
+                  value={recurringData.due_day}
+                  onChange={(e) => handleChange("due_day", e.target.value)}
+                />
+              </div>
+            )}
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="next_due_date" className="text-right">
+                Next Due Date
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn("col-span-3 justify-start text-left font-normal", !recurringData.next_due_date && "text-muted-foreground")}
+                    id="next_due_date"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {recurringData.next_due_date ? (
+                      format(recurringData.next_due_date, "PPP")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={recurringData.next_due_date}
+                    onSelect={(date) => handleChange("next_due_date", date)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="payment_method" className="text-right">
+                Payment Method
+              </Label>
+              <Select
+                value={recurringData.payment_method}
+                onValueChange={(value) => handleChange("payment_method", value)}
+              >
+                <SelectTrigger id="payment_method" className="col-span-3">
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>      
+                <SelectContent>
+                  {paymentMethods.map((method) => (
+                    <SelectItem key={method.value} value={method.value}>
+                      {method.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <div className="text-right">Auto Payment</div>
+              <div className="col-span-3 flex items-center space-x-2">
+                <Checkbox
+                  id="is_automatic"
+                  checked={recurringData.is_automatic}
+                  onCheckedChange={(checked) => 
+                    handleChange("is_automatic", checked === true)
+                  }
+                />
+                <Label htmlFor="is_automatic" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+                  Automatic Payment
+                </Label>
+              </div>
+            </div>
           </div>
           
           <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Creating..." : "Create"}
             </Button>

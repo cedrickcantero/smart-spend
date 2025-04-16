@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarRail,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
@@ -118,7 +119,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <SidebarMenu>
+          {/* <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <Link href="/settings">
@@ -127,12 +128,13 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          </SidebarMenu>
+          </SidebarMenu> */}
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
       <div className="flex flex-1 flex-col">
         <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+          <SidebarTrigger />
           <div className="ml-auto flex items-center gap-4">
             <Button variant="outline" size="sm" className="hidden md:flex gap-1">
               <Sparkles className="h-4 w-4" />

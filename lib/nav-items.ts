@@ -64,11 +64,11 @@ export const sidebarItems: SidebarItem[] = [
       url: "/calendar",
       icon: Calendar,
     },
-    {
-      title: "Tax Reports",
-      url: "/tax-reports",
-      icon: FileText,
-    },
+    // {
+    //   title: "Tax Reports",
+    //   url: "/tax-reports",
+    //   icon: FileText,
+    // },
     {
       title: "Categories",
       url: "/categories",

@@ -153,10 +153,10 @@ export default function ReportsPage() {
             <PieChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{categoryBreakdown[0].name}</div>
+            <div className="text-2xl font-bold">{categoryBreakdown[0]?.name}</div>
             <p className="text-xs text-muted-foreground">
-              {formatMoney(categoryBreakdown[0].value, userCurrency)} (
-              {Math.round(((categoryBreakdown[0].value || 0) / totalExpenses) * 100)}% of
+              {formatMoney(categoryBreakdown[0]?.value || 0, userCurrency)} (
+              {Math.round(((categoryBreakdown[0]?.value || 0) / totalExpenses) * 100)}% of
               total)
             </p>
           </CardContent>
@@ -199,7 +199,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-1">
             <Card>
               <CardHeader>
                 <CardTitle>Category Breakdown</CardTitle>
@@ -300,9 +300,9 @@ export default function ReportsPage() {
             <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyComparisonData}>
+                  <BarChart data={monthlyComparisonData} margin={{ left: 50, right: 10 }}>
                     <XAxis dataKey="name" />
-                    <YAxis tickFormatter={(value) => formatMoney(value, userCurrency)} />
+                    <YAxis width={70} tickFormatter={(value) => formatMoney(value, userCurrency)} />
                     <Tooltip formatter={(value: number) => [formatMoney(value, userCurrency), "Amount"]} />
                     <Legend />
                     <Bar name="Current Year" dataKey="current" fill="#0ea5e9" />
