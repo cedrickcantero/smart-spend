@@ -7,7 +7,8 @@ import {
   Receipt,
   ReceiptText,
   Repeat,
-  CreditCard} from "lucide-react";
+  CreditCard,
+  Wallet} from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 export interface SubMenuItem {
@@ -51,6 +52,11 @@ export const sidebarItems: SidebarItem[] = [
     title: "Dashboard",
     url: "/dashboard",
     icon: Home,
+  },
+  {
+    title: "Income",
+    url: "/income",
+    icon: Wallet,
   },
     {
       title: "Expenses",
