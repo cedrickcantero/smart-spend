@@ -19,12 +19,32 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { isCurrentUserAdmin } from "@/lib/auth"
+import { UserSettings } from "@/types/userSettings"
+
+interface ProfileData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  bio: string;
+}
+
+
+const defaultProfileData: ProfileData = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  bio: ""
+};
+
 
 export function UserNav() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, userSettings } = useAuth()
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const [avatarUrl, setAvatarUrl] = useState<string>("")
+  const [profileData, setProfileData] = useState<ProfileData>(defaultProfileData)
+
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -36,6 +56,32 @@ export function UserNav() {
     
     checkAdmin()
   }, [user])
+
+  useEffect(() => {
+    if (user) {
+      setProfileData(prev => ({
+        ...prev,
+        firstName: user.user_metadata?.first_name || '',
+        lastName: user.user_metadata?.last_name || '',
+        email: user.email || '',
+      }));
+      
+    }
+    
+    if (userSettings) {
+      const settingsObj = userSettings as unknown as UserSettings;
+      
+      if (settingsObj.profile && settingsObj.profile.bio !== undefined) {
+        setProfileData(prev => ({
+          ...prev,
+          bio: settingsObj.profile.bio || ''
+        }));
+        console.log("settingsObj.profile.avatar_url", settingsObj.profile.avatar_url)
+        setAvatarUrl(settingsObj.profile.avatar_url || '')
+      }
+    }
+  }, [user, userSettings]);
+
 
   const handleSignOut = async () => {
     try {
@@ -57,8 +103,8 @@ export function UserNav() {
     }
   }
 
-  const firstName = user?.user_metadata?.first_name || '';
-  const lastName = user?.user_metadata?.last_name || '';
+  const firstName = profileData.firstName || '';
+  const lastName = profileData.lastName || '';
   const fullName = `${firstName} ${lastName}` || "Anonymous User"
   
   const initials = fullName
@@ -82,7 +128,7 @@ export function UserNav() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg?height=32&width=32"} alt={fullName} />
+              <AvatarImage src={avatarUrl || "/placeholder.svg?height=32&width=32"} alt={fullName} />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
           </Button>

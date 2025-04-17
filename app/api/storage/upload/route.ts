@@ -12,12 +12,14 @@ export async function POST(request: NextRequest) {
 
       const supabase = await createClient();
 
-      // const cleanupResponse = await StorageService.cleanupExistingAvatars(userId, supabase)
+      const cleanupResponse = await StorageService.cleanupExistingAvatars(userId, supabase)
+
+      console.log("cleanupResponse", cleanupResponse)
 
 
-      // if (!cleanupResponse.success) {
-      //   return NextResponse.json({ error: 'Failed to cleanup existing avatars' }, { status: 500 })
-      // } 
+      if (!cleanupResponse.success) {
+        return NextResponse.json({ error: 'Failed to cleanup existing avatars' }, { status: 500 })
+      } 
 
       const formData = await request.formData()
       const file = formData.get('file') as File
@@ -34,8 +36,6 @@ export async function POST(request: NextRequest) {
       const filePath = path || `${bucket}/${userId}/${Date.now()}-${file.name}`
 
       const uploadResponse = await StorageService.uploadFile(bucket, filePath, file, supabase, { upsert: true })
-
-      console.log("uploadResponse", uploadResponse)
 
       if (uploadResponse.error) {
         return NextResponse.json({ error: uploadResponse.error }, { status: 500 })

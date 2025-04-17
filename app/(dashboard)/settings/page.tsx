@@ -17,7 +17,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="profile" className="gap-1">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Profile</span>
@@ -30,10 +30,10 @@ export default function SettingsPage() {
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">Notifications</span>
           </TabsTrigger>
-          <TabsTrigger value="payment" className="gap-1">
+          {/* <TabsTrigger value="payment" className="gap-1">
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Payment</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
           <TabsTrigger value="security" className="gap-1">
             <Lock className="h-4 w-4" />
             <span className="hidden sm:inline">Security</span>
@@ -52,9 +52,9 @@ export default function SettingsPage() {
           <NotificationSettings />
         </TabsContent>
 
-        <TabsContent value="payment" className="mt-4">
+        {/* <TabsContent value="payment" className="mt-4">
           <PaymentSettings />
-        </TabsContent>
+        </TabsContent> */}
 
         <TabsContent value="security" className="mt-4">
           <SecuritySettings />

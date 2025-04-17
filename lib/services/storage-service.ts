@@ -9,6 +9,9 @@ export const StorageService = {
     options?: { upsert?: boolean },
   ): Promise<{ url: string | null; error: Error | null }> => {
     try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      console.log('Current user:', user);
+      
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {
@@ -34,6 +37,8 @@ export const StorageService = {
       const { data: existingFiles, error } = await supabase.storage
         .from('user-avatars')
         .list(`${userId}`);
+
+      console.log("existingFiles", existingFiles)
 
       if (error) throw error;
       

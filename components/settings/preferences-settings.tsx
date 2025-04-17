@@ -278,6 +278,7 @@ export function PreferencesSettings() {
             <Select 
               value={preferencesData.preferences.accentColor} 
               onValueChange={(value) => updatePreference('accentColor', value)}
+              disabled
             >
               <SelectTrigger id="accent-color">
                 <SelectValue placeholder="Select accent color" />
@@ -301,6 +302,7 @@ export function PreferencesSettings() {
               id="compact-mode" 
               checked={preferencesData.preferences.compactMode}
               onCheckedChange={(value) => updatePreference('compactMode', value)}
+              disabled
             />
           </div>
 
@@ -313,6 +315,7 @@ export function PreferencesSettings() {
               id="animations" 
               checked={preferencesData.preferences.animations}
               onCheckedChange={(value) => updatePreference('animations', value)}
+              disabled
             />
           </div>
         </CardContent>
@@ -340,6 +343,7 @@ export function PreferencesSettings() {
             <Switch 
               checked={preferencesData.dashboard.showRecentTransactions}
               onCheckedChange={(value) => updateDashboard('showRecentTransactions', value)}
+              disabled
             />
           </div>
 
@@ -351,6 +355,7 @@ export function PreferencesSettings() {
             <Switch 
               checked={preferencesData.dashboard.showBudgetProgress}
               onCheckedChange={(value) => updateDashboard('showBudgetProgress', value)}
+              disabled
             />
           </div>
 
@@ -362,6 +367,7 @@ export function PreferencesSettings() {
             <Switch 
               checked={preferencesData.dashboard.showAIInsights}
               onCheckedChange={(value) => updateDashboard('showAIInsights', value)}
+              disabled
             />
           </div>
 
@@ -373,6 +379,7 @@ export function PreferencesSettings() {
             <Switch 
               checked={preferencesData.dashboard.showUpcomingBills}
               onCheckedChange={(value) => updateDashboard('showUpcomingBills', value)}
+              disabled
             />
           </div>
         </CardContent>

@@ -117,8 +117,9 @@ export function ProfileSettings() {
     }
   }
 
-  const handleFileSelect = () => {
+  const handleFileSelect = (e: React.MouseEvent<HTMLButtonElement>) => {
     // Trigger file input click
+    e.preventDefault();
     fileInputRef.current?.click();
   };
   
