@@ -37,7 +37,7 @@ export interface FinancialData {
   }[];
 }
 
-export type InsightType = 'spending' | 'saving' | 'budgeting' | 'income' | 'general' | 'investing' | 'debt' | 'tax' | 'retirement' | 'emergency';
+export type InsightType = 'spending' | 'saving' | 'budgeting' | 'income' | 'general';
 
 export interface FinancialInsight {
   type: InsightType;
@@ -45,27 +45,93 @@ export interface FinancialInsight {
   description: string;
   recommendation?: string;
   priority: 'high' | 'medium' | 'low';
-  details?: string;
-  metrics?: {
-    name: string;
-    value: string | number;
-    trend?: 'up' | 'down' | 'stable';
-  }[];
-  potentialSavings?: number;
 }
 
-export class AIService {
-  private static OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 1000;
+
+const getFallbackInsights = (reason: string = 'Unable to process financial data'): FinancialInsight[] => {
+  return [
+    {
+      type: "general",
+      title: "Insights Unavailable",
+      description: reason,
+      recommendation: "Please try again in a moment. If the problem persists, check your data sources or contact support.",
+      priority: "medium"
+    }
+  ];
+};
+
+const createFinancialPrompt = (data: FinancialData, settings: UserSettings): string => {
+  const currencySymbol = settings.preferences?.currency || 'USD';
   
-  public static async getFinancialInsights(
-    data: FinancialData,
-    settings: UserSettings,
-    apiKey: string
-  ): Promise<FinancialInsight[]> {
+  const totalExpenses = data.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalIncome = data.income.reduce((sum, income) => sum + income.amount, 0);
+  const netCashFlow = totalIncome - totalExpenses;
+  
+  const expensesByCategory: Record<string, number> = {};
+  data.expenses.forEach(expense => {
+    if (!expensesByCategory[expense.category]) {
+      expensesByCategory[expense.category] = 0;
+    }
+    expensesByCategory[expense.category] += expense.amount;
+  });
+  
+  const sortedCategories = Object.entries(expensesByCategory)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3); 
+  
+  const budgetIssues = data.budgets
+    .map(budget => {
+      const spentPercentage = budget.amount > 0 ? (budget.spent / budget.amount) * 100 : 0;
+      const variance = spentPercentage - 100;
+      return {
+        category: budget.category,
+        variance,
+        spent: budget.spent,
+        amount: budget.amount,
+        spentPercentage
+      };
+    })
+    .sort((a, b) => Math.abs(b.variance) - Math.abs(a.variance))
+    .slice(0, 3);
+  
+  return `
+  Financial snapshot:
+  - Income: ${currencySymbol} ${totalIncome}
+  - Expenses: ${currencySymbol} ${totalExpenses}
+  - Net: ${currencySymbol} ${netCashFlow}
+  
+  Top expenses:
+  ${sortedCategories.map(([category, amount]) => 
+    `${category}: ${currencySymbol} ${amount} (${((amount / totalExpenses) * 100).toFixed(0)}%)`
+  ).join(', ')}
+  
+  Budget issues:
+  ${budgetIssues.map(b => 
+    `${b.category}: ${b.spent > b.amount ? 'Over' : 'Under'} by ${Math.abs(b.variance).toFixed(0)}%`
+  ).join(', ')}
+  
+  Return ONLY a JSON array with EXACTLY 2 financial insight objects.
+  `;
+};
+
+export const getFinancialInsights = async (
+  data: FinancialData,
+  settings: UserSettings,
+  apiKey: string
+): Promise<FinancialInsight[]> => {
+  let retries = 0;
+  
+  while (retries <= MAX_RETRIES) {
     try {
-      const prompt = this.createFinancialPrompt(data, settings);
+      const prompt = createFinancialPrompt(data, settings);
       
-      const response = await fetch(this.OPENROUTER_API_URL, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
+      const response = await fetch(OPENROUTER_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,195 +144,190 @@ export class AIService {
           messages: [
             {
               role: 'system',
-              content: `You are an expert financial advisor with years of experience in personal finance management, budgeting, investment strategies, and wealth building. Analyze the financial data provided and generate comprehensive, actionable financial insights.
+              content: `You are a financial advisor. You must respond ONLY with a JSON array containing multiple financial insights.
 
-Your response should be a JSON array containing between 5-8 detailed financial insights covering various aspects of the user's financial health.
+Each insight must have these exact properties:
+- "type": one of "spending", "saving", "budgeting", "income", or "general"
+- "title": short title (4 words maximum)
+- "description": brief explanation (30 words maximum)
+- "recommendation": brief action step (50 words maximum)
+- "priority": one of "high", "medium", or "low"
 
-Each insight must have the following properties:
-- "type": one of "spending", "saving", "budgeting", "income", "general", "investing", "debt", "tax", "retirement", or "emergency"
-- "title": A concise, attention-grabbing title (2-6 words)
-- "description": A clear explanation of the insight (50-100 words)
-- "recommendation": Specific, actionable advice tailored to their financial situation (80-150 words)
-- "priority": "high", "medium", or "low" based on urgency and impact
-- "details": Additional context, analysis, or explanation about why this insight matters (100-200 words)
-- "metrics": (Optional) An array of relevant metrics with name, value, and trend ("up", "down", or "stable")
-- "potentialSavings": (Optional) Estimated annual savings if recommendation is followed
-
-Be thoughtful and specific in your analysis. Consider:
-- Long-term financial health and goals
-- Spending patterns and potential areas of waste
-- Budgeting effectiveness and adherence
-- Saving rate and emergency preparedness
-- Debt management and reduction strategies
-- Investment opportunities based on their profile
-- Tax efficiency and planning
-- Retirement readiness
-
-Your entire response must be valid JSON that can be parsed with JSON.parse().
-Do not include explanations outside the JSON structure.`
+IMPORTANT: Your entire response must be ONLY valid JSON that can be parsed with JSON.parse().
+Do not include any explanation, markdown formatting, or anything outside the JSON array.`
             },
             {
               role: 'user',
               content: prompt
             }
           ],
-          temperature: 0.2,
-          max_tokens: 50000,
+          temperature: 0.1,
+          max_tokens: 2000,
           response_format: { type: "json_object" }
-        })
+        }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
-      const result: OpenRouterResponse = await response.json();
-
+      const responseClone = response.clone();
+      const bodyText = await responseClone.text();
+      
       if (!response.ok) {
-        console.error('Error from OpenRouter:', result);
-        throw new Error('Failed to generate insights');
+        try {
+          const errorResult = bodyText ? JSON.parse(bodyText) : { error: 'Unknown error' };
+          console.error('Error from OpenRouter:', errorResult);
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError);
+          console.error('Raw error response:', bodyText);
+        }
+        
+        if (retries < MAX_RETRIES) {
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          continue;
+        }
+        
+        throw new Error(`Failed to generate insights: ${response.status} ${response.statusText}`);
+      }
+      
+      let result: OpenRouterResponse;
+      try {
+        result = bodyText ? JSON.parse(bodyText) : null;
+        if (!result) {
+          throw new Error('Empty response body');
+        }
+        
+        if (!result.choices || !Array.isArray(result.choices) || result.choices.length === 0) {
+          throw new Error('Invalid response structure: missing choices array');
+        }
+        
+        if (!result.choices[0]?.message?.content) {
+          throw new Error('Invalid response structure: missing content in first choice');
+        }
+      } catch (e) {
+        console.error('Error parsing response JSON:', e);
+        console.error('Response body that failed to parse:', bodyText);
+        
+        if (retries < MAX_RETRIES) {
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          continue;
+        }
+        
+        return getFallbackInsights('Invalid API response format');
       }
       
       const content = result.choices[0].message.content;
+      console.log("AI content response:", content);
+      
+      if (!content || typeof content !== 'string') {
+        if (retries < MAX_RETRIES) {
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          continue;
+        }
+        
+        return getFallbackInsights('Empty or invalid content from AI model');
+      }
+      
       let insights: FinancialInsight[] = [];
       
       try {
         const jsonContent = content.replace(/```json|```/g, '').trim();
+        console.log("Processed JSON content:", jsonContent);
         
-        insights = JSON.parse(jsonContent);
+        try {
+          try {
+            insights = JSON.parse(jsonContent);
+          } catch (initialError) {
+            console.log("initialError:", initialError);
+            const firstBrace = jsonContent.indexOf('{');
+            const lastBrace = jsonContent.lastIndexOf('}');
+            
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+              const extractedJson = jsonContent.substring(firstBrace, lastBrace + 1);
+              console.log("Extracted JSON:", extractedJson);
+              try {
+                insights = JSON.parse(extractedJson);
+              } catch (extractError) {
+                if (extractError instanceof Error) {
+                  throw new Error(`Failed to parse extracted JSON: ${extractError.message}`);
+                } else {
+                  throw new Error(`Failed to parse extracted JSON: Unknown error`);
+                }
+              }
+            } else {
+              throw new Error(`Failed to extract valid JSON from: ${jsonContent}`);
+            }
+          }
+        } catch (jsonError) {
+          console.error('Invalid JSON response:', jsonContent);
+          console.error('JSON parsing error:', jsonError);
+          
+          if (retries < MAX_RETRIES) {
+            retries++;
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+            continue;
+          }
+          
+          return getFallbackInsights();
+        }
         
         if (!Array.isArray(insights)) {
           if (insights && typeof insights === 'object' && 'insights' in insights) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             insights = (insights as any).insights;
           } else {
-            insights = [
-              {
-                type: "general",
-                title: "Financial Review",
-                description: "Check your finances regularly.",
-                recommendation: "Review your spending patterns.",
-                priority: "medium"
-              }
-            ];
+            if (retries < MAX_RETRIES) {
+              retries++;
+              await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+              continue;
+            }
+            
+            return getFallbackInsights();
           }
         }
         
-        const validTypes = ['spending', 'saving', 'budgeting', 'income', 'general', 'investing', 'debt', 'tax', 'retirement', 'emergency'];
         insights = insights.map(insight => ({
-          type: insight.type && validTypes.includes(insight.type) 
+          type: insight.type && ['spending', 'saving', 'budgeting', 'income', 'general'].includes(insight.type) 
             ? insight.type : 'general',
           title: insight.title || "Financial Insight",
           description: insight.description || "Check your recent financial activity.",
           recommendation: insight.recommendation || "Review your spending habits.",
           priority: insight.priority && ['high', 'medium', 'low'].includes(insight.priority)
-            ? insight.priority : 'medium',
-          details: insight.details || undefined,
-          metrics: insight.metrics || undefined,
-          potentialSavings: insight.potentialSavings || undefined
+            ? insight.priority : 'medium'
         }));
+        
+        return insights;
         
       } catch (error) {
         console.error('Error parsing AI response:', error);
-        insights = [
-          {
-            type: "general",
-            title: "Financial Health Check",
-            description: "Review your financial accounts regularly.",
-            recommendation: "Set up weekly finance reviews.",
-            priority: "medium"
-          }
-        ];
+        
+        if (retries < MAX_RETRIES) {
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          continue;
+        }
+        
+        return getFallbackInsights();
       }
-      
-      return insights;
     } catch (error) {
       console.error('Error getting financial insights:', error);
+      
+      if (retries < MAX_RETRIES && !(error instanceof DOMException && error.name === 'AbortError')) {
+        retries++;
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        continue;
+      }
+      
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return getFallbackInsights('Request timeout');
+      }
+      
       throw error;
     }
   }
-
-  private static createFinancialPrompt(data: FinancialData, settings: UserSettings): string {
-    const currencySymbol = settings.preferences?.currency || 'USD';
-    
-    const totalExpenses = data.expenses.reduce((sum, expense) => sum + expense.amount, 0);
-    const totalIncome = data.income.reduce((sum, income) => sum + income.amount, 0);
-    const netCashFlow = totalIncome - totalExpenses;
-    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
-    
-    const expensesByCategory: Record<string, number> = {};
-    data.expenses.forEach(expense => {
-      if (!expensesByCategory[expense.category]) {
-        expensesByCategory[expense.category] = 0;
-      }
-      expensesByCategory[expense.category] += expense.amount;
-    });
-    
-    const sortedCategories = Object.entries(expensesByCategory)
-      .sort((a, b) => b[1] - a[1]);
-    
-    const budgetPerformance = data.budgets
-      .map(budget => {
-        const spentPercentage = budget.amount > 0 ? (budget.spent / budget.amount) * 100 : 0;
-        const variance = spentPercentage - 100;
-        return {
-          category: budget.category,
-          variance,
-          spent: budget.spent,
-          amount: budget.amount,
-          spentPercentage
-        };
-      });
-    
-    const savingsGoalsAnalysis = data.savingsGoals?.map(goal => {
-      const progressPercentage = goal.target > 0 ? (goal.current / goal.target) * 100 : 0;
-      return {
-        name: goal.name,
-        progress: progressPercentage.toFixed(1) + '%',
-        remaining: goal.target - goal.current
-      };
-    });
-    
-    return `
-    # COMPREHENSIVE FINANCIAL ANALYSIS
-
-    ## CURRENT FINANCIAL SNAPSHOT
-    - Total Monthly Income: ${currencySymbol} ${totalIncome.toFixed(2)}
-    - Total Monthly Expenses: ${currencySymbol} ${totalExpenses.toFixed(2)}
-    - Net Cash Flow: ${currencySymbol} ${netCashFlow.toFixed(2)}
-    - Monthly Savings Rate: ${savingsRate.toFixed(1)}%
-    - Financial Health Status: ${netCashFlow > 0 ? 'Positive' : 'Negative'} cash flow
-
-    ## EXPENSE BREAKDOWN
-    ${sortedCategories.map(([category, amount], index) => 
-      `${index + 1}. ${category}: ${currencySymbol} ${amount.toFixed(2)} (${((amount / totalExpenses) * 100).toFixed(1)}% of total expenses)`
-    ).join('\n')}
-
-    ## BUDGET PERFORMANCE
-    ${budgetPerformance.map(b => 
-      `- ${b.category}: Budget ${currencySymbol} ${b.amount.toFixed(2)}, Spent ${currencySymbol} ${b.spent.toFixed(2)} (${b.spentPercentage.toFixed(1)}% of budget, ${b.spent > b.amount ? 'OVER by ' : 'UNDER by '}${Math.abs(b.variance).toFixed(1)}%)`
-    ).join('\n')}
-
-    ${savingsGoalsAnalysis ? `
-    ## SAVINGS GOALS PROGRESS
-    ${savingsGoalsAnalysis.map(goal => 
-      `- ${goal.name}: Progress ${goal.progress}, Remaining ${currencySymbol} ${goal.remaining.toFixed(2)}`
-    ).join('\n')}
-    ` : ''}
-
-    ## INCOME SOURCES
-    ${data.income.map(income => 
-      `- ${income.source}: ${currencySymbol} ${income.amount.toFixed(2)}`
-    ).join('\n')}
-
-    ## ADDITIONAL CONTEXT
-    - Number of expense transactions: ${data.expenses.length}
-    - Number of budget categories: ${data.budgets.length}
-    - Currency: ${currencySymbol}
-    
-    Based on this detailed financial data, provide a thorough analysis with 5-8 in-depth financial insights. 
-    Consider spending patterns, budget adherence, saving opportunities, debt management (if applicable), 
-    investment potential, and long-term financial planning.
-    
-    Each insight should be detailed, specific, and actionable. Focus on both immediate optimizations 
-    and long-term financial health. Include numerical analysis where relevant and make concrete recommendations 
-    that would meaningfully improve this financial situation.
-    `;
-  }
-} 
+  
+  return getFallbackInsights();
+}; 

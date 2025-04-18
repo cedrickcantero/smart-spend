@@ -25,6 +25,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { InsightType, FinancialInsight } from "@/lib/services/ai-service";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AIInsightsService } from "@/app/api/ai-insights/service";
+
 
 export function AIInsights() {
   const [insights, setInsights] = useState<FinancialInsight[]>([]);
@@ -38,29 +40,29 @@ export function AIInsights() {
     setError(null);
     
     try {
-      const response = await fetch("/api/ai-insights");
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch insights");
-      }
-      
-      const data = await response.json();
-      
-      if (Array.isArray(data)) {
-        setInsights(data);
-      } else {
-        console.error("Unexpected response format:", data);
-        throw new Error("Received invalid format from API");
-      }
+      const insightsData = await AIInsightsService.getFinancialInsights();
+      setInsights(insightsData);
     } catch (err) {
-      console.error("Error fetching AI insights:", err);
-      setError(err instanceof Error ? err.message : "An unknown error occurred");
-      toast({
-        title: "Error",
-        description: "Failed to load AI insights. Please try again later.",
-        variant: "destructive",
-      });
+      console.log("Error fetching AI insights:", err);
+      const errorMessage = err instanceof Error 
+        ? err.message
+        : "Something went wrong. Please try again later.";
+      
+      const userMessage = errorMessage.includes("JSON") 
+        ? "Our AI is processing your data. Please try again in a moment." 
+        : errorMessage.includes("generate insights") || errorMessage.includes("process")
+          ? "Our AI couldn't process your financial data. Please try again."
+          : errorMessage;
+      
+      setError(userMessage);
+      
+      if (!errorMessage.includes("JSON") && !errorMessage.includes("process")) {
+        toast({
+          title: "AI Insights Unavailable",
+          description: "We couldn't generate insights right now. Please try again later.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +132,13 @@ export function AIInsights() {
           <div className="flex flex-col items-center justify-center py-6 text-center">
             <AlertTriangle className="h-10 w-10 text-amber-500 mb-2" />
             <h3 className="font-medium text-lg mb-1">Couldn&apos;t Load Insights</h3>
-            <p className="text-sm text-muted-foreground mb-4">{error}</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              {error.includes("AI is processing") ? (
+                <>Our AI is warming up. This usually happens on the first request.</>
+              ) : (
+                error
+              )}
+            </p>
             <Button variant="default" onClick={fetchInsights}>
               Try Again
             </Button>
@@ -146,7 +154,7 @@ export function AIInsights() {
                 <TabsTrigger value="income">Income</TabsTrigger>
               </TabsList>
               
-              <TabsContent value={activeTab} className="space-y-4 mt-0 max-h-[500px] overflow-y-auto">
+              <TabsContent value={activeTab} className="space-y-4 mt-0">
                 {isLoading ? (
                   Array.from({ length: 3 }).map((_, index) => (
                     <Card key={index}>
