@@ -184,6 +184,7 @@ export function NotificationSettings() {
                 id="email-notifications"
                 checked={notificationData.notifications.channels.emailNotifications}
                 onCheckedChange={(value) => updateChannelSetting('emailNotifications', value)}
+                disabled
               />
             </div>
 
@@ -196,6 +197,7 @@ export function NotificationSettings() {
                 id="push-notifications" 
                 checked={notificationData.notifications.channels.pushNotifications} 
                 onCheckedChange={(value) => updateChannelSetting('pushNotifications', value)} 
+                disabled
               />
             </div>
           </div>
@@ -212,6 +214,7 @@ export function NotificationSettings() {
                 id="weekly-reports" 
                 checked={notificationData.notifications.types.weeklyReports} 
                 onCheckedChange={(value) => updateTypeSetting('weeklyReports', value)} 
+                disabled
               />
             </div>
 
@@ -224,6 +227,7 @@ export function NotificationSettings() {
                 id="budget-alerts" 
                 checked={notificationData.notifications.types.budgetAlerts} 
                 onCheckedChange={(value) => updateTypeSetting('budgetAlerts', value)} 
+                disabled
               />
             </div>
 
@@ -236,6 +240,7 @@ export function NotificationSettings() {
                 id="unusual-activity" 
                 checked={notificationData.notifications.types.unusualActivity} 
                 onCheckedChange={(value) => updateTypeSetting('unusualActivity', value)} 
+                disabled
               />
             </div>
 
@@ -248,6 +253,7 @@ export function NotificationSettings() {
                 id="bill-reminders" 
                 checked={notificationData.notifications.types.billReminders} 
                 onCheckedChange={(value) => updateTypeSetting('billReminders', value)}
+                disabled
               />
             </div>
           </div>
@@ -274,6 +280,7 @@ export function NotificationSettings() {
             <Switch 
               checked={notificationData.email.marketingEmails} 
               onCheckedChange={(value) => updateEmailSetting('marketingEmails', value)} 
+              disabled
             />
           </div>
 
@@ -287,6 +294,7 @@ export function NotificationSettings() {
             <Switch 
               checked={notificationData.email.tipsAndTutorials} 
               onCheckedChange={(value) => updateEmailSetting('tipsAndTutorials', value)} 
+              disabled
             />
           </div>
 
@@ -298,6 +306,7 @@ export function NotificationSettings() {
             <Switch 
               checked={notificationData.email.productUpdates} 
               onCheckedChange={(value) => updateEmailSetting('productUpdates', value)} 
+              disabled
             />
           </div>
         </CardContent>

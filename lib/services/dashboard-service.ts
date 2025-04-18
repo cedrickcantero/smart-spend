@@ -6,6 +6,10 @@ export interface DashboardData {
     amount: number;
     percentChange: number;
   };
+  totalIncome: {
+    amount: number;
+    percentChange: number;
+  };
   monthlyBudget: {
     amount: number;
     used: number;
@@ -41,11 +45,13 @@ export const DashboardService = {
     try {
       const [
         totalExpenses, 
+        totalIncome,
         monthlyBudget, 
         savingsGoal, 
         taxDeductions
       ] = await Promise.all([
         DashboardService.getTotalExpenses(userId, supabase),
+        DashboardService.getTotalIncome(userId, supabase),
         DashboardService.getMonthlyBudget(userId, supabase),
         DashboardService.getSavingsGoal(userId, supabase),
         DashboardService.getTaxDeductions(userId, supabase)
@@ -53,6 +59,7 @@ export const DashboardService = {
 
       return {
         totalExpenses,
+        totalIncome,
         monthlyBudget,
         savingsGoal,
         taxDeductions
@@ -63,15 +70,13 @@ export const DashboardService = {
     }
   },
 
-  async getTotalExpenses(userId: string, supabase: SupabaseClient): Promise<{ amount: number; percentChange: number }> {
+  async getTotalIncome(userId: string, supabase: SupabaseClient): Promise<{ amount: number; percentChange: number }> {
     try {
       const currentDate = new Date();
       
-      // Current month range
       const firstDayCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const lastDayCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
       
-      // Previous month range
       const firstDayPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
       const lastDayPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
       
@@ -80,7 +85,57 @@ export const DashboardService = {
       const firstDayPreviousStr = firstDayPreviousMonth.toISOString().split('T')[0];
       const lastDayPreviousStr = lastDayPreviousMonth.toISOString().split('T')[0];
       
-      // Get expenses for current month
+      const { data: currentMonthData, error: currentMonthError } = await supabase
+        .from('income')
+        .select('amount')
+        .eq('user_id', userId)
+        .gte('date', firstDayCurrentStr)
+        .lte('date', lastDayCurrentStr);
+      
+      if (currentMonthError) throw currentMonthError;
+      
+      const { data: previousMonthData, error: previousMonthError } = await supabase
+        .from('income')
+        .select('amount')
+        .eq('user_id', userId)
+        .gte('date', firstDayPreviousStr)
+        .lte('date', lastDayPreviousStr);
+      
+      if (previousMonthError) throw previousMonthError;
+      
+      const currentMonthTotal = currentMonthData?.reduce((sum, income) => sum + (income.amount || 0), 0) || 0;
+      const previousMonthTotal = previousMonthData?.reduce((sum, income) => sum + (income.amount || 0), 0) || 0;
+      
+      let percentChange = 0;
+      if (previousMonthTotal > 0) {
+        percentChange = ((currentMonthTotal - previousMonthTotal) / previousMonthTotal) * 100;
+      }
+      
+      return {
+        amount: currentMonthTotal,
+        percentChange: parseFloat(percentChange.toFixed(1))
+      };
+    } catch (error) {
+      console.error("Error fetching total income:", error);
+      return { amount: 0, percentChange: 0 };
+    }
+  },
+
+  async getTotalExpenses(userId: string, supabase: SupabaseClient): Promise<{ amount: number; percentChange: number }> {
+    try {
+      const currentDate = new Date();
+      
+      const firstDayCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDayCurrentMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      
+      const firstDayPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+      const lastDayPreviousMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+      
+      const firstDayCurrentStr = firstDayCurrentMonth.toISOString().split('T')[0];
+      const lastDayCurrentStr = lastDayCurrentMonth.toISOString().split('T')[0];
+      const firstDayPreviousStr = firstDayPreviousMonth.toISOString().split('T')[0];
+      const lastDayPreviousStr = lastDayPreviousMonth.toISOString().split('T')[0];
+      
       const { data: currentMonthData, error: currentMonthError } = await supabase
         .from('expenses')
         .select('amount')
@@ -90,7 +145,6 @@ export const DashboardService = {
       
       if (currentMonthError) throw currentMonthError;
       
-      // Get expenses for previous month
       const { data: previousMonthData, error: previousMonthError } = await supabase
         .from('expenses')
         .select('amount')
@@ -100,11 +154,9 @@ export const DashboardService = {
       
       if (previousMonthError) throw previousMonthError;
       
-      // Calculate totals
       const currentMonthTotal = currentMonthData?.reduce((sum, expense) => sum + (expense.amount || 0), 0) || 0;
       const previousMonthTotal = previousMonthData?.reduce((sum, expense) => sum + (expense.amount || 0), 0) || 0;
       
-      // Calculate percentage change
       let percentChange = 0;
       if (previousMonthTotal > 0) {
         percentChange = ((currentMonthTotal - previousMonthTotal) / previousMonthTotal) * 100;
@@ -112,7 +164,7 @@ export const DashboardService = {
       
       return {
         amount: currentMonthTotal,
-        percentChange: parseFloat(percentChange.toFixed(1)) // Round to 1 decimal place
+        percentChange: parseFloat(percentChange.toFixed(1))
       };
     } catch (error) {
       console.error("Error fetching total expenses:", error);

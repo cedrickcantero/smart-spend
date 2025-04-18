@@ -23,6 +23,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { DBBudget } from "@/types/supabase"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 interface EditBudgetModalProps {
   open: boolean
@@ -45,6 +46,7 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
   const [startDate, setStartDate] = useState<Date>(new Date())
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [icon, setIcon] = useState("")
+  const [isIncome, setIsIncome] = useState(false)
 
   // Fetch categories when modal opens and populate form with budget data
   useEffect(() => {
@@ -59,6 +61,7 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
     setCategoryId(budget.category_id || "")
     setAmount(budget.amount.toString())
     setPeriod(budget.period || "monthly")
+    setIsIncome(budget.is_income || false)
     
     if (budget.start_date) {
       setStartDate(new Date(budget.start_date))
@@ -125,12 +128,13 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
         period,
         start_date: format(startDate, 'yyyy-MM-dd'),
         end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
-        icon: icon || selectedCategory?.icon || "📦"
+        icon: icon || selectedCategory?.icon || "📦",
+        is_income: isIncome
       });
 
       toast({
         title: "Budget updated",
-        description: `The ${period} budget "${budgetName || `${selectedCategory?.name || 'Unnamed'} Budget`}" has been updated.`,
+        description: `The ${period} ${isIncome ? 'income' : 'expense'} budget "${budgetName || `${selectedCategory?.name || 'Unnamed'} Budget`}" has been updated.`,
         variant: "success",
       })
 
@@ -159,12 +163,31 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="budget-type" className="text-right">
+                Budget Type
+              </Label>
+              <RadioGroup 
+                className="col-span-3 flex space-x-4" 
+                value={isIncome ? "income" : "expense"}
+                onValueChange={(value) => setIsIncome(value === "income")}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="expense" id="expense" />
+                  <Label htmlFor="expense">Expense</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="income" id="income" />
+                  <Label htmlFor="income">Income</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="budget-name" className="text-right">
                 Budget Name
               </Label>
               <Input
                 id="budget-name"
-                placeholder="e.g., Monthly Groceries"
+                placeholder={isIncome ? "e.g., Monthly Salary" : "e.g., Monthly Groceries"}
                 value={budgetName}
                 onChange={(e) => setBudgetName(e.target.value)}
                 className="col-span-3"

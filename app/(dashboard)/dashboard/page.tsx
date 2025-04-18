@@ -1,29 +1,24 @@
 "use client"
 
-import { DollarSign, Wallet, Gift, FileText } from "lucide-react"
+import { DollarSign, Wallet, Gift, FileText, TrendingUp } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ExpenseChart } from "@/components/expense-chart"
 import { useAuth } from "@/lib/auth-context"
 import { DashboardService } from "@/app/api/dashboard/service"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { DashboardData } from "@/lib/services/dashboard-service"
 import { formatMoney } from "@/lib/utils"
 import { UserSettings } from "@/types/userSettings"
 import { toast } from "@/hooks/use-toast"
+
 export default function DashboardPage() {
   const { user, userSettings: dbUserSettings } = useAuth()
   const userSettings = dbUserSettings as unknown as UserSettings
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
 
-  useEffect(() => {
-    if (user) {
-      fetchDashboardData()
-    }
-  }, [user])
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     if (user) {
       try {
         const response = await DashboardService.getDashboardData()
@@ -38,13 +33,34 @@ export default function DashboardPage() {
         })
       }
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (user) {
+      fetchDashboardData()
+    }
+  }, [user, fetchDashboardData])
   
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Dashboard</h1>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Income</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatMoney(dashboardData?.totalIncome?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
+            <p className="text-xs text-muted-foreground">
+              {!dashboardData?.totalIncome ? 'No data' :
+               dashboardData.totalIncome.percentChange === 0 ? 'No change' : 
+               `${dashboardData.totalIncome.percentChange > 0 ? '+' : ''}${dashboardData.totalIncome.percentChange}% from last month`}
+            </p>
+          </CardContent>
+        </Card>
+        
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>

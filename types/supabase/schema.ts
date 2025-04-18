@@ -18,6 +18,7 @@ export type Database = {
           end_date: string | null
           icon: string | null
           id: string
+          is_income: boolean
           period: string
           remaining: number | null
           spent: number | null
@@ -34,6 +35,7 @@ export type Database = {
           end_date?: string | null
           icon?: string | null
           id?: string
+          is_income?: boolean
           period?: string
           remaining?: number | null
           spent?: number | null
@@ -50,6 +52,7 @@ export type Database = {
           end_date?: string | null
           icon?: string | null
           id?: string
+          is_income?: boolean
           period?: string
           remaining?: number | null
           spent?: number | null
@@ -397,6 +400,56 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      income: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          is_taxable: boolean | null
+          source: string
+          payment_method: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          is_taxable?: boolean | null
+          source: string
+          payment_method?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          is_taxable?: boolean | null
+          source?: string
+          payment_method?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

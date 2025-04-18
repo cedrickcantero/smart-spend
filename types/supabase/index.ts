@@ -13,6 +13,7 @@ export type DBRecurringBill = Database['public']['Tables']['recurring_bills']['R
 export type DBSavingsGoal = Database['public']['Tables']['savings_goals']['Row']
 export type DBSubscription = Database['public']['Tables']['subscriptions']['Row']
 export type DBUserSettings = Database['public']['Tables']['user_settings']['Row'];
+export type DBIncome = Database['public']['Tables']['income']['Row']
 
 
 // Insert types

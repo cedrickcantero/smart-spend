@@ -18,6 +18,7 @@ export interface UserSettings {
     };
     profile: {
       bio: string;
+      avatar_url: string;
     };
     security: {
       aiFeatures: boolean;
@@ -48,7 +49,7 @@ export interface UserSettings {
       };
       channels: {
         pushNotifications: boolean;
-        emailNotifications: boolean;
+         emailNotifications: boolean;
       };
     };
   }

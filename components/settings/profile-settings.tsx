@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Save, Download, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,10 +26,13 @@ const defaultProfileData: ProfileData = {
 };
 
 export function ProfileSettings() {
-  const { user, signOut, userSettings, updateUserProfile } = useAuth()
+  const { user, signOut, userSettings, updateUserProfile, updateUserAvatar } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [profileData, setProfileData] = useState<ProfileData>(defaultProfileData)
+  const [avatarUrl, setAvatarUrl] = useState<string>("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (user) {
@@ -39,6 +42,7 @@ export function ProfileSettings() {
         lastName: user.user_metadata?.last_name || '',
         email: user.email || '',
       }));
+      
     }
     
     if (userSettings) {
@@ -49,6 +53,7 @@ export function ProfileSettings() {
           ...prev,
           bio: settingsObj.profile.bio || ''
         }));
+        setAvatarUrl(settingsObj.profile.avatar_url || '')
       }
     }
   }, [user, userSettings]);
@@ -110,6 +115,38 @@ export function ProfileSettings() {
     }
   }
 
+  const handleFileSelect = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    fileInputRef.current?.click();
+  };
+  
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    
+    if (files && files.length > 0) {
+      setIsUploading(true);
+      
+      try {
+        await updateUserAvatar(files[0]);
+        
+        toast({
+          title: "Avatar updated",
+          description: "Your profile picture has been updated successfully.",
+          variant: "success",
+        });
+      } catch (err) {
+        const error = err as { message?: string };
+        toast({
+          title: "Error updating avatar",
+          description: error.message || "Failed to update your profile picture.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -122,13 +159,25 @@ export function ProfileSettings() {
             <div className="flex flex-col gap-6 sm:flex-row">
               <div className="flex flex-col items-center gap-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg?height=96&width=96"} />
+                  <AvatarImage src={avatarUrl || "/placeholder.svg?height=96&width=96"} />
                   <AvatarFallback className="text-lg">
                     {profileData.firstName?.[0]?.toUpperCase() || ""}{profileData.lastName?.[0]?.toUpperCase() || ""}
                   </AvatarFallback>
                 </Avatar>
-                <Button variant="outline" size="sm">
-                  Change Avatar
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleFileSelect}
+                  disabled={isUploading}
+                >
+                  {isUploading ? "Uploading..." : "Change Avatar"}
                 </Button>
               </div>
 

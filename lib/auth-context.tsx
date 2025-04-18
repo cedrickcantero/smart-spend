@@ -14,6 +14,7 @@ import type {
 } from "@supabase/supabase-js"
 import { UserSettingsService } from "@/app/api/user-settings/service"
 import { DBUserSettings } from "@/types/supabase"
+import { StorageService } from "@/app/api/storage/service"
 
 type User = SupabaseUser
 
@@ -24,6 +25,7 @@ type AuthContextType = {
   userSettings: DBUserSettings
   updateUserSettings: (pathOrSettings: string[] | DBUserSettings, value?: unknown) => Promise<{ success: boolean; error?: unknown }>
   updateUserProfile: (firstName: string, lastName: string, bio?: string) => Promise<{ success: boolean; error?: unknown }>
+  updateUserAvatar: (selectedFile: File) => Promise<{ success: boolean; error?: unknown }>
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<{ error: Error | null }>
@@ -146,6 +148,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const updateUserAvatar = async (selectedFile: File): Promise<{ success: boolean; error?: unknown }> => {
+    if (!selectedFile) return { success: false, error: "No file selected" };
+    
+    try {
+      const response = await StorageService.uploadFile(selectedFile, user?.id ?? '');
+
+      if (response.error) {
+        return { success: false, error: response.error };
+      }
+
+      if (response.url) {
+        await updateUserSettings(['profile', 'avatar_url'], response.url);
+        return { success: true };
+      }
+      
+      return { success: false, error: "No URL returned from upload" };
+    } catch (err) {
+      console.error("Avatar update failed:", err);
+      return { success: false, error: err };
+    }
+  };  
   const signUp = async (email: string, password: string, name: string) => {
     // Split the full name into first and last name
     const nameParts = name.trim().split(/\s+/);
@@ -199,6 +222,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         userSettings,
         updateUserSettings,
         updateUserProfile,
+        updateUserAvatar,
         signUp,
         signIn,
         signOut,

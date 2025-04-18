@@ -1,0 +1,873 @@
+{
+  "info": {
+    "name": "SmartSpend API Collection",
+    "description": "API endpoints for SmartSpend app",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get Access Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Get access token for API authentication"
+          }
+        }
+      ],
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "User Settings",
+      "item": [
+        {
+          "name": "Get User Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user-settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user-settings"]
+            },
+            "description": "Get all user settings"
+          }
+        },
+        {
+          "name": "Get Setting by Path",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/user-settings?path=preferences.currency",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user-settings"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "preferences.currency"
+                }
+              ]
+            },
+            "description": "Get specific user setting by path"
+          }
+        },
+        {
+          "name": "Update User Setting",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"path\": \"preferences.currency\",\n  \"value\": \"USD\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/user-settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user-settings"]
+            },
+            "description": "Update a specific user setting"
+          }
+        }
+      ],
+      "description": "User settings endpoints"
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"]
+            },
+            "description": "Get all categories for the authenticated user"
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Groceries\",\n  \"color\": \"#4CAF50\",\n  \"icon\": \"🛒\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"]
+            },
+            "description": "Create a new category"
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Category\",\n  \"color\": \"#2196F3\",\n  \"icon\": \"🏠\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", "{{categoryId}}"]
+            },
+            "description": "Update an existing category"
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", "{{categoryId}}"]
+            },
+            "description": "Delete a category"
+          }
+        }
+      ],
+      "description": "Category management endpoints"
+    },
+    {
+      "name": "Expenses",
+      "item": [
+        {
+          "name": "Get All Expenses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/expense",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expense"]
+            },
+            "description": "Get all expenses for the authenticated user"
+          }
+        },
+        {
+          "name": "Get Expenses by Date",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/expense/date?date=2023-07-01",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expense", "date"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2023-07-01"
+                }
+              ]
+            },
+            "description": "Get expenses for a specific date"
+          }
+        },
+        {
+          "name": "Get Expenses by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/expense/category",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expense", "category"]
+            },
+            "description": "Get expenses grouped by category"
+          }
+        },
+        {
+          "name": "Create Expense",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 45.99,\n  \"category_id\": \"{{categoryId}}\",\n  \"date\": \"2023-07-01\",\n  \"merchant\": \"Walmart\",\n  \"description\": \"Groceries\",\n  \"payment_method\": \"Credit Card\",\n  \"is_tax_deductible\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expense",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expense"]
+            },
+            "description": "Create a new expense"
+          }
+        },
+        {
+          "name": "Update Expense",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 50.99,\n  \"category_id\": \"{{categoryId}}\",\n  \"date\": \"2023-07-01\",\n  \"merchant\": \"Target\",\n  \"description\": \"Updated description\",\n  \"payment_method\": \"Credit Card\",\n  \"is_tax_deductible\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/expense/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expense", "{{expenseId}}"]
+            },
+            "description": "Update an existing expense"
+          }
+        },
+        {
+          "name": "Delete Expense",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/expense/{{expenseId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "expense", "{{expenseId}}"]
+            },
+            "description": "Delete an expense"
+          }
+        }
+      ],
+      "description": "Expense management endpoints"
+    },
+    {
+      "name": "Income",
+      "item": [
+        {
+          "name": "Get All Income",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/income",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "income"]
+            },
+            "description": "Get all income entries for the authenticated user"
+          }
+        },
+        {
+          "name": "Get Income by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/income/{{incomeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "income", "{{incomeId}}"]
+            },
+            "description": "Get a specific income entry by ID"
+          }
+        },
+        {
+          "name": "Create Income",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 2500.00,\n  \"category_id\": \"{{categoryId}}\",\n  \"date\": \"2023-07-01\",\n  \"source\": \"Salary\",\n  \"description\": \"Monthly salary\",\n  \"payment_method\": \"Direct Deposit\",\n  \"is_taxable\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/income",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "income"]
+            },
+            "description": "Create a new income entry"
+          }
+        },
+        {
+          "name": "Update Income",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 2600.00,\n  \"category_id\": \"{{categoryId}}\",\n  \"date\": \"2023-07-01\",\n  \"source\": \"Salary\",\n  \"description\": \"Updated monthly salary\",\n  \"payment_method\": \"Direct Deposit\",\n  \"is_taxable\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/income/{{incomeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "income", "{{incomeId}}"]
+            },
+            "description": "Update an existing income entry"
+          }
+        },
+        {
+          "name": "Delete Income",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/income/{{incomeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "income", "{{incomeId}}"]
+            },
+            "description": "Delete an income entry"
+          }
+        }
+      ],
+      "description": "Income management endpoints"
+    },
+    {
+      "name": "Budgets",
+      "item": [
+        {
+          "name": "Get All Budgets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/budget",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "budget"]
+            },
+            "description": "Get all budgets for the authenticated user"
+          }
+        },
+        {
+          "name": "Get Budget by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/budget/category/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "budget", "category", "{{categoryId}}"]
+            },
+            "description": "Get a budget for a specific category"
+          }
+        },
+        {
+          "name": "Create Budget",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budget_name\": \"Groceries Budget\",\n  \"category_id\": \"{{categoryId}}\",\n  \"amount\": 400,\n  \"period\": \"monthly\",\n  \"start_date\": \"2023-07-01\",\n  \"end_date\": \"2023-07-31\",\n  \"is_income\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/budget",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "budget"]
+            },
+            "description": "Create a new budget"
+          }
+        },
+        {
+          "name": "Update Budget",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budget_name\": \"Updated Groceries Budget\",\n  \"amount\": 450,\n  \"period\": \"monthly\",\n  \"start_date\": \"2023-07-01\",\n  \"end_date\": \"2023-07-31\",\n  \"is_income\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/budget/{{budgetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "budget", "{{budgetId}}"]
+            },
+            "description": "Update an existing budget"
+          }
+        },
+        {
+          "name": "Delete Budget",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/budget/{{budgetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "budget", "{{budgetId}}"]
+            },
+            "description": "Delete a budget"
+          }
+        }
+      ],
+      "description": "Budget management endpoints"
+    },
+    {
+      "name": "Recurring Bills",
+      "item": [
+        {
+          "name": "Get All Recurring Bills",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/recurring",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recurring"]
+            },
+            "description": "Get all recurring bills for the authenticated user"
+          }
+        },
+        {
+          "name": "Create Recurring Bill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rent\",\n  \"amount\": 1200,\n  \"frequency\": \"monthly\",\n  \"category_id\": \"{{categoryId}}\",\n  \"due_day\": 1,\n  \"next_due_date\": \"2023-08-01\",\n  \"is_automatic\": true,\n  \"payment_method\": \"Bank Transfer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/recurring",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recurring"]
+            },
+            "description": "Create a new recurring bill"
+          }
+        },
+        {
+          "name": "Update Recurring Bill",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Rent\",\n  \"amount\": 1250,\n  \"frequency\": \"monthly\",\n  \"category_id\": \"{{categoryId}}\",\n  \"due_day\": 1,\n  \"next_due_date\": \"2023-08-01\",\n  \"is_automatic\": true,\n  \"payment_method\": \"Bank Transfer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/recurring/{{recurringId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recurring", "{{recurringId}}"]
+            },
+            "description": "Update an existing recurring bill"
+          }
+        },
+        {
+          "name": "Delete Recurring Bill",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/recurring/{{recurringId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "recurring", "{{recurringId}}"]
+            },
+            "description": "Delete a recurring bill"
+          }
+        }
+      ],
+      "description": "Recurring bills management endpoints"
+    },
+    {
+      "name": "Subscriptions",
+      "item": [
+        {
+          "name": "Get All Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subscriptions"]
+            },
+            "description": "Get all subscriptions for the authenticated user"
+          }
+        },
+        {
+          "name": "Create Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Netflix\",\n  \"amount\": 15.99,\n  \"billing_cycle\": \"monthly\",\n  \"category_id\": \"{{categoryId}}\",\n  \"next_billing_date\": \"2023-08-15\",\n  \"is_active\": true,\n  \"payment_method\": \"Credit Card\",\n  \"website\": \"https://netflix.com\",\n  \"description\": \"Streaming service\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subscriptions"]
+            },
+            "description": "Create a new subscription"
+          }
+        },
+        {
+          "name": "Update Subscription",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Netflix Premium\",\n  \"amount\": 19.99,\n  \"billing_cycle\": \"monthly\",\n  \"category_id\": \"{{categoryId}}\",\n  \"next_billing_date\": \"2023-08-15\",\n  \"is_active\": true,\n  \"payment_method\": \"Credit Card\",\n  \"website\": \"https://netflix.com\",\n  \"description\": \"Premium streaming service\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/{{subscriptionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subscriptions", "{{subscriptionId}}"]
+            },
+            "description": "Update an existing subscription"
+          }
+        },
+        {
+          "name": "Delete Subscription",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/subscriptions/{{subscriptionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "subscriptions", "{{subscriptionId}}"]
+            },
+            "description": "Delete a subscription"
+          }
+        }
+      ],
+      "description": "Subscription management endpoints"
+    },
+    {
+      "name": "Storage",
+      "item": [
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "bucket",
+                  "value": "receipts",
+                  "type": "text"
+                },
+                {
+                  "key": "path",
+                  "value": "user-receipts/receipt-{{$timestamp}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/storage/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "storage", "upload"]
+            },
+            "description": "Upload a file to storage (e.g., receipt)"
+          }
+        }
+      ],
+      "description": "File storage endpoints"
+    },
+    {
+      "name": "Colors",
+      "item": [
+        {
+          "name": "Get All Colors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/color",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "color"]
+            },
+            "description": "Get all available colors for the app"
+          }
+        }
+      ],
+      "description": "Color management endpoints"
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "your-access-token-here",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "your-category-id-here",
+      "type": "string"
+    },
+    {
+      "key": "expenseId",
+      "value": "your-expense-id-here",
+      "type": "string"
+    },
+    {
+      "key": "incomeId",
+      "value": "your-income-id-here",
+      "type": "string"
+    },
+    {
+      "key": "budgetId",
+      "value": "your-budget-id-here",
+      "type": "string"
+    },
+    {
+      "key": "subscriptionId",
+      "value": "your-subscription-id-here",
+      "type": "string"
+    },
+    {
+      "key": "recurringId",
+      "value": "your-recurring-id-here",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "your-email@example.com",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "your-password",
+      "type": "string"
+    }
+  ]
+}
