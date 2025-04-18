@@ -21,6 +21,18 @@ export const supabase = createBrowserClient(
         document.cookie = `${name}=; path=${options?.path || '/'};
           expires=Thu, 01 Jan 1970 00:00:00 GMT`
       }
+    },
+    global: {
+      fetch: (url, options) => {
+        const controller = new AbortController();
+        const { signal } = controller;
+        
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        
+        const fetchPromise = fetch(url, { ...options, signal });
+        
+        return fetchPromise.finally(() => clearTimeout(timeoutId));
+      }
     }
   }
 )
