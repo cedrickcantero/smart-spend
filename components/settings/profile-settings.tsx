@@ -54,7 +54,6 @@ export function ProfileSettings() {
           ...prev,
           bio: settingsObj.profile.bio || ''
         }));
-        console.log("settingsObj.profile.avatar_url", settingsObj.profile.avatar_url)
         setAvatarUrl(settingsObj.profile.avatar_url || '')
       }
     }
@@ -149,9 +148,7 @@ export function ProfileSettings() {
       }
     }
   };
-
-  console.log("avatarUrl", avatarUrl)
-
+  
   return (
     <div className="space-y-4">
       <Card>

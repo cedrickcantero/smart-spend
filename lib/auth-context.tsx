@@ -154,8 +154,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const response = await StorageService.uploadFile(selectedFile, user?.id ?? '');
 
-      console.log("response", response)
-
       if (response.error) {
         return { success: false, error: response.error };
       }

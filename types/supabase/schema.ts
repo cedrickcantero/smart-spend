@@ -18,6 +18,7 @@ export type Database = {
           end_date: string | null
           icon: string | null
           id: string
+          is_income: boolean
           period: string
           remaining: number | null
           spent: number | null
@@ -34,6 +35,7 @@ export type Database = {
           end_date?: string | null
           icon?: string | null
           id?: string
+          is_income?: boolean
           period?: string
           remaining?: number | null
           spent?: number | null
@@ -50,6 +52,7 @@ export type Database = {
           end_date?: string | null
           icon?: string | null
           id?: string
+          is_income?: boolean
           period?: string
           remaining?: number | null
           spent?: number | null

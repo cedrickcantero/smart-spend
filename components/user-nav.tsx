@@ -76,7 +76,6 @@ export function UserNav() {
           ...prev,
           bio: settingsObj.profile.bio || ''
         }));
-        console.log("settingsObj.profile.avatar_url", settingsObj.profile.avatar_url)
         setAvatarUrl(settingsObj.profile.avatar_url || '')
       }
     }

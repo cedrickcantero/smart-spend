@@ -21,8 +21,6 @@ export const BudgetService = {
 
     // Add category names to each budget
 
-    console.log("categories", categories)
-
     const budgetsWithCategories = data?.map(budget => {
       const category = categories.data?.find(c => c.id === budget.category_id);
       return {

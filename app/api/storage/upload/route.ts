@@ -14,9 +14,6 @@ export async function POST(request: NextRequest) {
 
       const cleanupResponse = await StorageService.cleanupExistingAvatars(userId, supabase)
 
-      console.log("cleanupResponse", cleanupResponse)
-
-
       if (!cleanupResponse.success) {
         return NextResponse.json({ error: 'Failed to cleanup existing avatars' }, { status: 500 })
       } 
