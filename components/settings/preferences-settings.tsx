@@ -37,13 +37,13 @@ const defaultPreferencesData: PreferencesData = {
     theme: "system",
     accentColor: "blue",
     compactMode: false,
-    animations: true
+    animations: false
   },
   dashboard: {
-    showRecentTransactions: true,
-    showBudgetProgress: true,
-    showAIInsights: true,
-    showUpcomingBills: true
+    showRecentTransactions: false,
+    showBudgetProgress: false,
+    showAIInsights: false,
+    showUpcomingBills: false
   }
 };
 
@@ -367,7 +367,7 @@ export function PreferencesSettings() {
             <Switch 
               checked={preferencesData.dashboard.showAIInsights}
               onCheckedChange={(value) => updateDashboard('showAIInsights', value)}
-              disabled
+              // disabled
             />
           </div>
 
