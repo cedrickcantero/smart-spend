@@ -1,6 +1,6 @@
 "use client"
 
-import { DollarSign, Wallet, Gift, FileText, TrendingUp } from "lucide-react"
+import { DollarSign, Wallet, Gift, TrendingUp } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
