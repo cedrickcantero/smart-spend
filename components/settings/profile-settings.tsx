@@ -10,7 +10,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { UserSettings } from "@/types/userSettings"
-import { StorageService } from "@/app/api/storage/service"
 
 interface ProfileData {
   firstName: string;
@@ -117,7 +116,6 @@ export function ProfileSettings() {
   }
 
   const handleFileSelect = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Trigger file input click
     e.preventDefault();
     fileInputRef.current?.click();
   };
@@ -148,7 +146,7 @@ export function ProfileSettings() {
       }
     }
   };
-  
+
   return (
     <div className="space-y-4">
       <Card>
@@ -166,7 +164,6 @@ export function ProfileSettings() {
                     {profileData.firstName?.[0]?.toUpperCase() || ""}{profileData.lastName?.[0]?.toUpperCase() || ""}
                   </AvatarFallback>
                 </Avatar>
-                {/* Hidden file input */}
                 <input
                   type="file"
                   ref={fileInputRef}

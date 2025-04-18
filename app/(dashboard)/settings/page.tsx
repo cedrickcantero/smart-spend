@@ -1,12 +1,11 @@
 "use client"
 
 import type React from "react"
-import { Bell, CreditCard, Globe, Lock, User } from "lucide-react"
+import { Bell, Globe, Lock, User } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {ProfileSettings} from "@/components/settings/profile-settings"
 import {PreferencesSettings} from "@/components/settings/preferences-settings"
 import {NotificationSettings} from "@/components/settings/notification-settings"
-import {PaymentSettings} from "@/components/settings/payment-settings"
 import {SecuritySettings} from "@/components/settings/security-settings"
 
 export default function SettingsPage() {

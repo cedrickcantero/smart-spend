@@ -12,7 +12,7 @@ import { EditBudgetModal } from "@/components/budget/modals/edit-budget-modal"
 import { BudgetService, BudgetWithCategory } from "@/app/api/budget/service"
 import { useToast } from "@/hooks/use-toast"
 import { formatMoney } from "@/lib/utils"
-import { DBBudget, DBExpense } from "@/types/supabase"
+import { DBBudget, DBExpense, DBIncome } from "@/types/supabase"
 import { useAuth } from "@/lib/auth-context"
 import { UserSettings } from "@/types/userSettings"
 import { ExpenseService } from "@/app/api/expense/service"
@@ -25,14 +25,13 @@ export default function BudgetsPage() {
   const [selectedBudget, setSelectedBudget] = useState<DBBudget | null>(null)
   const [budgets, setBudgets] = useState<BudgetWithCategory[]>([])
   const [expenses, setExpenses] = useState<DBExpense[]>([])
-  const [income, setIncome] = useState<any[]>([])
+  const [income, setIncome] = useState<DBIncome[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
   const { userSettings: dbUserSettings } = useAuth()
   const userSettings = dbUserSettings as unknown as UserSettings
   const userCurrency = userSettings?.preferences?.currency || "USD"
 
-  // Calculate expenses per category
   const getExpensesByCategory = () => {
     const expensesByCategory: Record<string, number> = {};
     
@@ -48,7 +47,6 @@ export default function BudgetsPage() {
     return expensesByCategory;
   };
 
-  // Get income by category for income budgets
   const getIncomeByCategory = () => {
     const incomeByCategory: Record<string, number> = {};
     
@@ -64,8 +62,6 @@ export default function BudgetsPage() {
     return incomeByCategory;
   };
 
-
-  // Update budgets with expense/income data
   const updateBudgetsWithData = () => {
     const expensesByCategory = getExpensesByCategory();
     const incomeByCategory = getIncomeByCategory();
@@ -73,21 +69,19 @@ export default function BudgetsPage() {
     const updatedBudgets = budgets.map(budget => {
       const categoryId = budget.category_id;
       
-      // For income budgets, use income data
       if (budget.is_income) {
         const incomeAmount = categoryId ? incomeByCategory[categoryId] || 0 : 0;
         const remainingAmount = budget.amount - incomeAmount;
         
-        // Determine budget status based on percentage of income goal met
         let status = "on-track";
         const percentMet = budget.amount > 0 ? (incomeAmount / budget.amount) * 100 : 0;
         
         if (percentMet >= 100) {
-          status = "exceeded"; // Exceeded income goal (good)
+          status = "exceeded";
         } else if (percentMet === 100) {
-          status = "complete"; // Exactly met the goal
+          status = "complete";
         } else if (percentMet >= 75) {
-          status = "approaching"; // Approaching income goal
+          status = "approaching";
         }
         
         return {
@@ -97,21 +91,19 @@ export default function BudgetsPage() {
           status
         };
       } 
-      // For expense budgets, use expense data
       else {
         const spentAmount = categoryId ? expensesByCategory[categoryId] || 0 : 0;
         const remainingAmount = budget.amount - spentAmount;
         
-        // Determine budget status based on percentage spent
         let status = "on-track";
         const percentSpent = budget.amount > 0 ? (spentAmount / budget.amount) * 100 : 0;
         
         if (percentSpent >= 100) {
-          status = "exceeded"; // Exceeded expense budget (bad)
+          status = "exceeded";
         } else if (percentSpent === 100) {
-          status = "complete"; // Exactly at budget limit
+          status = "complete";
         } else if (percentSpent >= 75) {
-          status = "warning"; // Approaching expense limit
+          status = "warning";
         }
         
         return {
@@ -126,29 +118,23 @@ export default function BudgetsPage() {
     return updatedBudgets;
   };
 
-  // Calculate budget summary from the updated budgets
   const processedBudgets = (expenses.length || income.length) && budgets.length ? updateBudgetsWithData() : budgets;
   
-  // Split budgets by type
   const expenseBudgets = processedBudgets.filter(budget => !budget.is_income);
   const incomeBudgets = processedBudgets.filter(budget => budget.is_income);
   
-  // Calculate totals for expenses
   const totalExpenseBudget = expenseBudgets.reduce((sum, budget) => sum + budget.amount, 0);
   const totalExpenseSpent = expenseBudgets.reduce((sum, budget) => sum + (budget.spent || 0), 0);
   const totalExpenseRemaining = totalExpenseBudget - totalExpenseSpent;
   
-  // Calculate totals for income
   const totalIncomeBudget = incomeBudgets.reduce((sum, budget) => sum + budget.amount, 0);
   const totalIncomeReceived = incomeBudgets.reduce((sum, budget) => sum + (budget.spent || 0), 0);
-  const totalIncomeRemaining = totalIncomeBudget - totalIncomeReceived;
-  
-  // Calculate net cashflow from actual transactions (all income minus all expenses) 
+  // const totalIncomeRemaining = totalIncomeBudget - totalIncomeReceived;
+   
   const totalActualIncome = income.reduce((sum, item) => sum + item.amount, 0);
   const totalActualExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const netCashflow = totalActualIncome - totalActualExpenses;
   
-  // Calculate daily target (remaining budget divided by days left in month)
   const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
   const today = new Date().getDate();
   const daysRemaining = Math.max(1, daysInMonth - today + 1);
@@ -218,44 +204,42 @@ export default function BudgetsPage() {
     }
   }
 
-  // Helper function to determine progress color - updated for income vs expense
   const getProgressColor = (status: string, isIncome: boolean, percentComplete: number) => {
     if (isIncome) {
       if (percentComplete >= 100) {
-        return "bg-blue-700" // 100%+ for income is great
+        return "bg-blue-700"
       }
       switch (status) {
         case "complete":
-          return "bg-blue-700" // Exactly 100% - completed goal
+          return "bg-blue-700"
         case "on-track":
           return "bg-blue-500"
         case "approaching":
           return "bg-blue-600"
         case "exceeded":
-          return "bg-blue-700" // Exceeding income goal is good
+          return "bg-blue-700"
         default:
           return "bg-blue-500"
       }
     } else {
       if (percentComplete >= 100) {
-        return "bg-red-500" // 100%+ for expense is usually bad
+        return "bg-red-500"
       }
       switch (status) {
         case "complete":
-          return "bg-yellow-600" // Exactly 100% - at budget limit
+          return "bg-yellow-600"
         case "on-track":
           return "bg-green-500"
         case "warning":
           return "bg-yellow-500"
         case "exceeded":
-          return "bg-red-500" // Exceeding expense budget is bad
+          return "bg-red-500"
         default:
           return "bg-blue-500"
       }
     }
   }
 
-  // Helper function to format date
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "";
     return new Date(dateString).toLocaleDateString();

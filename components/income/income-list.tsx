@@ -102,6 +102,7 @@ export function IncomeList() {
       })
       await fetchIncome()
     } catch (error) {
+      console.error('Error deleting income:', error)
       toast({
         title: "Error",
         description: "Failed to delete income. Please try again.",
@@ -143,6 +144,7 @@ export function IncomeList() {
       setSelectedIncome([])
       await fetchIncome()
     } catch (error) {
+      console.error('Error deleting selected income:', error)
       toast({
         title: "Error",
         description: "Failed to delete selected income. Please try again.",
