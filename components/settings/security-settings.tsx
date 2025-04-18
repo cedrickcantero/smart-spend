@@ -106,7 +106,7 @@ export function SecuritySettings() {
         </CardFooter>
       </Card>
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Two-Factor Authentication</CardTitle>
           <CardDescription>Add an extra layer of security to your account</CardDescription>
@@ -127,9 +127,9 @@ export function SecuritySettings() {
             Set Up Two-Factor Authentication
           </Button>
         </CardContent>
-      </Card>
+      </Card> */}
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Sessions</CardTitle>
           <CardDescription>Manage your active sessions and devices</CardDescription>
@@ -164,9 +164,9 @@ export function SecuritySettings() {
             Log Out of All Devices
           </Button>
         </CardContent>
-      </Card>
+      </Card> */}
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Privacy</CardTitle>
           <CardDescription>Manage your privacy settings and data</CardDescription>
@@ -208,7 +208,7 @@ export function SecuritySettings() {
             Save Privacy Settings
           </Button>
         </CardFooter>
-      </Card>
+      </Card> */}
     </div>
   )
 } 
