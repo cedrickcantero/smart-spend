@@ -146,7 +146,7 @@ export function AIInsights() {
                 <TabsTrigger value="income">Income</TabsTrigger>
               </TabsList>
               
-              <TabsContent value={activeTab} className="space-y-4 mt-0">
+              <TabsContent value={activeTab} className="space-y-4 mt-0 max-h-[500px] overflow-y-auto">
                 {isLoading ? (
                   Array.from({ length: 3 }).map((_, index) => (
                     <Card key={index}>

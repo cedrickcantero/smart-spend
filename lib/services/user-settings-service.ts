@@ -68,7 +68,6 @@ export const UserSettingsService = {
     }
 
     if (existingSettings?.id) {
-      // Update existing settings
       const { data, error } = await supabase
         .from('user_settings')
         .update({ 
@@ -86,7 +85,6 @@ export const UserSettingsService = {
 
       return data;
     } else {
-      // Create new settings
       return this.createUserSettings(userId, settings, supabase);
     }
   },
@@ -103,10 +101,8 @@ export const UserSettingsService = {
       return settingsResult;
     }
 
-    // Create a deep copy of the settings
     const updatedSettings = JSON.parse(JSON.stringify(settingsResult));
     
-    // Update the specific path
     let current = updatedSettings;
     for (let i = 0; i < path.length - 1; i++) {
       if (!current[path[i]]) {
@@ -115,10 +111,8 @@ export const UserSettingsService = {
       current = current[path[i]];
     }
     
-    // Set the value at the final path
     current[path[path.length - 1]] = value;
     
-    // Update the settings
     return this.updateUserSettings(userId, updatedSettings, supabase);
   },
 }; 
