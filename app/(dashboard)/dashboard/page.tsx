@@ -55,7 +55,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Dashboard</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Income</CardTitle>
@@ -119,7 +119,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tax Deductions</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -128,7 +128,7 @@ export default function DashboardPage() {
             <div className="text-2xl font-bold">{formatMoney(dashboardData?.taxDeductions?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
             <p className="text-xs text-muted-foreground">Potential tax savings this year</p>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       <Tabs defaultValue="overview" className="mt-6">
