@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/server/auth";
 import { createClient } from "@/lib/supabase/server";
-import { AIService, FinancialData } from "@/lib/services/ai-service";
+import { FinancialData, getFinancialInsights } from "@/lib/services/ai-service";
 import { DashboardService } from "@/lib/services/dashboard-service";
 
 export async function GET(request: NextRequest) {
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       };
       
       try {
-        const insights = await AIService.getFinancialInsights(
+        const insights = await getFinancialInsights(
           financialData,
           userSettings,
           apiKey
