@@ -12,11 +12,13 @@ import { DashboardData } from "@/lib/services/dashboard-service"
 import { formatMoney } from "@/lib/utils"
 import { UserSettings } from "@/types/userSettings"
 import { toast } from "@/hooks/use-toast"
+import { AIInsights } from "@/components/dashboard/ai-insights"
 
 export default function DashboardPage() {
   const { user, userSettings: dbUserSettings } = useAuth()
   const userSettings = dbUserSettings as unknown as UserSettings
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [showAiInsights, setShowAiInsights] = useState(false)
 
   const fetchDashboardData = useCallback(async () => {
     if (user) {
@@ -40,11 +42,19 @@ export default function DashboardPage() {
       fetchDashboardData()
     }
   }, [user, fetchDashboardData])
+
+
+  useEffect(() => {
+    if (userSettings?.dashboard?.showAIInsights) {
+      setShowAiInsights(true)
+    }
+  }, [userSettings])
+
+
   
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Dashboard</h1>
-
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -162,6 +172,8 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {showAiInsights && <AIInsights />}
     </div>
   )
 }
