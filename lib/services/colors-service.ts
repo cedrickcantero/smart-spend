@@ -42,5 +42,24 @@ export const ColorsService = {
       console.error('Error fetching color by ID:', error);
       return { error: error instanceof Error ? error.message : 'Unknown error' };
     }
+  },
+
+  async createColor(color: Omit<DBColor, 'id' | 'created_at' | 'updated_at'>, supabase: SupabaseClient<Database>): Promise<DBColor | { error: string }> {
+    try {
+      const { data, error } = await supabase
+        .from('colors')
+        .insert(color)
+        .select() 
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error creating color:', error);
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
+    }
   }
 }; 

@@ -9,7 +9,7 @@ const CACHE_MAX_AGE = 60 * 60; // 1 hour in seconds
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    context: { params: Promise<{ id: string }> }
 ) {
     try {
         const userId = await getAuthenticatedUserId(request);
@@ -17,13 +17,13 @@ export async function GET(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const colorId = params.id;
-        if (!colorId) {
+        const { id } = await context.params;
+        if (!id) {
             return NextResponse.json({ error: 'Color ID is required' }, { status: 400 });
         }
 
         const supabase = await createClient();
-        const color = await ColorsService.getColorById(colorId, supabase);
+        const color = await ColorsService.getColorById(id, supabase);
         
         // Add error check for the color result
         if ('error' in color) {

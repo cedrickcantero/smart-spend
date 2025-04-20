@@ -11,7 +11,7 @@ import { useExpenses } from "@/app/contexts/ExpenseContext"
 import { useCategories } from "@/app/contexts/CategoriesContext"
 
 export default function ExpensesPage() {
-  const { expenses, loading, refreshExpenses, filterExpensesByCategory, filterExpensesByDateRange } = useExpenses()
+  const { expenses, refreshExpenses } = useExpenses()
   const { categories } = useCategories()
   
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)

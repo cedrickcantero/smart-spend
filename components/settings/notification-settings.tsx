@@ -9,7 +9,6 @@ import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 import { useToast } from "@/hooks/use-toast"
-import { UserSettings } from "@/types/userSettings"
 interface NotificationSettingsData {
   email: {
     productUpdates: boolean;

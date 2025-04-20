@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react"
 import { DBBudget, DBBudgetInsert } from "@/types/supabase"
 import { BudgetService } from "@/app/api/budget/service"
 import { useToast } from "@/hooks/use-toast"
@@ -35,14 +35,16 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
-  const { categories } = useCategories()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { categories: _categories } = useCategories()
   
   // Track pending operations for optimistic updates
-  const [pendingOperations, setPendingOperations] = useState<{
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_pendingOperations, setPendingOperations] = useState<{
     [id: string]: "create" | "update" | "delete"
   }>({})
 
-  const refreshBudgets = async () => {
+  const refreshBudgets = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -59,7 +61,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
 
   const getBudgetById = (id: string): DBBudget | undefined => {
     return budgets.find(budget => budget.id === id)
@@ -116,7 +118,8 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
       
       // Clear pending operation
       setPendingOperations(prev => {
-        const { [tempId]: _, ...rest } = prev
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [tempId]: _unused, ...rest } = prev
         return rest
       })
       
@@ -166,7 +169,8 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
       
       // Clear pending operation
       setPendingOperations(prev => {
-        const { [budget.id]: _, ...rest } = prev
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [budget.id]: _unused, ...rest } = prev
         return rest
       })
       
@@ -211,7 +215,8 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
       
       // Clear pending operation
       setPendingOperations(prev => {
-        const { [id]: _, ...rest } = prev
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [id]: _unused, ...rest } = prev
         return rest
       })
       
@@ -276,7 +281,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
   // Initial fetch
   useEffect(() => {
     refreshBudgets()
-  }, [])
+  }, [refreshBudgets])
 
   const value = {
     budgets,

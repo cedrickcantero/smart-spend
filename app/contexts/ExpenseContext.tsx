@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react"
 import { DBExpense, DBExpenseInsert } from "@/types/supabase"
 import { ExpenseService } from "@/app/api/expense/service"
 import { useToast } from "@/hooks/use-toast"
@@ -28,14 +28,16 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
-  const { categories } = useCategories()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { categories: _categories } = useCategories()
   
   // Track pending operations for optimistic updates
-  const [pendingOperations, setPendingOperations] = useState<{
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_pendingOperations, setPendingOperations] = useState<{
     [id: string]: "create" | "update" | "delete"
   }>({})
 
-  const refreshExpenses = async () => {
+  const refreshExpenses = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -52,7 +54,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
 
   const getExpenseById = (id: string): DBExpense | undefined => {
     return expenses.find(expense => expense.id === id)
@@ -102,7 +104,8 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       
       // Clear pending operation
       setPendingOperations(prev => {
-        const { [tempId]: _, ...rest } = prev
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [tempId]: _unused, ...rest } = prev
         return rest
       })
       
@@ -154,7 +157,8 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       
       // Clear pending operation
       setPendingOperations(prev => {
-        const { [expense.id]: _, ...rest } = prev
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [expense.id]: _unused, ...rest } = prev
         return rest
       })
       
@@ -199,7 +203,8 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
       
       // Clear pending operation
       setPendingOperations(prev => {
-        const { [id]: _, ...rest } = prev
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [id]: _unused, ...rest } = prev
         return rest
       })
       
@@ -255,7 +260,7 @@ export function ExpenseProvider({ children }: { children: ReactNode }) {
   // Initial fetch
   useEffect(() => {
     refreshExpenses()
-  }, [])
+  }, [refreshExpenses])
 
   const value = {
     expenses,

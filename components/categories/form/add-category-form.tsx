@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { DBCategory, DBColor } from "@/types/supabase"
+import { DBCategory } from "@/types/supabase"
 import { useColors } from "@/app/contexts/ColorsContext"
 
 const CATEGORY_ICONS = [

@@ -9,9 +9,7 @@ import {
   Repeat,
   CreditCard,
   Wallet,
-  Settings,
   Palette,
-  Users,
   ShieldCheck} from "lucide-react";
 import { LucideIcon } from "lucide-react";
 

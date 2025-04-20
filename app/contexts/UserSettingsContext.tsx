@@ -4,6 +4,7 @@ import React, { createContext, useContext, ReactNode } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { UserSettings } from "@/types/userSettings"
 import { DBUserSettings } from "@/types/supabase"
+import { Json } from "@/types/supabase/schema"
 
 interface UserSettingsContextType {
   userSettings: UserSettings
@@ -32,7 +33,7 @@ export function UserSettingsProvider({ children }: { children: ReactNode }) {
         // Cast UserSettings back to DBUserSettings format
         const settingsToUpdate: DBUserSettings = {
           ...dbUserSettings,
-          settings: pathOrSettings as any
+          settings: pathOrSettings as unknown as Json
         }
         return await updateDbUserSettings(settingsToUpdate)
       }

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react"
 import { DBCategory, DBCategoryInsert, DBColor } from "@/types/supabase"
 import { CategoriesService } from "@/app/api/categories/service"
 import { useToast } from "@/hooks/use-toast"
@@ -32,11 +32,12 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   const { colors } = useColors()
   
   // Add a map for tracking pending operations
-  const [pendingOperations, setPendingOperations] = useState<{
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_pendingOperations, setPendingOperations] = useState<{
     [id: string]: "create" | "update" | "delete"
   }>({})
 
-  const refreshCategories = async () => {
+  const refreshCategories = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -53,7 +54,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [toast])
 
   const getCategoryById = (id: string): CategoryWithColor | undefined => {
     const category = categories.find(category => category.id === id);
@@ -93,7 +94,8 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       
       // Clear pending operation
       setPendingOperations(prev => {
-        const { [tempId]: _, ...rest } = prev
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [tempId]: _unused, ...rest } = prev
         return rest
       })
       
@@ -142,7 +144,8 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       
       // Clear pending operation
       setPendingOperations(prev => {
-        const { [category.id]: _, ...rest } = prev
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [category.id]: _unused, ...rest } = prev
         return rest
       })
       
@@ -187,7 +190,8 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       
       // Clear pending operation
       setPendingOperations(prev => {
-        const { [id]: _, ...rest } = prev
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [id]: _unused, ...rest } = prev
         return rest
       })
       
@@ -234,7 +238,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshCategories()
-  }, [])
+  }, [refreshCategories])
 
   const value = {
     categories: categoriesWithColorInfo,

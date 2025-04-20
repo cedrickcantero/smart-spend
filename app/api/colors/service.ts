@@ -74,6 +74,20 @@ export const ColorsService = {
     }
   },
   
+  createColor: async (color: Omit<DBColor, 'id' | 'created_at' | 'updated_at'>): Promise<DBColor> => {
+    try {
+      const newColor = await api.post<DBColor>("/api/colors", color);
+      
+      // Invalidate cache after creating a new color
+      colorsCache.data = null;
+      
+      return newColor;
+    } catch (error) {
+      console.error("Error creating color:", error);
+      throw error;
+    }
+  },
+  
   // Manually invalidate the cache
   invalidateCache: (): void => {
     colorsCache.data = null;

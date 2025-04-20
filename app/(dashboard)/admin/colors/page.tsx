@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase/client"
 import { DBColor } from "@/types/supabase"
 import { isCurrentUserAdmin } from "@/lib/auth"
 import { toast } from "sonner"
-import { ColorService } from "@/app/api/color/service"
+import { ColorsService } from "@/app/api/colors/service"
 import { useColors } from "@/app/contexts/ColorsContext"
 
 export default function ColorsAdminPage() {
@@ -58,7 +58,7 @@ export default function ColorsAdminPage() {
     }
     
     try {
-      await ColorService.createColor(newColor as DBColor)
+      await ColorsService.createColor(newColor as DBColor)
       toast.success('Color added successfully')
       setNewColor({
         name: "",
