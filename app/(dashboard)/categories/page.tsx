@@ -1,113 +1,43 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
 import { Plus, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
 import { AddCategoryForm } from "@/components/categories/form/add-category-form"
 import { CategoryCard } from "@/components/categories/category-card"
-import { CategoriesService } from "@/app/api/categories/service"
 import { DBCategory } from "@/types/supabase"
 import { EditCategoryModal } from "@/components/categories/modals/edit-category-modal"
+import { useCategories } from "@/app/contexts/CategoriesContext"
 
 export default function CategoriesPage() {
-  const { toast } = useToast()
-  const [categories, setCategories] = useState<DBCategory[]>([])
-  const [loading, setLoading] = useState(true)
+  const { categories, loading, addCategory, updateCategory, deleteCategory } = useCategories()
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [editingCategory, setEditingCategory] = useState<DBCategory | null>(null)
 
-  const fetchCategories = useCallback(async () => {
-    const categories = await CategoriesService.getCategories()
-    setCategories(categories)
-    setLoading(false)
-  }, [])
-
-  useEffect(() => {
-    fetchCategories()
-  }, [fetchCategories])
-
   const handleDeleteCategory = async (id: string) => {
     try {
-      setLoading(true)
-
-      await CategoriesService.deleteCategory(id)
-
-      await fetchCategories()
-
-      toast({
-        title: "Category deleted",
-        description: "The category has been deleted successfully.",
-        variant: "success",
-      })
+      await deleteCategory(id)
     } catch (error) {
       console.error("Error deleting category:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete category. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
     }
   }
 
   const handleAddCategory = async (newCategory: DBCategory) => {
     try {
-      setLoading(true)
-
-      const category = {
-        ...newCategory,
-      }
-
-      await CategoriesService.createCategory(category)
-
-      await fetchCategories()
-
+      await addCategory(newCategory)
       setIsAddingCategory(false)
-
-      toast({
-        title: "Category added",
-        description: "The new category has been added successfully.",
-        variant: "success",
-      })
     } catch (error) {
       console.error("Error adding category:", error)
-      toast({
-        title: "Error",
-        description: "Failed to add category. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
     }
   }
 
   const handleUpdateCategory = async (updatedCategory: DBCategory) => {
     try {
-      setLoading(true)
-
-      await CategoriesService.updateCategory(updatedCategory)
-
-      await fetchCategories()
-
+      await updateCategory(updatedCategory)
       setEditingCategory(null)
-
-      toast({
-        title: "Category updated",
-        description: "The category has been updated successfully.",
-        variant: "success",
-      })
     } catch (error) {
       console.error("Error updating category:", error)
-      toast({
-        title: "Error",
-        description: "Failed to update category. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -142,7 +72,7 @@ export default function CategoriesPage() {
           {categories.map((category) => (
             <CategoryCard
               key={category.id}
-              category={category}
+              category={category as DBCategory}
               onEdit={() => setEditingCategory(category)}
               onDelete={() => handleDeleteCategory(category.id)}
             />

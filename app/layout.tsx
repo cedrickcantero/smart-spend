@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { NetworkStatusProvider } from "@/lib/network-status-context"
 import { NetworkStatusIndicator } from "@/components/network-status-indicator"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { UserSettingsProvider } from "@/app/contexts/UserSettingsContext"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -27,19 +28,21 @@ export default function RootLayout({
       <body className={inter.className}>
         <ErrorBoundary>
           <AuthProvider>
-            <NetworkStatusProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-                storageKey="smart-spend-theme"
-              >
-                {children}
-                <NetworkStatusIndicator />
-                <Toaster position="top-center" richColors />
-              </ThemeProvider>
-            </NetworkStatusProvider>
+            <UserSettingsProvider>
+              <NetworkStatusProvider>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                  storageKey="smart-spend-theme"
+                >
+                  {children}
+                  <NetworkStatusIndicator />
+                  <Toaster position="top-center" richColors />
+                </ThemeProvider>
+              </NetworkStatusProvider>
+            </UserSettingsProvider>
           </AuthProvider>
         </ErrorBoundary>
       </body>
