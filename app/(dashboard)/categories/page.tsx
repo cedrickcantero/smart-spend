@@ -72,7 +72,7 @@ export default function CategoriesPage() {
           {categories.map((category) => (
             <CategoryCard
               key={category.id}
-              category={category}
+              category={category as DBCategory}
               onEdit={() => setEditingCategory(category)}
               onDelete={() => handleDeleteCategory(category.id)}
             />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,41 +11,18 @@ import { DBColor } from "@/types/supabase"
 import { isCurrentUserAdmin } from "@/lib/auth"
 import { toast } from "sonner"
 import { ColorService } from "@/app/api/color/service"
+import { useColors } from "@/app/contexts/ColorsContext"
+
 export default function ColorsAdminPage() {
-  const [colors, setColors] = useState<DBColor[]>([])
-  const [loading, setLoading] = useState(true)
+  const { colors, loading, refreshColors } = useColors()
   const [isAdmin, setIsAdmin] = useState(false)
   const [newColor, setNewColor] = useState({
     name: "",
     hex_value: "#000000",
     tailwind_key: ""
-
   })
   const router = useRouter()
   const unmountedRef = useRef(false)
-
-  // Use memoized fetchColors function to prevent unnecessary re-renders
-  const fetchColors = useCallback(async () => {
-    if (unmountedRef.current) return
-    
-    setLoading(true)
-    try {
-      const colors = await ColorService.getColors()
-    
-      if (!unmountedRef.current) {
-        setColors(colors || [])
-      }
-    } catch (error) {
-      console.error('Error fetching colors:', error)
-      if (!unmountedRef.current) {
-        toast.error('Failed to load colors')
-      }
-    } finally {
-      if (!unmountedRef.current) {
-        setLoading(false)
-      }
-    }
-  }, [])
 
   useEffect(() => {
     unmountedRef.current = false
@@ -63,7 +40,7 @@ export default function ColorsAdminPage() {
         return
       }
       
-      fetchColors()
+      // Colors are automatically loaded by the context
     }
     
     checkAccess()
@@ -72,18 +49,15 @@ export default function ColorsAdminPage() {
     return () => {
       unmountedRef.current = true
     }
-  }, [router, fetchColors])
+  }, [router])
 
   const handleAddColor = async () => {
     if (!newColor.name || !newColor.hex_value || !newColor.tailwind_key) {
       toast.error('Please fill in all fields')
       return
     }
-
-
     
     try {
-
       await ColorService.createColor(newColor as DBColor)
       toast.success('Color added successfully')
       setNewColor({
@@ -91,7 +65,7 @@ export default function ColorsAdminPage() {
         hex_value: "#000000",
         tailwind_key: ""
       })
-      fetchColors()
+      refreshColors()
     } catch (error) {
       console.error('Error adding color:', error)
       toast.error('Failed to add color')
@@ -108,7 +82,7 @@ export default function ColorsAdminPage() {
       if (error) throw error
       
       toast.success('Color deleted successfully')
-      fetchColors()
+      refreshColors()
     } catch (error) {
       console.error('Error deleting color:', error)
       toast.error('Failed to delete color')
@@ -222,7 +196,7 @@ export default function ColorsAdminPage() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={fetchColors}>
+          <Button variant="outline" onClick={refreshColors}>
             Refresh
           </Button>
         </CardFooter>

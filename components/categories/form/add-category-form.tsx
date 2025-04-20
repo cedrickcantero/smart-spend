@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { DBCategory, DBColor } from "@/types/supabase"
+import { useColors } from "@/app/contexts/ColorsContext"
 
 const CATEGORY_ICONS = [
   "🍔",
@@ -33,7 +34,7 @@ const CATEGORY_ICONS = [
   "💵",
 ]
 
-// Default colors in case API fetch fails
+// Default colors in case context isn't loaded yet
 const DEFAULT_COLORS = [
   { id: "1", name: "Red", hex_value: "#ef4444", tailwind_key: "red-500", created_at: "", updated_at: "" },
   { id: "2", name: "Blue", hex_value: "#3b82f6", tailwind_key: "blue-500", created_at: "", updated_at: "" },
@@ -53,47 +54,27 @@ export function AddCategoryForm({ category, onSubmit, onCancel }: AddCategoryFor
   const [icon, setIcon] = useState<string | null>(category?.icon || "🍔")
   const [colorId, setColorId] = useState<string | null>(category?.color || null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [colors, setColors] = useState<DBColor[]>(DEFAULT_COLORS)
-  const [isLoadingColors, setIsLoadingColors] = useState(true)
-
-  // Fetch colors from the API
+  
+  // Use colors from the context
+  const { colors, loading: isLoadingColors } = useColors()
+  
+  // Set initial color when colors are loaded
   useEffect(() => {
-    const fetchColors = async () => {
-      try {
-        setIsLoadingColors(true)
-        const response = await fetch('/api/color');
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch colors');
-        }
-        
-        const data = await response.json();
-        
-        if (data && Array.isArray(data)) {
-          setColors(data);
-          
-          // If we don't have a color selected yet, set the first one
-          if (!colorId && data.length > 0) {
-            setColorId(data[0].id);
-          }
-          
-          // If category has a hex value instead of an ID, find the matching color
-          if (category?.color && !category.color.startsWith('-')) {
-            const matchingColor = data.find(c => c.hex_value === category.color);
-            if (matchingColor) {
-              setColorId(matchingColor.id);
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching colors:', error);
-      } finally {
-        setIsLoadingColors(false);
+    if (colors.length > 0) {
+      // If we don't have a color selected yet, set the first one
+      if (!colorId) {
+        setColorId(colors[0].id);
       }
-    };
-    
-    fetchColors();
-  }, [category]);
+          
+      // If category has a hex value instead of an ID, find the matching color
+      if (category?.color && !category.color.startsWith('-')) {
+        const matchingColor = colors.find(c => c.hex_value === category.color);
+        if (matchingColor) {
+          setColorId(matchingColor.id);
+        }
+      }
+    }
+  }, [colors, category, colorId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,9 +85,7 @@ export function AddCategoryForm({ category, onSubmit, onCancel }: AddCategoryFor
 
     setIsSubmitting(true)
 
-    try {
-      // Find the selected color's hex value for display purposes
-      
+    try {      
       if (category) {
         // Update existing category
         await onSubmit({
@@ -127,6 +106,9 @@ export function AddCategoryForm({ category, onSubmit, onCancel }: AddCategoryFor
       setIsSubmitting(false)
     }
   }
+  
+  // Use the colors from context, falling back to defaults if not loaded yet
+  const colorOptions = colors.length > 0 ? colors : DEFAULT_COLORS;
   
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -168,7 +150,7 @@ export function AddCategoryForm({ category, onSubmit, onCancel }: AddCategoryFor
             onValueChange={setColorId} 
             className="grid grid-cols-3 gap-2"
           >
-            {colors.map((colorOption) => (
+            {colorOptions.map((colorOption) => (
               <div key={colorOption.id} className="flex items-center space-x-2">
                 <RadioGroupItem value={colorOption.id} id={colorOption.id} className="sr-only" />
                 <Label

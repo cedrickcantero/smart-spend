@@ -1,18 +1,25 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
-import { DBCategory, DBCategoryInsert } from "@/types/supabase"
+import { DBCategory, DBCategoryInsert, DBColor } from "@/types/supabase"
 import { CategoriesService } from "@/app/api/categories/service"
 import { useToast } from "@/hooks/use-toast"
+import { useColors } from "./ColorsContext"
+
+// Define an extended type that includes the colorObj property
+interface CategoryWithColor extends DBCategory {
+  colorObj?: DBColor | null;
+}
 
 interface CategoriesContextType {
-  categories: DBCategory[]
+  categories: CategoryWithColor[]
   loading: boolean
   error: string | null
   refreshCategories: () => Promise<void>
   addCategory: (category: DBCategoryInsert) => Promise<DBCategory>
   updateCategory: (category: DBCategory) => Promise<DBCategory>
   deleteCategory: (id: string) => Promise<void>
+  getCategoryById: (id: string) => CategoryWithColor | undefined
 }
 
 const CategoriesContext = createContext<CategoriesContextType | undefined>(undefined)
@@ -22,6 +29,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
+  const { colors } = useColors()
   
   // Add a map for tracking pending operations
   const [pendingOperations, setPendingOperations] = useState<{
@@ -45,6 +53,20 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const getCategoryById = (id: string): CategoryWithColor | undefined => {
+    const category = categories.find(category => category.id === id);
+    if (!category) return undefined;
+    
+    const colorObj = category.color && colors.length > 0 
+      ? colors.find(color => color.id === category.color) || null
+      : null;
+      
+    return {
+      ...category,
+      colorObj
+    };
   }
 
   const addCategory = async (category: DBCategoryInsert): Promise<DBCategory> => {
@@ -192,18 +214,37 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // Enhance categories with color objects directly from the context
+  const categoriesWithColorInfo: CategoryWithColor[] = categories.map(category => {
+    // If the category already has a colorObj property, we need to cast it
+    if ('colorObj' in category) {
+      return category as CategoryWithColor;
+    }
+    
+    // Otherwise, look up the color from the colors context
+    const colorObj = category.color && colors.length > 0 
+      ? colors.find(color => color.id === category.color) || null
+      : null;
+      
+    return {
+      ...category,
+      colorObj
+    };
+  });
+
   useEffect(() => {
     refreshCategories()
   }, [])
 
   const value = {
-    categories,
+    categories: categoriesWithColorInfo,
     loading,
     error,
     refreshCategories,
     addCategory,
     updateCategory,
     deleteCategory,
+    getCategoryById
   }
 
   return (
