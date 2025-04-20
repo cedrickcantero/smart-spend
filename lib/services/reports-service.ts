@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, format, parseISO, subYears } from 'date-fns';
+import { ColorService } from './color-service';
 
 export interface CategoryBreakdown {
   name: string;
@@ -254,13 +255,39 @@ export const ReportsService = {
 
     // Group by category
     const categoryTotals: Record<string, { total: number; color: string }> = {};
+
+    const { data: colors, error: colorError } = await ColorService.getColors(supabase);
+
+    if (colorError) {
+      console.error('Error fetching colors:', colorError);
+      throw colorError;
+    }
+
+    console.log("colors", colors)
+    console.log("expenses", expenses)
+
+    // Create a color lookup map for quick access
+    const colorMap: Record<string, string> = {};
+    if (colors) {
+      colors.forEach(color => {
+        colorMap[color.id] = color.hex_value;
+      });
+    }
     
     expenses.forEach(expense => {
       const category = expense.categories;
       const categoryName = category ? category.name : 'Other';
-      const categoryColor = category 
-        ? (category.color || categoryColors[categoryName.toLowerCase()] || '#94a3b8')
-        : '#94a3b8';
+      
+      // Get the color using the ID from the color map, or fall back to defaults
+      let categoryColor = '#94a3b8'; // Default slate color
+      
+      if (category) {
+        if (category.color && colorMap[category.color]) {
+          categoryColor = colorMap[category.color];
+        } else if (categoryColors[categoryName.toLowerCase()]) {
+          categoryColor = categoryColors[categoryName.toLowerCase()];
+        }
+      }
       
       if (!categoryTotals[categoryName]) {
         categoryTotals[categoryName] = { total: 0, color: categoryColor };

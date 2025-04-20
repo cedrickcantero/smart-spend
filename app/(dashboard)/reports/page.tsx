@@ -199,7 +199,7 @@ export default function ReportsPage() {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, "Amount"]} />
+                      <Tooltip formatter={(value: number) => [`${formatMoney(value, userCurrency)}`, "Amount"]} />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>
