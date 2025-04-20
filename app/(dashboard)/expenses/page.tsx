@@ -1,19 +1,20 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { DBExpense, DBCategory } from "@/types/supabase"
-import { ExpenseService } from "@/app/api/expense/service"
-import { CategoriesService } from "@/app/api/categories/service"
-import { CustomDataTable } from "@/components/common/custom-data-table"
+import { useCallback, useMemo, useState } from "react"
+import { DBExpense } from "@/types/supabase"
 import { DateRange } from "react-day-picker"
 import { AddExpenseModal } from "@/components/expense/modals/add-expense-modal"
 import { EditExpenseModal } from "@/components/expense/modals/edit-expense-modal"
 import { DeleteExpenseModal } from "@/components/expense/modals/delete-expense-modal"
+import { CustomDataTable } from "@/components/common/custom-data-table"
+import { useExpenses } from "@/app/contexts/ExpenseContext"
+import { useCategories } from "@/app/contexts/CategoriesContext"
 
 export default function ExpensesPage() {
+  const { expenses, loading, refreshExpenses, filterExpensesByCategory, filterExpensesByDateRange } = useExpenses()
+  const { categories } = useCategories()
+  
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [expenses, setExpenses] = useState<DBExpense[]>([])
-  const [categories, setCategories] = useState<DBCategory[]>([])
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
   const [openAddExpenseModal, setOpenAddExpenseModal] = useState(false)
   const [openEditExpenseModal, setOpenEditExpenseModal] = useState(false)
@@ -21,27 +22,28 @@ export default function ExpensesPage() {
   const [openDeleteExpenseModal, setOpenDeleteExpenseModal] = useState(false)
   const [selectedExpenseToDelete, setSelectedExpenseToDelete] = useState<DBExpense | null>(null)
 
-  const fetchExpenses = useCallback(async () => {
-    try {
-      const expenses = await ExpenseService.getExpenses();
-      setExpenses(expenses);
-    } catch (error) {
-      console.error('Error fetching expenses:', error);
+  // Filter expenses based on selected filters
+  const filteredExpenses = useMemo(() => {
+    let result = [...expenses];
+    
+    // Apply category filter
+    if (selectedCategory) {
+      result = result.filter(expense => expense.category_id === selectedCategory);
     }
-  }, [])
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      const categories = await CategoriesService.getCategories();
-      setCategories(categories);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
+    
+    // Apply date range filter
+    if (dateRange && dateRange.from) {
+      const startDate = dateRange.from;
+      const endDate = dateRange.to || startDate;
+      
+      result = result.filter(expense => {
+        const expenseDate = new Date(expense.date);
+        return expenseDate >= startDate && expenseDate <= endDate;
+      });
     }
-  }, [])
-
-  useEffect(() => {
-    Promise.all([fetchExpenses(), fetchCategories()]);
-  }, [fetchExpenses, fetchCategories])
+    
+    return result;
+  }, [expenses, selectedCategory, dateRange]);
 
   const handleDeleteExpense = useCallback((expense: DBExpense) => {
     setSelectedExpenseToDelete(expense)
@@ -113,14 +115,15 @@ export default function ExpensesPage() {
               <div className="pb-2">
                 <h2 className="text-2xl font-semibold">Expenses</h2>
                 <p className="text-sm text-muted-foreground">
-                  {expenses.length} expenses found
-                  {selectedCategory && ` in ${selectedCategory}`}
+                  {filteredExpenses.length} expenses found
+                  {selectedCategory && categories.find(c => c.id === selectedCategory) && 
+                    ` in ${categories.find(c => c.id === selectedCategory)?.name}`}
                 </p>
               </div>
               <div>
                 <div className="rounded-md border p-4">
                   <CustomDataTable
-                    data={expenses}
+                    data={filteredExpenses}
                     columns={expenseColumns}
                     actions={getRowActions}
                     title="Expenses"
@@ -163,7 +166,7 @@ export default function ExpensesPage() {
           open={openAddExpenseModal} 
           onOpenChange={setOpenAddExpenseModal} 
           categories={categories}
-          fetchExpenses={fetchExpenses}
+          fetchExpenses={refreshExpenses}
         />
       )}
       {selectedExpense && categories.length > 0 && (
@@ -172,7 +175,7 @@ export default function ExpensesPage() {
           onOpenChange={setOpenEditExpenseModal} 
           expense={selectedExpense}
           categories={categories}
-          fetchExpenses={fetchExpenses}
+          fetchExpenses={refreshExpenses}
         />
       )}
       {selectedExpenseToDelete && categories.length > 0 && (
@@ -180,7 +183,7 @@ export default function ExpensesPage() {
           open={openDeleteExpenseModal}
           onOpenChange={setOpenDeleteExpenseModal}
           expense={selectedExpenseToDelete}
-          fetchExpenses={fetchExpenses}
+          fetchExpenses={refreshExpenses}
         />
       )}
     </div>
