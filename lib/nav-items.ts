@@ -8,7 +8,9 @@ import {
   ReceiptText,
   Repeat,
   CreditCard,
-  Wallet} from "lucide-react";
+  Wallet,
+  Palette,
+  ShieldCheck} from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 export interface SubMenuItem {
@@ -26,28 +28,28 @@ export interface SidebarItem {
 }
 
 export const sidebarItems: SidebarItem[] = [
-  // {
-  //   title: "Admin",
-  //   icon: ShieldCheck,
-  //   permission: ["admin"],
-  //   submenu: [
-  //     {
-  //       title: "Colors",
-  //       url: "/admin/colors",
-  //       icon: Palette,
-  //     },
-  //     {
-  //       title: "Users",
-  //       url: "/admin/users",
-  //       icon: Users,
-  //     },
-  //     {
-  //       title: "Settings",
-  //       url: "/admin/settings",
-  //       icon: Settings,
-  //     }
-  //   ],
-  // },
+  {
+    title: "Admin",
+    icon: ShieldCheck,
+    permission: ["admin"],
+    submenu: [
+      {
+        title: "Colors",
+        url: "/admin/colors",
+        icon: Palette,
+      },
+      // {
+      //   title: "Users",
+      //   url: "/admin/users",
+      //   icon: Users,
+      // },
+      // {
+      //   title: "Settings",
+      //   url: "/admin/settings",
+      //   icon: Settings,
+      // }
+    ],
+  },
   {
     title: "Dashboard",
     url: "/dashboard",

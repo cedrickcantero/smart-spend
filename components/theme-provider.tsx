@@ -6,8 +6,7 @@ import {
   type ThemeProviderProps,
   useTheme
 } from 'next-themes'
-import { useAuth } from '@/lib/auth-context'
-import { UserSettings } from '@/types/userSettings'
+import { useUserSettings } from '@/app/contexts/UserSettingsContext'
 
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
@@ -19,14 +18,11 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
 
 function ThemeSync({ children }: { children: React.ReactNode }) {
   const { setTheme } = useTheme()
-  const { userSettings } = useAuth()
+  const { userSettings } = useUserSettings()
   
   React.useEffect(() => {
-    if (userSettings) {
-      const settings = userSettings as unknown as UserSettings
-      if (settings.preferences?.theme) {
-        setTheme(settings.preferences.theme)
-      }
+    if (userSettings?.preferences?.theme) {
+      setTheme(userSettings.preferences.theme)
     }
   }, [userSettings, setTheme])
   
