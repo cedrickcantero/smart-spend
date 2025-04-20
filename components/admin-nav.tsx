@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { isCurrentUserAdmin } from "@/lib/auth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Palette} from "lucide-react"
+import { Palette, MessageSquare} from "lucide-react"
 
 export function AdminNav() {
   const [isAdmin, setIsAdmin] = useState(false)
@@ -42,6 +42,12 @@ export function AdminNav() {
       icon: Palette,
       description: "Manage system colors"
     },
+    {
+      name: "Feedback",
+      href: "/admin/feedback",
+      icon: MessageSquare,
+      description: "View user feedback"
+    },
     // {
     //   name: "Users",
     //   href: "/admin/users",
@@ -65,7 +71,7 @@ export function AdminNav() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           {adminNavItems.map((item) => (
             <Link 
               key={item.href} 

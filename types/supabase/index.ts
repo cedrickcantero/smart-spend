@@ -14,6 +14,7 @@ export type DBSavingsGoal = Database['public']['Tables']['savings_goals']['Row']
 export type DBSubscription = Database['public']['Tables']['subscriptions']['Row']
 export type DBUserSettings = Database['public']['Tables']['user_settings']['Row'];
 export type DBIncome = Database['public']['Tables']['income']['Row']
+export type DBFeedback = Database['public']['Tables']['feedback']['Row']
 
 
 // Insert types
@@ -26,6 +27,7 @@ export type DBRecurringBillInsert = Database['public']['Tables']['recurring_bill
 export type DBSavingsGoalInsert = Database['public']['Tables']['savings_goals']['Insert']
 export type DBSubscriptionInsert = Database['public']['Tables']['subscriptions']['Insert']
 export type DBUserSettingsInsert = Database['public']['Tables']['user_settings']['Insert'];
+export type DBFeedbackInsert = Database['public']['Tables']['feedback']['Insert']
 
 // Update types
 export type DBBudgetUpdate = Database['public']['Tables']['budgets']['Update']
@@ -37,6 +39,7 @@ export type DBRecurringBillUpdate = Database['public']['Tables']['recurring_bill
 export type DBSavingsGoalUpdate = Database['public']['Tables']['savings_goals']['Update']
 export type DBSubscriptionUpdate = Database['public']['Tables']['subscriptions']['Update']
 export type DBUserSettingsUpdate = Database['public']['Tables']['user_settings']['Update'];
+export type DBFeedbackUpdate = Database['public']['Tables']['feedback']['Update']
 
 // Client-side types (without fields added by the server)
 export type ClientSubscriptionInsert = Omit<DBSubscriptionInsert, 'user_id'>;

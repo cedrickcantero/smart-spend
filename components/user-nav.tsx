@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { LogOut, Settings, ShieldCheck } from "lucide-react"
+import { LogOut, Settings, ShieldCheck, MessageSquare } from "lucide-react"
 import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -20,6 +20,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { isCurrentUserAdmin } from "@/lib/auth"
 import { UserSettings } from "@/types/userSettings"
+import { FeedbackForm } from "@/components/feedback/feedback-form"
 
 interface ProfileData {
   firstName: string;
@@ -44,6 +45,7 @@ export function UserNav() {
   const { toast } = useToast()
   const [avatarUrl, setAvatarUrl] = useState<string>("")
   const [profileData, setProfileData] = useState<ProfileData>(defaultProfileData)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
 
   useEffect(() => {
@@ -121,8 +123,15 @@ export function UserNav() {
     router.push("/admin/colors")
   }
 
+  const openFeedback = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setFeedbackOpen(true)
+  }
+
   return (
     <div className="flex items-center gap-2">
+      <FeedbackForm open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -145,6 +154,10 @@ export function UserNav() {
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
               <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={openFeedback}>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              <span>Send Feedback</span>
             </DropdownMenuItem>
             {isAdmin && (
               <DropdownMenuItem onClick={goToAdmin}>
