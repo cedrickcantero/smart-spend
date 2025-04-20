@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
-import { useAuth } from "@/lib/auth-context"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 import { useToast } from "@/hooks/use-toast"
 import { UserSettings } from "@/types/userSettings"
 interface NotificationSettingsData {
@@ -51,31 +51,29 @@ const defaultNotificationSettings: NotificationSettingsData = {
 };
 
 export function NotificationSettings() {
-  const { userSettings, updateUserSettings } = useAuth()
+  const { userSettings, updateUserSettings } = useUserSettings()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [notificationData, setNotificationData] = useState<NotificationSettingsData>(defaultNotificationSettings)
   
   useEffect(() => {
-    if (userSettings && typeof userSettings === 'object' && userSettings.settings) {
-      const settings = userSettings.settings as unknown as UserSettings;
-      
+    if (userSettings) {
       const newNotificationData: NotificationSettingsData = {
         email: {
-          productUpdates: Boolean(settings.email?.productUpdates ?? true),
-          marketingEmails: Boolean(settings.email?.marketingEmails ?? false),
-          tipsAndTutorials: Boolean(settings.email?.tipsAndTutorials ?? true)
+          productUpdates: Boolean(userSettings.email?.productUpdates ?? true),
+          marketingEmails: Boolean(userSettings.email?.marketingEmails ?? false),
+          tipsAndTutorials: Boolean(userSettings.email?.tipsAndTutorials ?? true)
         },
         notifications: {
           types: {
-            budgetAlerts: Boolean(settings.notifications?.types?.budgetAlerts ?? true),
-            billReminders: Boolean(settings.notifications?.types?.billReminders ?? true),
-            weeklyReports: Boolean(settings.notifications?.types?.weeklyReports ?? true),
-            unusualActivity: Boolean(settings.notifications?.types?.unusualActivity ?? true)
+            budgetAlerts: Boolean(userSettings.notifications?.types?.budgetAlerts ?? true),
+            billReminders: Boolean(userSettings.notifications?.types?.billReminders ?? true),
+            weeklyReports: Boolean(userSettings.notifications?.types?.weeklyReports ?? true),
+            unusualActivity: Boolean(userSettings.notifications?.types?.unusualActivity ?? true)
           },
           channels: {
-            pushNotifications: Boolean(settings.notifications?.channels?.pushNotifications ?? true),
-            emailNotifications: Boolean(settings.notifications?.channels?.emailNotifications ?? true)
+            pushNotifications: Boolean(userSettings.notifications?.channels?.pushNotifications ?? true),
+            emailNotifications: Boolean(userSettings.notifications?.channels?.emailNotifications ?? true)
           }
         }
       };
