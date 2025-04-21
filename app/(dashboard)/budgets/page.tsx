@@ -398,7 +398,7 @@ export default function BudgetsPage() {
                         className="h-2"
                         indicatorClassName={getProgressColor(
                           budget.status || 'default', 
-                          budget.is_income, 
+                          budget.is_income || false, 
                           budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0
                         )}
                       />
@@ -540,7 +540,7 @@ export default function BudgetsPage() {
                         className="h-2"
                         indicatorClassName={getProgressColor(
                           budget.status || 'default', 
-                          budget.is_income, 
+                          budget.is_income || false, 
                           budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0
                         )}
                       />
@@ -647,7 +647,7 @@ export default function BudgetsPage() {
                         className="h-2"
                         indicatorClassName={getProgressColor(
                           budget.status || 'default', 
-                          budget.is_income, 
+                          budget.is_income || false, 
                           budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0
                         )}
                       />

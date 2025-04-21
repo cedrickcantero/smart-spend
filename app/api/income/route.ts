@@ -42,3 +42,21 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to create income' }, { status: 500 });
     }
 } 
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const userId = await getAuthenticatedUserId(request);
+        if (!userId) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const supabase = await createClient();
+        const incomeData = await request.json();
+
+        const income = await IncomeService.deleteIncome(incomeData, supabase);
+        return NextResponse.json(income);
+    } catch (error) {
+        console.error('Error deleting income:', error);
+        return NextResponse.json({ error: 'Failed to delete income' }, { status: 500 });
+    }
+}

@@ -9,8 +9,10 @@ import {
   Repeat,
   CreditCard,
   Wallet,
+  ShieldCheck,
   Palette,
-  ShieldCheck} from "lucide-react";
+  MessageSquare,
+} from "lucide-react";
 import { LucideIcon } from "lucide-react";
 
 export interface SubMenuItem {
@@ -48,6 +50,11 @@ export const sidebarItems: SidebarItem[] = [
       //   url: "/admin/settings",
       //   icon: Settings,
       // }
+      {
+        title: "Feedback",
+        url: "/admin/feedback",
+        icon: MessageSquare,
+      }
     ],
   },
   {
