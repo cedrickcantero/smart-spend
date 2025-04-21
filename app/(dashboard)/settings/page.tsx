@@ -1,11 +1,10 @@
 "use client"
 
 import type React from "react"
-import { Bell, Globe, Lock, User } from "lucide-react"
+import { Globe, Lock, User } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {ProfileSettings} from "@/components/settings/profile-settings"
 import {PreferencesSettings} from "@/components/settings/preferences-settings"
-import {NotificationSettings} from "@/components/settings/notification-settings"
 import {SecuritySettings} from "@/components/settings/security-settings"
 
 export default function SettingsPage() {
@@ -16,7 +15,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="profile" className="gap-1">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Profile</span>
@@ -25,10 +24,10 @@ export default function SettingsPage() {
             <Globe className="h-4 w-4" />
             <span className="hidden sm:inline">Preferences</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-1">
+          {/* <TabsTrigger value="notifications" className="gap-1">
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">Notifications</span>
-          </TabsTrigger>
+          </TabsTrigger> */}
           {/* <TabsTrigger value="payment" className="gap-1">
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Payment</span>
@@ -47,9 +46,9 @@ export default function SettingsPage() {
           <PreferencesSettings />
         </TabsContent>
 
-        <TabsContent value="notifications" className="mt-4">
+        {/* <TabsContent value="notifications" className="mt-4">
           <NotificationSettings />
-        </TabsContent>
+        </TabsContent> */}
 
         {/* <TabsContent value="payment" className="mt-4">
           <PaymentSettings />

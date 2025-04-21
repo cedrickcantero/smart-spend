@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/app/contexts/AuthContext"
 
 export default function RegisterPage() {
   const router = useRouter()

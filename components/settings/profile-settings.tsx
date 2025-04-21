@@ -1,14 +1,15 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Save, Download, LogOut } from "lucide-react"
+import { LogOut, Save} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/app/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 import { UserSettings } from "@/types/userSettings"
 
 interface ProfileData {
@@ -26,7 +27,8 @@ const defaultProfileData: ProfileData = {
 };
 
 export function ProfileSettings() {
-  const { user, signOut, userSettings, updateUserProfile, updateUserAvatar } = useAuth()
+  const { user, signOut } = useAuth()
+  const { userSettings, updateUserProfile, updateUserAvatar } = useUserSettings()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -259,7 +261,7 @@ export function ProfileSettings() {
           </form>
         </CardContent>
       </Card>
-
+{/* 
       <Card>
         <CardHeader>
           <CardTitle>Export Your Data</CardTitle>
@@ -294,7 +296,7 @@ export function ProfileSettings() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       <Card>
         <CardHeader>
@@ -302,7 +304,7 @@ export function ProfileSettings() {
           <CardDescription>Manage your account settings</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-lg border p-4 border-destructive/20">
+          {/* <div className="rounded-lg border p-4 border-destructive/20">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium text-destructive">Delete Account</h3>
@@ -310,7 +312,7 @@ export function ProfileSettings() {
               </div>
               <Button variant="destructive">Delete Account</Button>
             </div>
-          </div>
+          </div> */}
 
           <div className="rounded-lg border p-4">
             <div className="flex items-center justify-between">

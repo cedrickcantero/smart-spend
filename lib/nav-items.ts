@@ -9,10 +9,8 @@ import {
   Repeat,
   CreditCard,
   Wallet,
-  Settings,
   ShieldCheck,
   Palette,
-  Users,
   MessageSquare,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
@@ -51,7 +49,7 @@ export const sidebarItems: SidebarItem[] = [
       //   title: "Settings",
       //   url: "/admin/settings",
       //   icon: Settings,
-      // },
+      // }
       {
         title: "Feedback",
         url: "/admin/feedback",

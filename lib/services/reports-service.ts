@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, format, parseISO, subYears } from 'date-fns';
-import { ColorService } from './color-service';
+import { ColorsService } from './colors-service';
 
 export interface CategoryBreakdown {
   name: string;
@@ -256,20 +256,20 @@ export const ReportsService = {
     // Group by category
     const categoryTotals: Record<string, { total: number; color: string }> = {};
 
-    const { data: colors, error: colorError } = await ColorService.getColors(supabase);
+    const colorsResult = await ColorsService.getColors(supabase);
+    
+    // Check if colors is an error object or color array
+    const colors = 'error' in colorsResult ? [] : colorsResult;
 
-    if (colorError) {
-      console.error('Error fetching colors:', colorError);
-      throw colorError;
+    if ('error' in colorsResult) {
+      console.error('Error fetching colors:', colorsResult.error);
+      throw colorsResult.error;
     }
-
-    console.log("colors", colors)
-    console.log("expenses", expenses)
 
     // Create a color lookup map for quick access
     const colorMap: Record<string, string> = {};
     if (colors) {
-      colors.forEach(color => {
+      colors.forEach((color: {id: string, hex_value: string}) => {
         colorMap[color.id] = color.hex_value;
       });
     }

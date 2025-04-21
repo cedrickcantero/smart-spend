@@ -7,13 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AddEventModal } from "@/components/calendar/modals/add-event-modal"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/app/contexts/AuthContext"
 import { CalendarService } from "@/app/api/calendar/service"
 import { DBCalendarEvent, DBCategory, DBColor } from "@/types/supabase"
 import { EditEventModal } from "@/components/calendar/modals/edit-event-modal"
 import { CategoriesService } from "@/app/api/categories/service"
 import { formatMoney } from "@/lib/utils"
-import { UserSettings } from "@/types/userSettings"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 
 // Extended type that includes colorObj property
 interface CalendarEventWithColor extends DBCalendarEvent {
@@ -31,8 +31,8 @@ export default function CalendarPage() {
   const [editEventOpen, setEditEventOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithColor | null>(null)
   const [categories, setCategories] = useState<DBCategory[]>([])
-  const { user, userSettings: dbUserSettings } = useAuth()
-  const userSettings = dbUserSettings as unknown as UserSettings
+  const { user } = useAuth()
+  const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
 
   const fetchEvents = async () => {

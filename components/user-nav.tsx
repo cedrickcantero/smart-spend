@@ -16,10 +16,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/app/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
 import { isCurrentUserAdmin } from "@/lib/auth"
 import { UserSettings } from "@/types/userSettings"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 import { FeedbackForm } from "@/components/feedback/feedback-form"
 
 interface ProfileData {
@@ -39,12 +40,13 @@ const defaultProfileData: ProfileData = {
 
 
 export function UserNav() {
-  const { user, signOut, userSettings } = useAuth()
+  const { user, signOut } = useAuth()
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   const [avatarUrl, setAvatarUrl] = useState<string>("")
   const [profileData, setProfileData] = useState<ProfileData>(defaultProfileData)
+  const { userSettings } = useUserSettings()
   const [feedbackOpen, setFeedbackOpen] = useState(false)
 
 

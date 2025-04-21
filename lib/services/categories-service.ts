@@ -10,33 +10,40 @@ interface CategoryWithColor extends DBCategory {
 export const CategoriesService = {
   async getCategories(userId: string, supabase: SupabaseClient<Database>): Promise<CategoryWithColor[] | { error: string }> {
     try {
-      // Fetch categories
-      const { data: categories, error: categoriesError } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('user_id', userId);
+      // Fetch categories with their color information in a single query
+      // We're using a more efficient approach - fetch all categories and colors in parallel
+      const [categoriesResult, colorsResult] = await Promise.all([
+        supabase
+          .from('categories')
+          .select('*')
+          .eq('user_id', userId),
+        supabase
+          .from('colors')
+          .select('*')
+      ]);
 
-      if (categoriesError) {
-        throw categoriesError;
+      if (categoriesResult.error) {
+        throw categoriesResult.error;
       }
 
-      if (!categories || categories.length === 0) {
+      const categories = categoriesResult.data || [];
+      
+      if (categories.length === 0) {
         return [];
       }
 
-      // Fetch all colors to map to the categories
-      const { data: colors, error: colorsError } = await supabase
-        .from('colors')
-        .select('*');
+      // Get colors (handle potential error but don't fail the whole request)
+      const colors = colorsResult.error ? [] : (colorsResult.data || []);
+      
+      // Create a colors lookup map for faster access
+      const colorsMap = new Map();
+      colors.forEach(color => {
+        colorsMap.set(color.id, color);
+      });
 
-      if (colorsError) {
-        throw colorsError;
-      }
-
-      // Map color information to each category
+      // Map color information to each category using the lookup map
       const categoriesWithColors = categories.map(category => {
-        // Find the color object that matches the category's color ID
-        const colorObj = category.color ? colors?.find(c => c.id === category.color) : null;
+        const colorObj = category.color ? colorsMap.get(category.color) || null : null;
         
         return {
           ...category,
@@ -129,8 +136,11 @@ export const CategoriesService = {
 
         if (colorError) {
           console.error('Error fetching color:', colorError);
-          // Continue even if color fetch fails
-        } else if (color) {
+          // Continue even if color fetch fails, just return the category without color
+          return { ...category, colorObj: null } as CategoryWithColor;
+        } 
+        
+        if (color) {
           return {
             ...category,
             colorObj: color
@@ -138,7 +148,7 @@ export const CategoriesService = {
         }
       }
 
-      return category as CategoryWithColor;
+      return { ...category, colorObj: null } as CategoryWithColor;
     } catch (error) {
       console.error('Error fetching category by ID:', error);
       return { error: error instanceof Error ? error.message : 'Unknown error' };
