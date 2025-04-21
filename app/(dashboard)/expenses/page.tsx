@@ -22,16 +22,13 @@ export default function ExpensesPage() {
   const [openDeleteExpenseModal, setOpenDeleteExpenseModal] = useState(false)
   const [selectedExpenseToDelete, setSelectedExpenseToDelete] = useState<DBExpense | null>(null)
 
-  // Filter expenses based on selected filters
   const filteredExpenses = useMemo(() => {
     let result = [...expenses];
     
-    // Apply category filter
     if (selectedCategory) {
       result = result.filter(expense => expense.category_id === selectedCategory);
     }
     
-    // Apply date range filter
     if (dateRange && dateRange.from) {
       const startDate = dateRange.from;
       const endDate = dateRange.to || startDate;

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -24,7 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { DBBudget } from "@/types/supabase"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-
+import { useCategories } from "@/app/contexts/CategoriesContext"
 interface EditBudgetModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -35,77 +35,14 @@ interface EditBudgetModalProps {
 export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }: EditBudgetModalProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [categories, setCategories] = useState<{ id: string; name: string; icon: string | null }[]>([])
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
-
-  // Form state
+  const { categories } = useCategories()
   const [budgetName, setBudgetName] = useState("")
   const [categoryId, setCategoryId] = useState("")
   const [amount, setAmount] = useState("")
   const [period, setPeriod] = useState("monthly")
   const [startDate, setStartDate] = useState<Date>(new Date())
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
-  const [icon, setIcon] = useState("")
   const [isIncome, setIsIncome] = useState(false)
-
-  // Fetch categories when modal opens and populate form with budget data
-  useEffect(() => {
-    if (open) {
-      fetchCategories()
-      populateFormWithBudgetData()
-    }
-  }, [open, budget])
-
-  const populateFormWithBudgetData = () => {
-    setBudgetName(budget.budget_name || "")
-    setCategoryId(budget.category_id || "")
-    setAmount(budget.amount.toString())
-    setPeriod(budget.period || "monthly")
-    setIsIncome(budget.is_income || false)
-    
-    if (budget.start_date) {
-      setStartDate(new Date(budget.start_date))
-    }
-    
-    if (budget.end_date) {
-      setEndDate(new Date(budget.end_date))
-    } else {
-      setEndDate(undefined)
-    }
-    
-    setIcon(budget.icon || "")
-  }
-
-  const fetchCategories = async () => {
-    setIsLoadingCategories(true)
-    try {
-      const response = await fetch('/api/categories')
-      const data = await response.json()
-      
-      // Convert from record to array
-      if (typeof data === 'object' && !Array.isArray(data)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const categoriesArray = Object.entries(data).map(([id, details]: [string, any]) => ({
-          id,
-          name: details.name,
-          icon: details.icon
-        }))
-        setCategories(categoriesArray)
-      } else if (Array.isArray(data)) {
-        // If data is already an array
-        setCategories(data)
-      }
-    } catch (error) {
-      console.error("Error fetching categories:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load categories. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoadingCategories(false)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -116,10 +53,8 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
         throw new Error("Please fill in all required fields")
       }
 
-      // Find the selected category to get its icon
       const selectedCategory = categories.find((c) => c.id === categoryId)
       
-      // Update the budget
       await BudgetService.updateBudget({
         id: budget.id,
         budget_name: budgetName || `${selectedCategory?.name || 'Unnamed'} Budget`,
@@ -128,7 +63,7 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
         period,
         start_date: format(startDate, 'yyyy-MM-dd'),
         end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
-        icon: icon || selectedCategory?.icon || "📦",
+        icon: selectedCategory?.icon || "📦",
         is_income: isIncome
       });
 
@@ -199,7 +134,7 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
               </Label>
               <Select value={categoryId} onValueChange={setCategoryId} required>
                 <SelectTrigger id="budget-category" className="col-span-3">
-                  <SelectValue placeholder={isLoadingCategories ? "Loading categories..." : "Select category"} />
+                  <SelectValue placeholder={categories.length === 0 ? "Loading categories..." : "Select category"} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
