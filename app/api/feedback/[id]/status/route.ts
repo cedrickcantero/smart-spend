@@ -5,10 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     const userId = await getAuthenticatedUserId(request);
     
     if (!userId) {

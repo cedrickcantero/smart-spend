@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { DBFeedback, DBFeedbackInsert, DBFeedbackUpdate } from '@/types/supabase';
+import { DBFeedback, DBFeedbackInsert } from '@/types/supabase';
 
 export type DBFeedbackInsertClient = Omit<DBFeedbackInsert, 'id' | 'created_at' | 'user_id'>;
 export type DBFeedbackUpdateClient = Partial<Omit<DBFeedback, 'id' | 'created_at' | 'user_id'>>;
@@ -21,7 +21,6 @@ export const FeedbackService = {
   },
   
   async getFeedbackById(id: string, supabase: SupabaseClient): Promise<DBFeedback | { error: string } | null> {
-    // Use two separate queries to avoid the join issue
     const { data: feedbackData, error: feedbackError } = await supabase
       .from('feedback')
       .select('*')
@@ -30,28 +29,10 @@ export const FeedbackService = {
     
     if (feedbackError) {
       if (feedbackError.code === 'PGRST116') {
-        return null; // No rows found
+        return null;
       }
       console.error(`Error fetching feedback with ID ${id}:`, feedbackError);
       return { error: feedbackError.message };
-    }
-    
-    if (feedbackData) {
-      // Get user info from auth
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(feedbackData.user_id);
-      
-      if (userError) {
-        console.error(`Error fetching user data for user ID ${feedbackData.user_id}:`, userError);
-      }
-      
-      return {
-        ...feedbackData,
-        profiles: userData?.user ? {
-          email: userData.user.email || '',
-          first_name: userData.user.user_metadata?.first_name,
-          last_name: userData.user.user_metadata?.last_name
-        } : undefined
-      };
     }
     
     return feedbackData;
@@ -106,7 +87,6 @@ export const FeedbackService = {
   },
   
   async getFeedbackByStatus(status: string, supabase: SupabaseClient): Promise<DBFeedback[] | { error: string }> {
-    // Use a simple query without joins
     const { data: feedbackList, error } = await supabase
       .from('feedback')
       .select('*')
@@ -118,30 +98,6 @@ export const FeedbackService = {
       return { error: error.message };
     }
     
-    // If we have feedback results, fetch the user data separately
-    if (feedbackList && feedbackList.length > 0) {
-      const enrichedFeedback = await Promise.all(
-        feedbackList.map(async (feedback) => {
-          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(feedback.user_id);
-          
-          if (userError) {
-            console.error(`Error fetching user data for user ID ${feedback.user_id}:`, userError);
-            return feedback;
-          }
-          
-          return {
-            ...feedback,
-            profiles: userData?.user ? {
-              email: userData.user.email || '',
-              first_name: userData.user.user_metadata?.first_name,
-              last_name: userData.user.user_metadata?.last_name
-            } : undefined
-          };
-        })
-      );
-      
-      return enrichedFeedback;
-    }
     
     return feedbackList || [];
   },
@@ -159,30 +115,7 @@ export const FeedbackService = {
       return { error: error.message };
     }
     
-    // If we have feedback results, fetch the user data separately
-    if (feedbackList && feedbackList.length > 0) {
-      const enrichedFeedback = await Promise.all(
-        feedbackList.map(async (feedback) => {
-          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(feedback.user_id);
-          
-          if (userError) {
-            console.error(`Error fetching user data for user ID ${feedback.user_id}:`, userError);
-            return feedback;
-          }
-          
-          return {
-            ...feedback,
-            profiles: userData?.user ? {
-              email: userData.user.email || '',
-              first_name: userData.user.user_metadata?.first_name,
-              last_name: userData.user.user_metadata?.last_name
-            } : undefined
-          };
-        })
-      );
-      
-      return enrichedFeedback;
-    }
+
     
     return feedbackList || [];
   },
@@ -198,55 +131,6 @@ export const FeedbackService = {
       console.error('Error fetching all feedback:', error);
       return { error: error.message };
     }
-    
-    // If we have feedback results, fetch the user data separately
-    if (feedbackList && feedbackList.length > 0) {
-      const enrichedFeedback = await Promise.all(
-        feedbackList.map(async (feedback) => {
-          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(feedback.user_id);
-          
-          if (userError) {
-            console.error(`Error fetching user data for user ID ${feedback.user_id}:`, userError);
-            return feedback;
-          }
-          
-          return {
-            ...feedback,
-            profiles: userData?.user ? {
-              email: userData.user.email || '',
-              first_name: userData.user.user_metadata?.first_name,
-              last_name: userData.user.user_metadata?.last_name
-            } : undefined
-          };
-        })
-      );
-      
-      return enrichedFeedback;
-    }
-    
     return feedbackList || [];
   },
-  
-  async getAllUsers(supabase: SupabaseClient): Promise<{ id: string; email: string; first_name?: string; last_name?: string }[] | { error: string }> {
-    try {
-      // The admin.listUsers method requires admin permissions
-      const { data, error } = await supabase.auth.admin.listUsers();
-      
-      if (error) {
-        console.error('Error fetching users:', error);
-        return { error: error.message };
-      }
-      
-      return data.users.map(user => ({
-        id: user.id,
-        email: user.email || '',
-        first_name: user.user_metadata?.first_name,
-        last_name: user.user_metadata?.last_name
-      }));
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      return { error: 'Failed to fetch users' };
-    }
-  }
-};
-
+}

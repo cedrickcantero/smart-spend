@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { CustomDataTable } from "@/components/common/custom-data-table"
-import { Check, AlertTriangle, MessageSquare, Lightbulb, HelpCircle } from "lucide-react"
+import { AlertTriangle, MessageSquare, Lightbulb, HelpCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { isCurrentUserAdmin } from "@/lib/auth"
@@ -11,7 +11,6 @@ import { FeedbackService, FeedbackWithUserInfo } from "@/app/api/feedback/servic
 
 export default function FeedbackPage() {
   const [feedback, setFeedback] = useState<FeedbackWithUserInfo[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
 
@@ -34,14 +33,11 @@ export default function FeedbackPage() {
   }, [router])
 
   const fetchFeedback = async () => {
-    setIsLoading(true)
     try {
       const data = await FeedbackService.getFeedback()
       setFeedback(data || [])
     } catch (error) {
       console.error("Error fetching feedback:", error)
-    } finally {
-      setIsLoading(false)
     }
   }
 

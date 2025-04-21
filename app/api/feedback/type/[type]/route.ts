@@ -5,10 +5,10 @@ import { FeedbackService } from "@/lib/services/feedback-service";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { type: string } }
+  context: { params: Promise<{ type: string }> }
 ) {
   try {
-    const feedbackType = params.type;
+    const { type } = await context.params;
     
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
@@ -17,11 +17,10 @@ export async function GET(
     
     const supabase = await createClient();
     
-    // Use the service instead of direct Supabase query
-    const feedback = await FeedbackService.getFeedbackByType(feedbackType, supabase);
+    const feedback = await FeedbackService.getFeedbackByType(type, supabase);
     return NextResponse.json(feedback);
   } catch (error) {
-    console.error(`Error fetching feedback with type ${params.type}:`, error);
+    console.error(`Error fetching feedback with type:`, error);
     return NextResponse.json(
       { error: "Failed to fetch feedback" },
       { status: 500 }

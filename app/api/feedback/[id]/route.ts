@@ -5,10 +5,10 @@ import { FeedbackService } from "@/lib/services/feedback-service";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
@@ -17,7 +17,6 @@ export async function GET(
     
     const supabase = await createClient();
     
-    // Get specific feedback by ID from the service
     const result = await FeedbackService.getFeedbackById(id, supabase);
     
     if (!result) {
@@ -46,10 +45,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
@@ -59,7 +58,6 @@ export async function PUT(
     const supabase = await createClient();
     const updates = await request.json();
     
-    // Validate required fields if any
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(
         { error: "No update data provided" },
@@ -88,10 +86,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await context.params;
     
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {

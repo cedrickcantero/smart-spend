@@ -5,10 +5,10 @@ import { FeedbackService } from "@/lib/services/feedback-service";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { status: string } }
+  context: { params: Promise<{ status: string }> }
 ) {
   try {
-    const statusValue = params.status;
+    const { status } = await context.params;
     
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
@@ -17,10 +17,10 @@ export async function GET(
     
     const supabase = await createClient();
     
-    const feedback = await FeedbackService.getFeedbackByStatus(statusValue, supabase);
+    const feedback = await FeedbackService.getFeedbackByStatus(status, supabase);
     return NextResponse.json(feedback);
   } catch (error) {
-    console.error(`Error fetching feedback with status ${params.status}:`, error);
+    console.error(`Error fetching feedback with status ${status}:`, error);
     return NextResponse.json(
       { error: "Failed to fetch feedback" },
       { status: 500 }

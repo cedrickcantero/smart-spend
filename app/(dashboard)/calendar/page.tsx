@@ -9,13 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AddEventModal } from "@/components/calendar/modals/add-event-modal"
 import { useAuth } from "@/app/contexts/AuthContext"
 import { CalendarService } from "@/app/api/calendar/service"
-import { DBCalendarEvent, DBCategory, DBColor } from "@/types/supabase"
+import { DBCalendarEvent, DBColor } from "@/types/supabase"
 import { EditEventModal } from "@/components/calendar/modals/edit-event-modal"
-import { CategoriesService } from "@/app/api/categories/service"
 import { formatMoney } from "@/lib/utils"
 import { useUserSettings } from "@/app/contexts/UserSettingsContext"
-
-// Extended type that includes colorObj property
+import { useCategories } from "@/app/contexts/CategoriesContext"
 interface CalendarEventWithColor extends DBCalendarEvent {
   colorObj?: DBColor | null;
 }
@@ -30,7 +28,7 @@ export default function CalendarPage() {
   const [calendarEvents, setCalendarEvents] = useState<CalendarEventWithColor[]>([])
   const [editEventOpen, setEditEventOpen] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<CalendarEventWithColor | null>(null)
-  const [categories, setCategories] = useState<DBCategory[]>([])
+  const { categories } = useCategories()
   const { user } = useAuth()
   const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
@@ -47,14 +45,9 @@ export default function CalendarPage() {
     }
   }
 
-  const fetchCategories = async () => {
-    const response = await CategoriesService.getCategories()
-    setCategories(response)
-  }
-
 
   useEffect(() => {
-    Promise.all([fetchEvents(), fetchCategories()])
+    Promise.all([fetchEvents()])
   }, [user])
 
   const getDaysInMonth = (year: number, month: number) => {
