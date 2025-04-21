@@ -33,7 +33,7 @@ export const UserSettingsService = {
     }
   },
 
-  async updateUserSetting(path: string | string[], value: DBUserSettings): Promise<{ success: boolean; error?: unknown; data?: DBUserSettings }> {
+  async updateUserSetting(path: string | string[], value: unknown): Promise<{ success: boolean; error?: unknown; data?: DBUserSettings }> {
     try {
       const pathArray = Array.isArray(path) ? path : path.split('.');
       const response = await api.patch<DBUserSettings>('/api/user-settings', { path: pathArray, value });

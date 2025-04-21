@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DBCalendarEvent, DBCalendarEventInsert, DBCategory } from "@/types/supabase"
 import { CalendarService } from "@/app/api/calendar/service"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/app/contexts/AuthContext"
 
 interface AddEventModalProps {
   open: boolean

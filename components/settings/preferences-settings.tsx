@@ -7,10 +7,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
 import { UserSettings } from "@/types/userSettings"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
+
 interface PreferencesData {
   preferences: {
     currency: string;
@@ -48,7 +49,7 @@ const defaultPreferencesData: PreferencesData = {
 };
 
 export function PreferencesSettings() {
-  const { userSettings, updateUserSettings } = useAuth()
+  const { userSettings, updateUserSettings } = useUserSettings()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [preferencesData, setPreferencesData] = useState<PreferencesData>(defaultPreferencesData)

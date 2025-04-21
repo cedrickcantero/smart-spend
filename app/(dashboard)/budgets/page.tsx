@@ -13,10 +13,9 @@ import { BudgetService, BudgetWithCategory } from "@/app/api/budget/service"
 import { useToast } from "@/hooks/use-toast"
 import { formatMoney } from "@/lib/utils"
 import { DBBudget, DBExpense, DBIncome } from "@/types/supabase"
-import { useAuth } from "@/lib/auth-context"
-import { UserSettings } from "@/types/userSettings"
 import { ExpenseService } from "@/app/api/expense/service"
 import { IncomeService } from "@/app/api/income/service"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 
 export default function BudgetsPage() {
   const [activeTab, setActiveTab] = useState("monthly")
@@ -28,8 +27,7 @@ export default function BudgetsPage() {
   const [income, setIncome] = useState<DBIncome[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
-  const { userSettings: dbUserSettings } = useAuth()
-  const userSettings = dbUserSettings as unknown as UserSettings
+  const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
 
   const getExpensesByCategory = () => {

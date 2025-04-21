@@ -23,9 +23,9 @@ import { Calendar } from "@/components/ui/calendar"
 import { cn, getCurrencySymbol } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { DBCategory } from "@/types/supabase"
-import { useAuth } from "@/lib/auth-context"
-import { UserSettings } from "@/types/userSettings"
+import { useAuth } from "@/app/contexts/AuthContext"
 import { useExpenses } from "@/app/contexts/ExpenseContext"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 
 const paymentMethods = [
   { value: "Credit Card", label: "Credit Card" },
@@ -56,7 +56,8 @@ type ExpenseFormData = {
 export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories }: AddExpenseModalProps) {
   const { toast } = useToast()
   const { addExpense } = useExpenses()
-  const { userSettings: dbUserSettings, user } = useAuth()
+  const { user } = useAuth()
+  const { userSettings } = useUserSettings()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [amount, setAmount] = useState("")
   const [merchant, setMerchant] = useState("")
@@ -72,7 +73,6 @@ export function AddExpenseModal({ open, onOpenChange, fetchExpenses, categories 
     receipt_url: null,
   })
 
-  const userSettings = dbUserSettings as unknown as UserSettings
   const userCurrency = userSettings?.preferences?.currency || "USD"
 
   const handleSubmit = async (e: React.FormEvent) => {

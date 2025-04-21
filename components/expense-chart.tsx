@@ -5,16 +5,14 @@ import { ExpenseService } from "@/app/api/expense/service";
 import { DBExpense } from "@/types/supabase";
 import { useEffect } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { useAuth } from "@/lib/auth-context";
 import { formatMoney } from "@/lib/utils";
-import { UserSettings } from "@/types/userSettings";
+import { useUserSettings } from "@/app/contexts/UserSettingsContext";
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function ExpenseChart() {
   const [chartData, setChartData] = useState<Array<{name: string, total: number}>>([]);
-  const { userSettings: dbUserSettings } = useAuth();
-  const userSettings = dbUserSettings as unknown as UserSettings;
+  const { userSettings } = useUserSettings();
 
   useEffect(() => {
     const fetchExpenses = async () => {

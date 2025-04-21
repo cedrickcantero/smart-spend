@@ -24,8 +24,7 @@ import { cn, getCurrencySymbol } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { DBCategory, DBExpense } from "@/types/supabase"
 import { ExpenseService } from "@/app/api/expense/service"
-import { UserSettings } from "@/types/userSettings"
-import { useAuth } from "@/lib/auth-context"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 
 const paymentMethods = [
   { value: "Credit Card", label: "Credit Card" },
@@ -47,8 +46,7 @@ export function EditExpenseModal({ open, onOpenChange, expense, fetchExpenses, c
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const { userSettings: dbUserSettings } = useAuth()
-  const userSettings = dbUserSettings as unknown as UserSettings
+  const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
 
   const [expenseData, setExpenseData] = useState<DBExpense>({

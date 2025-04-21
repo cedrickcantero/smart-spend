@@ -32,8 +32,7 @@ import { DBCategory, DBIncome } from "@/types/supabase"
 import { CategoriesService } from "@/app/api/categories/service"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatMoney } from "@/lib/utils"
-import { UserSettings } from "@/types/userSettings"
-import { useAuth } from "@/lib/auth-context"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 
 export function IncomeList() {
   const [income, setIncome] = useState<DBIncome[]>([])
@@ -44,8 +43,7 @@ export function IncomeList() {
   const [showAddModal, setShowAddModal] = useState(false)
   const { toast } = useToast()
 
-  const { userSettings: dbUserSettings } = useAuth()
-  const userSettings = dbUserSettings as unknown as UserSettings
+  const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
 
   useEffect(() => {
