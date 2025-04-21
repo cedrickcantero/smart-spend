@@ -40,12 +40,10 @@ export default function ColorsAdminPage() {
         return
       }
       
-      // Colors are automatically loaded by the context
     }
     
     checkAccess()
     
-    // Cleanup function to prevent memory leaks and state updates after unmount
     return () => {
       unmountedRef.current = true
     }

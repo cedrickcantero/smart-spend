@@ -73,8 +73,8 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                     <Package2 className="size-4" />
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
-                    <span className="font-semibold">ExpenseTracker</span>
-                    <span className="text-xs">Manage your finances</span>
+                    <span className="font-semibold">Smart Spend</span>
+                    <span className="text-xs">Make smarter choices</span>
                   </div>
                 </Link>
               </SidebarMenuButton>

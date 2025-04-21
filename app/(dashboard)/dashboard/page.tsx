@@ -5,18 +5,18 @@ import { DollarSign, Wallet, Gift, TrendingUp } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ExpenseChart } from "@/components/expense-chart"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/app/contexts/AuthContext"
 import { DashboardService } from "@/app/api/dashboard/service"
 import { useState, useEffect, useCallback } from "react"
 import { DashboardData } from "@/lib/services/dashboard-service"
 import { formatMoney } from "@/lib/utils"
-import { UserSettings } from "@/types/userSettings"
 import { toast } from "@/hooks/use-toast"
 import { AIInsights } from "@/components/dashboard/ai-insights"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 
 export default function DashboardPage() {
-  const { user, userSettings: dbUserSettings } = useAuth()
-  const userSettings = dbUserSettings as unknown as UserSettings
+  const { user } = useAuth()
+  const { userSettings } = useUserSettings()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [showAiInsights, setShowAiInsights] = useState(false)
 

@@ -24,8 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { getCurrencySymbol } from "@/lib/utils"
-import { useAuth } from "@/lib/auth-context"
-import { UserSettings } from "@/types/userSettings"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 interface AddBudgetModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -37,8 +36,7 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [categories, setCategories] = useState<{ id: string; name: string; icon: string | null }[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
-  const { userSettings: dbUserSettings } = useAuth()
-  const userSettings = dbUserSettings as unknown as UserSettings
+  const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
   // Form state
   const [budgetName, setBudgetName] = useState("")

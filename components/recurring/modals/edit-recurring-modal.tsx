@@ -32,8 +32,7 @@ import { RecurringService } from "@/app/api/recurring/service"
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { DBRecurringBill } from "@/types/supabase"
-import { useAuth } from "@/lib/auth-context"
-import { UserSettings } from "@/types/userSettings"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 import { getCurrencySymbol, cn } from "@/lib/utils"
 
 interface EditRecurringModalProps {
@@ -52,8 +51,7 @@ export function EditRecurringModal({
 }: EditRecurringModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
-  const { userSettings: dbUserSettings } = useAuth()
-  const userSettings = dbUserSettings as unknown as UserSettings
+  const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
   
   const [recurringData, setRecurringData] = useState({
