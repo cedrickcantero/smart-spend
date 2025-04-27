@@ -190,8 +190,9 @@ export const DashboardService = {
       
       // Get total expenses for this month to calculate usage
       const totalExpenses = await DashboardService.getTotalExpenses(userId, supabase);
-      
-      const usedPercentage = Math.min(100, (totalExpenses.amount / budgetAmount) * 100);
+
+      const usedPercentage = budgetAmount === 0 ? 0 : Math.min(100, (totalExpenses.amount / budgetAmount) * 100);
+
       
       return {
         amount: budgetAmount,
