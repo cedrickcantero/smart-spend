@@ -134,7 +134,7 @@ export const DashboardService = {
       
       if (budgetError && budgetError.code !== 'PGRST116') throw budgetError;
       
-      const budgetAmount = budgetData?.amount || 2000; // Default budget if none set
+      const budgetAmount = budgetData?.amount || 0; // Default budget if none set
       
       // Get total expenses for this month to calculate usage
       const totalExpenses = await DashboardService.getTotalExpenses(userId, supabase);
@@ -148,7 +148,7 @@ export const DashboardService = {
       };
     } catch (error) {
       console.error("Error fetching monthly budget:", error);
-      return { amount: 2000, used: 0, percentage: 0 };
+      return { amount: 0, used: 0, percentage: 0 };
     }
   },
 
@@ -167,7 +167,7 @@ export const DashboardService = {
       
       if (!data) {
         return {
-          target: 5000,
+          target: 0,
           current: 0,
           percentage: 0,
           name: "Default Goal"
@@ -184,7 +184,7 @@ export const DashboardService = {
       };
     } catch (error) {
       console.error("Error fetching savings goal:", error);
-      return { target: 5000, current: 0, percentage: 0, name: "Default Goal" };
+      return { target: 0, current: 0, percentage: 0, name: "Default Goal" };
     }
   },
 
