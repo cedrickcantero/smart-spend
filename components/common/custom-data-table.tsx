@@ -31,7 +31,7 @@ import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { DateRange } from "react-day-picker"
 import { formatMoney } from "@/lib/utils"
 import moment from "moment"
-import { useAuth } from "@/lib/auth-context"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 import { UserSettings } from "@/types/userSettings"
 
 export type ColumnType = 
@@ -196,7 +196,7 @@ export function CustomDataTable({
     []
   )
 
-  const { userSettings } = useAuth();
+  const { userSettings } = useUserSettings();
 
   useEffect(() => {
     const initialFilterValues: Record<string, string> = {}

@@ -33,8 +33,7 @@ import { CategoriesService } from "@/app/api/categories/service"
 import { DBCategory, DBSubscription } from "@/types/supabase"
 import { SubscriptionsService } from "@/app/api/subscriptions/service"
 import { cn, getCurrencySymbol } from "@/lib/utils"
-import { useAuth } from "@/lib/auth-context"
-import { UserSettings } from "@/types/userSettings"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 
 interface AddSubscriptionModalProps {
   open: boolean
@@ -67,8 +66,7 @@ export function AddSubscriptionModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
   const [categories, setCategories] = useState<DBCategory[]>([])
-  const { userSettings: dbUserSettings } = useAuth()
-  const userSettings = dbUserSettings as unknown as UserSettings
+  const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
   
   const [subscriptionData, setSubscriptionData] = useState({

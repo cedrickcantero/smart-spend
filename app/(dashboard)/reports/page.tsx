@@ -21,8 +21,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { UserSettings } from "@/types/userSettings"
-import { useAuth } from "@/lib/auth-context"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 import { ReportSummary, CategoryBreakdown, TopExpense, MonthlyComparison } from "@/lib/services/reports-service"
 import { formatMoney } from "@/lib/utils"
 
@@ -33,8 +32,7 @@ export default function ReportsPage() {
   // const [expenseTrends, setExpenseTrends] = useState<ExpenseTrend[]>([])
   const [monthlyComparison, setMonthlyComparison] = useState<MonthlyComparison[]>([])
   const [topExpenses, setTopExpenses] = useState<TopExpense[]>([])
-  const { userSettings: dbUserSettings } = useAuth()
-  const userSettings = dbUserSettings as unknown as UserSettings
+  const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
 
   useEffect(() => {
@@ -199,7 +197,7 @@ export default function ReportsPage() {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, "Amount"]} />
+                      <Tooltip formatter={(value: number) => [`${formatMoney(value, userCurrency)}`, "Amount"]} />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </div>

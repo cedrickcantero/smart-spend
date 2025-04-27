@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { LogOut, Settings, ShieldCheck } from "lucide-react"
+import { LogOut, Settings, ShieldCheck, MessageSquare } from "lucide-react"
 import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -16,15 +16,39 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/app/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
 import { isCurrentUserAdmin } from "@/lib/auth"
+import { UserSettings } from "@/types/userSettings"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
+import { FeedbackForm } from "@/components/feedback/feedback-form"
+
+interface ProfileData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  bio: string;
+}
+
+
+const defaultProfileData: ProfileData = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  bio: ""
+};
+
 
 export function UserNav() {
   const { user, signOut } = useAuth()
   const [isAdmin, setIsAdmin] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const [avatarUrl, setAvatarUrl] = useState<string>("")
+  const [profileData, setProfileData] = useState<ProfileData>(defaultProfileData)
+  const { userSettings } = useUserSettings()
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -36,6 +60,31 @@ export function UserNav() {
     
     checkAdmin()
   }, [user])
+
+  useEffect(() => {
+    if (user) {
+      setProfileData(prev => ({
+        ...prev,
+        firstName: user.user_metadata?.first_name || '',
+        lastName: user.user_metadata?.last_name || '',
+        email: user.email || '',
+      }));
+      
+    }
+    
+    if (userSettings) {
+      const settingsObj = userSettings as unknown as UserSettings;
+      
+      if (settingsObj.profile && settingsObj.profile.bio !== undefined) {
+        setProfileData(prev => ({
+          ...prev,
+          bio: settingsObj.profile.bio || ''
+        }));
+        setAvatarUrl(settingsObj.profile.avatar_url || '')
+      }
+    }
+  }, [user, userSettings]);
+
 
   const handleSignOut = async () => {
     try {
@@ -57,8 +106,8 @@ export function UserNav() {
     }
   }
 
-  const firstName = user?.user_metadata?.first_name || '';
-  const lastName = user?.user_metadata?.last_name || '';
+  const firstName = profileData.firstName || '';
+  const lastName = profileData.lastName || '';
   const fullName = `${firstName} ${lastName}` || "Anonymous User"
   
   const initials = fullName
@@ -76,13 +125,20 @@ export function UserNav() {
     router.push("/admin/colors")
   }
 
+  const openFeedback = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setFeedbackOpen(true)
+  }
+
   return (
     <div className="flex items-center gap-2">
+      <FeedbackForm open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder.svg?height=32&width=32"} alt={fullName} />
+              <AvatarImage src={avatarUrl || "/placeholder.svg?height=32&width=32"} alt={fullName} />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
           </Button>
@@ -100,6 +156,10 @@ export function UserNav() {
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
               <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={openFeedback}>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              <span>Send Feedback</span>
             </DropdownMenuItem>
             {isAdmin && (
               <DropdownMenuItem onClick={goToAdmin}>

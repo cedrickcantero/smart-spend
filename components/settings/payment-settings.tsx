@@ -8,9 +8,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { UserSettings } from "@/types/userSettings"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 interface PaymentSettingsData {
   paymentMethods: PaymentMethod[];
   billingAddress: BillingAddress;
@@ -47,7 +47,7 @@ const defaultPaymentSettings: PaymentSettingsData = {
 };
 
 export function PaymentSettings() {
-  const { userSettings, updateUserSettings } = useAuth()
+  const { userSettings, updateUserSettings } = useUserSettings()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [paymentData, setPaymentData] = useState<PaymentSettingsData>(defaultPaymentSettings)

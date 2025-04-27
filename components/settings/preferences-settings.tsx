@@ -7,10 +7,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { useTheme } from "next-themes"
 import { UserSettings } from "@/types/userSettings"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
+
 interface PreferencesData {
   preferences: {
     currency: string;
@@ -37,18 +38,18 @@ const defaultPreferencesData: PreferencesData = {
     theme: "system",
     accentColor: "blue",
     compactMode: false,
-    animations: true
+    animations: false
   },
   dashboard: {
-    showRecentTransactions: true,
-    showBudgetProgress: true,
-    showAIInsights: true,
-    showUpcomingBills: true
+    showRecentTransactions: false,
+    showBudgetProgress: false,
+    showAIInsights: false,
+    showUpcomingBills: false
   }
 };
 
 export function PreferencesSettings() {
-  const { userSettings, updateUserSettings } = useAuth()
+  const { userSettings, updateUserSettings } = useUserSettings()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [preferencesData, setPreferencesData] = useState<PreferencesData>(defaultPreferencesData)
@@ -278,6 +279,7 @@ export function PreferencesSettings() {
             <Select 
               value={preferencesData.preferences.accentColor} 
               onValueChange={(value) => updatePreference('accentColor', value)}
+              disabled
             >
               <SelectTrigger id="accent-color">
                 <SelectValue placeholder="Select accent color" />
@@ -301,6 +303,7 @@ export function PreferencesSettings() {
               id="compact-mode" 
               checked={preferencesData.preferences.compactMode}
               onCheckedChange={(value) => updatePreference('compactMode', value)}
+              disabled
             />
           </div>
 
@@ -313,6 +316,7 @@ export function PreferencesSettings() {
               id="animations" 
               checked={preferencesData.preferences.animations}
               onCheckedChange={(value) => updatePreference('animations', value)}
+              disabled
             />
           </div>
         </CardContent>
@@ -340,6 +344,7 @@ export function PreferencesSettings() {
             <Switch 
               checked={preferencesData.dashboard.showRecentTransactions}
               onCheckedChange={(value) => updateDashboard('showRecentTransactions', value)}
+              disabled
             />
           </div>
 
@@ -351,6 +356,7 @@ export function PreferencesSettings() {
             <Switch 
               checked={preferencesData.dashboard.showBudgetProgress}
               onCheckedChange={(value) => updateDashboard('showBudgetProgress', value)}
+              disabled
             />
           </div>
 
@@ -362,6 +368,7 @@ export function PreferencesSettings() {
             <Switch 
               checked={preferencesData.dashboard.showAIInsights}
               onCheckedChange={(value) => updateDashboard('showAIInsights', value)}
+              // disabled
             />
           </div>
 
@@ -373,6 +380,7 @@ export function PreferencesSettings() {
             <Switch 
               checked={preferencesData.dashboard.showUpcomingBills}
               onCheckedChange={(value) => updateDashboard('showUpcomingBills', value)}
+              disabled
             />
           </div>
         </CardContent>

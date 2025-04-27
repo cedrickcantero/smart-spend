@@ -9,43 +9,43 @@ BEGIN
   VALUES (new.id, '{
     "role": "user",
     "email": {
-      "productUpdates": true,
+      "productUpdates": false,
       "marketingEmails": false,
-      "tipsAndTutorials": true
+      "tipsAndTutorials": false
     },
     "profile": {
       "bio": ""
     },
     "security": {
-      "aiFeatures": true,
-      "dataCollection": true,
+      "aiFeatures": false,
+      "dataCollection": false,
       "twoFactorEnabled": false
     },
     "dashboard": {
-      "showAIInsights": true,
-      "showUpcomingBills": true,
-      "showBudgetProgress": true,
-      "showRecentTransactions": true
+      "showAIInsights": false,
+      "showUpcomingBills": false,
+      "showBudgetProgress": false,
+      "showRecentTransactions": false
     },
     "preferences": {
       "theme": "system",
       "currency": "USD",
       "language": "en",
-      "animations": true,
+      "animations": false,
       "dateFormat": "MM/DD/YYYY",
       "accentColor": "blue",
       "compactMode": false
     },
     "notifications": {
       "types": {
-        "budgetAlerts": true,
-        "billReminders": true,
-        "weeklyReports": true,
-        "unusualActivity": true
+        "budgetAlerts": false,
+        "billReminders": false,
+        "weeklyReports": false,
+        "unusualActivity": false
       },
       "channels": {
-        "pushNotifications": true,
-        "emailNotifications": true
+        "pushNotifications": false,
+        "emailNotifications": false
       }
     }
   }');

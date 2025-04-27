@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,10 +22,10 @@ import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-
-// Replace mock categories with state variable
-// const budgetCategories = [ ... ]
-
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { getCurrencySymbol } from "@/lib/utils"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
+import { useCategories } from "@/app/contexts/CategoriesContext"
 interface AddBudgetModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -35,10 +35,9 @@ interface AddBudgetModalProps {
 export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetModalProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [categories, setCategories] = useState<{ id: string; name: string; icon: string | null }[]>([])
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
-
-  // Form state
+  const { categories } = useCategories()
+  const { userSettings } = useUserSettings()
+  const userCurrency = userSettings?.preferences?.currency || "USD"
   const [budgetName, setBudgetName] = useState("")
   const [categoryId, setCategoryId] = useState("")
   const [amount, setAmount] = useState("")
@@ -46,44 +45,7 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
   const [startDate, setStartDate] = useState<Date>(new Date())
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [icon, setIcon] = useState("")
-
-  // Fetch categories when modal opens
-  useEffect(() => {
-    if (open) {
-      fetchCategories()
-    }
-  }, [open])
-
-  const fetchCategories = async () => {
-    setIsLoadingCategories(true)
-    try {
-      const response = await fetch('/api/categories')
-      const data = await response.json()
-      
-      // Convert from record to array
-      if (typeof data === 'object' && !Array.isArray(data)) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const categoriesArray = Object.entries(data).map(([id, details]: [string, any]) => ({
-          id,
-          name: details.name,
-          icon: details.icon
-        }))
-        setCategories(categoriesArray)
-      } else if (Array.isArray(data)) {
-        // If data is already an array
-        setCategories(data)
-      }
-    } catch (error) {
-      console.error("Error fetching categories:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load categories. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoadingCategories(false)
-    }
-  }
+  const [isIncome, setIsIncome] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -105,12 +67,13 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
         period,
         start_date: format(startDate, 'yyyy-MM-dd'),
         end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
-        icon: icon || selectedCategory?.icon || "📦"
+        icon: icon || selectedCategory?.icon || "📦",
+        is_income: isIncome
       });
 
       toast({
         title: "Budget created",
-        description: `A ${period} budget "${budgetName || `${selectedCategory?.name || 'Unnamed'} Budget`}" of $${amount} has been created.`,
+        description: `A ${period} ${isIncome ? 'income' : 'expense'} budget "${budgetName || `${selectedCategory?.name || 'Unnamed'} Budget`}" of $${amount} has been created.`,
         variant: "success",
       })
 
@@ -138,6 +101,7 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
     setStartDate(new Date())
     setEndDate(undefined)
     setIcon("")
+    setIsIncome(false)
   }
 
   return (
@@ -150,12 +114,32 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="budget-type" className="text-right">
+                Budget Type
+              </Label>
+              <RadioGroup 
+                className="col-span-3 flex space-x-4" 
+                defaultValue="expense"
+                onValueChange={(value) => setIsIncome(value === "income")}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="expense" id="expense" />
+                  <Label htmlFor="expense">Expense</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="income" id="income" />
+                  <Label htmlFor="income">Income</Label>
+                </div>
+              </RadioGroup>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="budget-name" className="text-right">
                 Budget Name
               </Label>
               <Input
                 id="budget-name"
-                placeholder="e.g., Monthly Groceries"
+                placeholder={isIncome ? "e.g., Monthly Salary" : "e.g., Monthly Groceries"}
                 value={budgetName}
                 onChange={(e) => setBudgetName(e.target.value)}
                 className="col-span-3"
@@ -167,7 +151,7 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
               </Label>
               <Select value={categoryId} onValueChange={setCategoryId} required>
                 <SelectTrigger id="budget-category" className="col-span-3">
-                  <SelectValue placeholder={isLoadingCategories ? "Loading categories..." : "Select category"} />
+                  <SelectValue placeholder={categories.length === 0 ? "Loading categories..." : "Select category"} />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
@@ -186,7 +170,7 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
                 Amount*
               </Label>
               <div className="col-span-3 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{getCurrencySymbol(userCurrency)}</span>
                 <Input
                   id="budget-amount"
                   type="number"

@@ -18,6 +18,7 @@ export type Database = {
           end_date: string | null
           icon: string | null
           id: string
+          is_income: boolean | null
           period: string
           remaining: number | null
           spent: number | null
@@ -34,6 +35,7 @@ export type Database = {
           end_date?: string | null
           icon?: string | null
           id?: string
+          is_income?: boolean | null
           period?: string
           remaining?: number | null
           spent?: number | null
@@ -50,6 +52,7 @@ export type Database = {
           end_date?: string | null
           icon?: string | null
           id?: string
+          is_income?: boolean | null
           period?: string
           remaining?: number | null
           spent?: number | null
@@ -116,7 +119,6 @@ export type Database = {
       categories: {
         Row: {
           color: string | null
-          color_label: string | null
           created_at: string
           icon: string | null
           id: string
@@ -126,7 +128,6 @@ export type Database = {
         }
         Insert: {
           color?: string | null
-          color_label?: string | null
           created_at?: string
           icon?: string | null
           id?: string
@@ -136,7 +137,6 @@ export type Database = {
         }
         Update: {
           color?: string | null
-          color_label?: string | null
           created_at?: string
           icon?: string | null
           id?: string
@@ -148,27 +148,27 @@ export type Database = {
       }
       colors: {
         Row: {
+          created_at: string
+          hex_value: string
           id: string
           name: string
-          hex_value: string
           tailwind_key: string
-          created_at: string
           updated_at: string
         }
         Insert: {
+          created_at?: string
+          hex_value: string
           id?: string
           name: string
-          hex_value: string
           tailwind_key: string
-          created_at?: string
           updated_at?: string
         }
         Update: {
+          created_at?: string
+          hex_value?: string
           id?: string
           name?: string
-          hex_value?: string
           tailwind_key?: string
-          created_at?: string
           updated_at?: string
         }
         Relationships: []
@@ -219,6 +219,86 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback: {
+        Row: {
+          created_at: string | null
+          feedback_text: string
+          feedback_type: string | null
+          id: string
+          is_resolved: boolean | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          feedback_text: string
+          feedback_type?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          feedback_text?: string
+          feedback_type?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      income: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          is_taxable: boolean | null
+          payment_method: string | null
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          is_taxable?: boolean | null
+          payment_method?: string | null
+          source: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          is_taxable?: boolean | null
+          payment_method?: string | null
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
@@ -376,24 +456,24 @@ export type Database = {
       }
       user_settings: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
           settings: Json | null
-          updated_at: string | null
+          updated_at: string
           user_id: string | null
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           settings?: Json | null
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string | null
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           settings?: Json | null
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
@@ -403,7 +483,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      update_user_role: {
+        Args: { target_user_id: string; new_role: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

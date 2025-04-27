@@ -4,7 +4,7 @@ import type * as React from "react"
 import Link from "next/link"
 import {
   Package2,
-  Sparkles,
+  MessageSquare
 } from "lucide-react"
 
 import {
@@ -25,6 +25,7 @@ import { UserNav } from "@/components/user-nav"
 import { sidebarItems, SidebarItem } from "@/lib/nav-items"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar"
+import { FeedbackForm } from "@/components/feedback/feedback-form"
 
 import { useState, useEffect } from "react"
 import { isCurrentUserAdmin } from "@/lib/auth"
@@ -36,6 +37,7 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     Admin: true,
   })
   const [isAdmin, setIsAdmin] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -61,6 +63,12 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
     return true
   }
 
+  const openFeedback = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setFeedbackOpen(true)
+  }
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -73,8 +81,8 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
                     <Package2 className="size-4" />
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
-                    <span className="font-semibold">ExpenseTracker</span>
-                    <span className="text-xs">Manage your finances</span>
+                    <span className="font-semibold">Smart Spend</span>
+                    <span className="text-xs">Make smarter choices</span>
                   </div>
                 </Link>
               </SidebarMenuButton>
@@ -157,9 +165,15 @@ export function AppSidebar({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
           <SidebarTrigger />
           <div className="ml-auto flex items-center gap-4">
-            <Button variant="outline" size="sm" className="hidden md:flex gap-1">
-              <Sparkles className="h-4 w-4" />
-              AI Insights
+            <FeedbackForm open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="hidden md:flex gap-1"
+              onClick={openFeedback}
+            >
+              <MessageSquare className="h-4 w-4" />
+              Send Feedback
             </Button>
             <UserNav />
           </div>

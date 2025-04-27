@@ -7,9 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
-import { useAuth } from "@/lib/auth-context"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 import { useToast } from "@/hooks/use-toast"
-import { UserSettings } from "@/types/userSettings"
 interface NotificationSettingsData {
   email: {
     productUpdates: boolean;
@@ -51,31 +50,29 @@ const defaultNotificationSettings: NotificationSettingsData = {
 };
 
 export function NotificationSettings() {
-  const { userSettings, updateUserSettings } = useAuth()
+  const { userSettings, updateUserSettings } = useUserSettings()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [notificationData, setNotificationData] = useState<NotificationSettingsData>(defaultNotificationSettings)
   
   useEffect(() => {
-    if (userSettings && typeof userSettings === 'object' && userSettings.settings) {
-      const settings = userSettings.settings as unknown as UserSettings;
-      
+    if (userSettings) {
       const newNotificationData: NotificationSettingsData = {
         email: {
-          productUpdates: Boolean(settings.email?.productUpdates ?? true),
-          marketingEmails: Boolean(settings.email?.marketingEmails ?? false),
-          tipsAndTutorials: Boolean(settings.email?.tipsAndTutorials ?? true)
+          productUpdates: Boolean(userSettings.email?.productUpdates ?? true),
+          marketingEmails: Boolean(userSettings.email?.marketingEmails ?? false),
+          tipsAndTutorials: Boolean(userSettings.email?.tipsAndTutorials ?? true)
         },
         notifications: {
           types: {
-            budgetAlerts: Boolean(settings.notifications?.types?.budgetAlerts ?? true),
-            billReminders: Boolean(settings.notifications?.types?.billReminders ?? true),
-            weeklyReports: Boolean(settings.notifications?.types?.weeklyReports ?? true),
-            unusualActivity: Boolean(settings.notifications?.types?.unusualActivity ?? true)
+            budgetAlerts: Boolean(userSettings.notifications?.types?.budgetAlerts ?? true),
+            billReminders: Boolean(userSettings.notifications?.types?.billReminders ?? true),
+            weeklyReports: Boolean(userSettings.notifications?.types?.weeklyReports ?? true),
+            unusualActivity: Boolean(userSettings.notifications?.types?.unusualActivity ?? true)
           },
           channels: {
-            pushNotifications: Boolean(settings.notifications?.channels?.pushNotifications ?? true),
-            emailNotifications: Boolean(settings.notifications?.channels?.emailNotifications ?? true)
+            pushNotifications: Boolean(userSettings.notifications?.channels?.pushNotifications ?? true),
+            emailNotifications: Boolean(userSettings.notifications?.channels?.emailNotifications ?? true)
           }
         }
       };
@@ -184,6 +181,7 @@ export function NotificationSettings() {
                 id="email-notifications"
                 checked={notificationData.notifications.channels.emailNotifications}
                 onCheckedChange={(value) => updateChannelSetting('emailNotifications', value)}
+                disabled
               />
             </div>
 
@@ -196,6 +194,7 @@ export function NotificationSettings() {
                 id="push-notifications" 
                 checked={notificationData.notifications.channels.pushNotifications} 
                 onCheckedChange={(value) => updateChannelSetting('pushNotifications', value)} 
+                disabled
               />
             </div>
           </div>
@@ -212,6 +211,7 @@ export function NotificationSettings() {
                 id="weekly-reports" 
                 checked={notificationData.notifications.types.weeklyReports} 
                 onCheckedChange={(value) => updateTypeSetting('weeklyReports', value)} 
+                disabled
               />
             </div>
 
@@ -224,6 +224,7 @@ export function NotificationSettings() {
                 id="budget-alerts" 
                 checked={notificationData.notifications.types.budgetAlerts} 
                 onCheckedChange={(value) => updateTypeSetting('budgetAlerts', value)} 
+                disabled
               />
             </div>
 
@@ -236,6 +237,7 @@ export function NotificationSettings() {
                 id="unusual-activity" 
                 checked={notificationData.notifications.types.unusualActivity} 
                 onCheckedChange={(value) => updateTypeSetting('unusualActivity', value)} 
+                disabled
               />
             </div>
 
@@ -248,6 +250,7 @@ export function NotificationSettings() {
                 id="bill-reminders" 
                 checked={notificationData.notifications.types.billReminders} 
                 onCheckedChange={(value) => updateTypeSetting('billReminders', value)}
+                disabled
               />
             </div>
           </div>
@@ -274,6 +277,7 @@ export function NotificationSettings() {
             <Switch 
               checked={notificationData.email.marketingEmails} 
               onCheckedChange={(value) => updateEmailSetting('marketingEmails', value)} 
+              disabled
             />
           </div>
 
@@ -287,6 +291,7 @@ export function NotificationSettings() {
             <Switch 
               checked={notificationData.email.tipsAndTutorials} 
               onCheckedChange={(value) => updateEmailSetting('tipsAndTutorials', value)} 
+              disabled
             />
           </div>
 
@@ -298,6 +303,7 @@ export function NotificationSettings() {
             <Switch 
               checked={notificationData.email.productUpdates} 
               onCheckedChange={(value) => updateEmailSetting('productUpdates', value)} 
+              disabled
             />
           </div>
         </CardContent>

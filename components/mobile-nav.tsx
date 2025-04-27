@@ -20,6 +20,9 @@ export function MobileNav() {
           <Link href="#" className="flex items-center gap-2 rounded-lg px-3 py-2 text-foreground">
             Dashboard
           </Link>
+          <Link href="/income" className="flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground">
+            Income
+          </Link>
           <Link href="#" className="flex items-center gap-2 rounded-lg px-3 py-2 text-muted-foreground">
             Expenses
           </Link>

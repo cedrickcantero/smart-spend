@@ -1,18 +1,18 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { DBCategory, DBSubscription } from "@/types/supabase"
-import { CategoriesService } from "@/app/api/categories/service"
+import { DBSubscription } from "@/types/supabase"
 import { SubscriptionsService } from "@/app/api/subscriptions/service"
 import { CustomDataTable } from "@/components/common/custom-data-table"
 import { DateRange } from "react-day-picker"
 import { AddSubscriptionModal } from "@/components/subscriptions/modals/add-subscriptions-modal"
 import { EditSubscriptionModal } from "@/components/subscriptions/modals/edit-subscriptions-modal"
 import { DeleteSubscriptionModal } from "@/components/subscriptions/modals/delete-subscriptions-modal"
+import { useCategories } from "@/app/contexts/CategoriesContext"
 
 export default function SubscriptionsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [categories, setCategories] = useState<DBCategory[]>([])
+  const { categories } = useCategories()
   const [dateRange, setDateRange] = useState<DateRange | null>(null)
   const [openAddSubscriptionModal, setOpenAddSubscriptionModal] = useState(false)
   const [openEditSubscriptionModal, setOpenEditSubscriptionModal] = useState(false)
@@ -30,18 +30,9 @@ export default function SubscriptionsPage() {
     }
   }, [])
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const categories = await CategoriesService.getCategories();
-      setCategories(categories);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  }, [])
-
   useEffect(() => {
-    Promise.all([fetchSubscriptions(), fetchCategories()]);
-  }, [fetchSubscriptions, fetchCategories])
+    Promise.all([fetchSubscriptions()]);
+  }, [fetchSubscriptions])
 
   const handleAddSubscriptionClick = useCallback(() => {
     setOpenAddSubscriptionModal(true);

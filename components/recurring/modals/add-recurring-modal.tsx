@@ -33,9 +33,9 @@ import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { CategoriesService } from "@/app/api/categories/service"
 import { DBCategory } from "@/types/supabase"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/app/contexts/AuthContext"
 import { getCurrencySymbol, cn } from "@/lib/utils"
-import { UserSettings } from "@/types/userSettings"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 
 interface AddRecurringModalProps {
   open: boolean
@@ -71,11 +71,9 @@ export function AddRecurringModal({
     is_automatic: false,
   })
 
-  const { userSettings: dbUserSettings } = useAuth()
-  const userSettings = dbUserSettings as unknown as UserSettings
+  const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
 
-  // Fetch categories when the modal opens
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -104,12 +102,10 @@ export function AddRecurringModal({
     e.preventDefault()
     setIsSubmitting(true)
     try {
-      // Validate form
       if (!recurringData.name || recurringData.amount === "" || !recurringData.frequency) {
         throw new Error("Please fill in all required fields")
       }
 
-      // Ensure category_id is a valid UUID if provided
       if (recurringData.category_id && !recurringData.category_id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
         throw new Error("Please select a valid category")
       }

@@ -61,7 +61,14 @@ export const apiService = async (endpoint: string, { method, data, requiresAuth 
         url += `?${queryString}`;
       }
     } else if (data) {
-      config.body = JSON.stringify(data);
+      // Handle FormData objects specially - don't stringify and remove Content-Type
+      if (data instanceof FormData) {
+        config.body = data;
+        // Let the browser set the content type with the correct boundary
+        delete headers['Content-Type'];
+      } else {
+        config.body = JSON.stringify(data);
+      }
     }
 
     const response = await fetch(url, config);

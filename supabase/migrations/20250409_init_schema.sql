@@ -47,6 +47,7 @@ CREATE TABLE budgets (
     category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
     amount DECIMAL(12, 2) NOT NULL,
     spent DECIMAL(12, 2) DEFAULT 0,
+    budget_name TEXT NOT NULL,
     remaining DECIMAL(12, 2) GENERATED ALWAYS AS (amount - spent) STORED,
     period TEXT NOT NULL DEFAULT 'monthly', -- 'weekly', 'monthly', 'quarterly', 'yearly'
     status TEXT GENERATED ALWAYS AS (

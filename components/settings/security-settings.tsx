@@ -1,79 +1,154 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Lock, Save } from "lucide-react"
+import { useState } from "react"
+import { Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/app/contexts/AuthContext"
 import { useToast } from "@/hooks/use-toast"
-import { UserSettings } from "@/types/userSettings"
+// import { UserSettings } from "@/types/userSettings"
+import { supabase } from "@/lib/supabase/client"
 
-interface SecuritySettingsData {
-  twoFactorEnabled: boolean;
-  dataCollection: boolean;
-  aiFeatures: boolean;
-}
+// interface SecuritySettingsData {
+//   twoFactorEnabled: boolean;
+//   dataCollection: boolean;
+//   aiFeatures: boolean;
+// }
 
-const defaultSecuritySettings: SecuritySettingsData = {
-  twoFactorEnabled: false,
-  dataCollection: true,
-  aiFeatures: true
-};
+// const defaultSecuritySettings: SecuritySettingsData = {
+//   twoFactorEnabled: false,
+//   dataCollection: true,
+//   aiFeatures: true
+// };
 
 export function SecuritySettings() {
-  const { userSettings, updateUserSettings } = useAuth()
+  const { user } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
-  const [securityData, setSecurityData] = useState<SecuritySettingsData>(defaultSecuritySettings)
+  // const [securityData, setSecurityData] = useState<SecuritySettingsData>(defaultSecuritySettings)
+  const [passwordForm, setPasswordForm] = useState<{
+    newPassword: string;
+    confirmPassword: string;
+    currentPassword: string;
+  }>({
+    newPassword: '',
+    confirmPassword: '',
+    currentPassword: ''
+  })
 
-  useEffect(() => {
-    if (userSettings) {
-      const settings = userSettings as unknown as UserSettings;
-      if (settings.security) {
-        setSecurityData({
-          twoFactorEnabled: Boolean(settings.security.twoFactorEnabled),
-          dataCollection: Boolean(settings.security.dataCollection ?? true),
-          aiFeatures: Boolean(settings.security.aiFeatures ?? true)
-        });
-      }
+  // useEffect(() => {
+  //   if (userSettings) {
+  //     const settings = userSettings as unknown as UserSettings;
+  //     if (settings.security) {
+  //       setSecurityData({
+  //         twoFactorEnabled: Boolean(settings.security.twoFactorEnabled),
+  //         dataCollection: Boolean(settings.security.dataCollection ?? true),
+  //         aiFeatures: Boolean(settings.security.aiFeatures ?? true)
+  //       });
+  //     }
+  //   }
+  // }, [userSettings]);
+
+  const verifyCurrentPassword = async (email: string, currentPassword: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+  
+    if (error) {
+      return { success: false, message: "Invalid current password." };
     }
-  }, [userSettings]);
+  
+    return { success: true, session: data.session };
+  }
 
-  const handleSecurityUpdate = async () => {
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
+    return { error }
+  }
+
+  const handlePasswordUpdate = async () => {
     setIsLoading(true);
     try {
-      if (updateUserSettings) {
-        const { success, error } = await updateUserSettings(
-          ['security'],
-          securityData
-        );
-        
-        if (!success) throw error;
-        
+
+      if(passwordForm.newPassword !== passwordForm.confirmPassword) {
         toast({
-          title: "Security settings updated",
-          description: "Your security preferences have been saved successfully.",
-          variant: "success",
+          title: "Error updating password",
+          description: "New password and confirm password do not match.",
+          variant: "destructive",
         });
-      } else {
-        throw new Error("Update function not available");
+        return;
       }
-    } catch (error) {
-      const err = error as { message?: string };
+
+      if(passwordForm.currentPassword === passwordForm.newPassword) {
+        toast({
+          title: "Error updating password",
+          description: "New password and current password cannot be the same.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { success, message } = await verifyCurrentPassword(user?.email || '', passwordForm.currentPassword)
+      if (!success) throw new Error(message || "Invalid current password.")
+
+      const { error: updateError } = await updatePassword(passwordForm.newPassword)
+      if (updateError) throw updateError
 
       toast({
-        title: "Error updating security settings",
-        description: err.message || "There was an error updating your security settings.",
+        title: "Password updated",
+        description: "Your password has been updated successfully.",
+        variant: "success",
+      });
+      
+
+    } catch (error) {
+      const err = error as { message?: string };
+      toast({
+        title: "Error updating password",
+        description: err.message || "There was an error updating your password.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  // const handleSecurityUpdate = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     if (updateUserSettings) {
+  //       const { success, error } = await updateUserSettings(
+  //         ['security'],
+  //         securityData
+  //       );
+        
+  //       if (!success) throw error;
+        
+  //       toast({
+  //         title: "Security settings updated",
+  //         description: "Your security preferences have been saved successfully.",
+  //         variant: "success",
+  //       });
+  //     } else {
+  //       throw new Error("Update function not available");
+  //     }
+  //   } catch (error) {
+  //     const err = error as { message?: string };
+
+  //     toast({
+  //       title: "Error updating security settings",
+  //       description: err.message || "There was an error updating your security settings.",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   return (
     <div className="space-y-4">
@@ -85,28 +160,28 @@ export function SecuritySettings() {
         <CardContent className="space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="current-password">Current Password</Label>
-            <Input id="current-password" type="password" />
+            <Input id="current-password" type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))} />
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="new-password">New Password</Label>
-            <Input id="new-password" type="password" />
+            <Input id="new-password" type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))} />
           </div>
 
           <div className="grid gap-2">
             <Label htmlFor="confirm-password">Confirm New Password</Label>
-            <Input id="confirm-password" type="password" />
+            <Input id="confirm-password" type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))} />
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="ml-auto gap-1" onClick={handleSecurityUpdate} disabled={isLoading}>
+          <Button className="ml-auto gap-1" onClick={handlePasswordUpdate} disabled={isLoading}>
             <Lock className="h-4 w-4" />
             Change Password
           </Button>
         </CardFooter>
       </Card>
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Two-Factor Authentication</CardTitle>
           <CardDescription>Add an extra layer of security to your account</CardDescription>
@@ -127,9 +202,9 @@ export function SecuritySettings() {
             Set Up Two-Factor Authentication
           </Button>
         </CardContent>
-      </Card>
+      </Card> */}
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Sessions</CardTitle>
           <CardDescription>Manage your active sessions and devices</CardDescription>
@@ -164,9 +239,9 @@ export function SecuritySettings() {
             Log Out of All Devices
           </Button>
         </CardContent>
-      </Card>
+      </Card> */}
 
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Privacy</CardTitle>
           <CardDescription>Manage your privacy settings and data</CardDescription>
@@ -208,7 +283,7 @@ export function SecuritySettings() {
             Save Privacy Settings
           </Button>
         </CardFooter>
-      </Card>
+      </Card> */}
     </div>
   )
 } 
