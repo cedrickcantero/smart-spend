@@ -1,6 +1,6 @@
 "use client"
 
-import { DollarSign, Wallet, Gift, TrendingUp } from "lucide-react"
+import { DollarSign, TrendingUp } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -55,7 +55,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Dashboard</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Income</CardTitle>
@@ -85,7 +85,7 @@ export default function DashboardPage() {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Monthly Budget</CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
@@ -93,7 +93,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatMoney(dashboardData?.monthlyBudget?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
             <div className="mt-1 h-2 w-full rounded-full bg-muted">
-              <div className="h-full w-[60%] rounded-full bg-primary" />
+              <div className="h-full w-[0%] rounded-full bg-primary" />
             </div>
             <p className="text-xs text-muted-foreground">
               {!dashboardData?.monthlyBudget ? 'No data' :
@@ -110,7 +110,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{formatMoney(dashboardData?.savingsGoal?.target || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
             <div className="mt-1 h-2 w-full rounded-full bg-muted">
-              <div className="h-full w-[45%] rounded-full bg-green-500" />
+              <div className="h-full w-[0%] rounded-full bg-green-500" />
             </div>
             <p className="text-xs text-muted-foreground">
               {!dashboardData?.savingsGoal ? 'No data' :
@@ -118,7 +118,7 @@ export default function DashboardPage() {
                `${dashboardData.savingsGoal.percentage > 0 ? '+' : ''}${dashboardData.savingsGoal.percentage}% from last month`}
             </p>
           </CardContent>
-        </Card>
+        </Card> */}
         {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tax Deductions</CardTitle>
