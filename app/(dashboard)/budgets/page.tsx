@@ -74,7 +74,7 @@ export default function BudgetsPage() {
         let status = "on-track";
         const percentMet = budget.amount > 0 ? (incomeAmount / budget.amount) * 100 : 0;
         
-        if (percentMet >= 100) {
+        if (percentMet > 100) {
           status = "exceeded";
         } else if (percentMet === 100) {
           status = "complete";
@@ -96,7 +96,7 @@ export default function BudgetsPage() {
         let status = "on-track";
         const percentSpent = budget.amount > 0 ? (spentAmount / budget.amount) * 100 : 0;
         
-        if (percentSpent >= 100) {
+        if (percentSpent > 100) {
           status = "exceeded";
         } else if (percentSpent === 100) {
           status = "complete";
@@ -204,7 +204,7 @@ export default function BudgetsPage() {
 
   const getProgressColor = (status: string, isIncome: boolean, percentComplete: number) => {
     if (isIncome) {
-      if (percentComplete >= 100) {
+      if (percentComplete > 100) {
         return "bg-blue-700"
       }
       switch (status) {
@@ -220,7 +220,7 @@ export default function BudgetsPage() {
           return "bg-blue-500"
       }
     } else {
-      if (percentComplete >= 100) {
+      if (percentComplete > 100) {
         return "bg-red-500"
       }
       switch (status) {
@@ -563,6 +563,11 @@ export default function BudgetsPage() {
                         <TrendingUp className="h-3 w-3" /> Getting Close
                       </Badge>
                     )}
+                    {budget.status === "complete" && (
+                      <Badge variant="outline" className="w-full justify-center text-yellow-600 border-yellow-600 gap-1">
+                        <Check className="h-3 w-3" /> Budget Limit
+                      </Badge>
+                    )}
                     {budget.status === "exceeded" && (
                       <Badge variant="outline" className="w-full justify-center text-red-500 border-red-500 gap-1">
                         <TrendingUp className="h-3 w-3" /> Exceeded
@@ -654,7 +659,7 @@ export default function BudgetsPage() {
                       <div className="flex items-center justify-between text-sm">
                         <span>Remaining Goal</span>
                         <span className={(budget.remaining || 0) < 0 ? "text-green-500 font-medium" : ""}>
-                          {formatMoney(budget.remaining || 0, userCurrency)}
+                          {formatMoney(budget.amount == budget.remaining && 0|| 0, userCurrency)}
                         </span>
                       </div>
                     </div>

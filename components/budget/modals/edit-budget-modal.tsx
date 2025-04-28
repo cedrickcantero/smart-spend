@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -21,10 +21,11 @@ import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+import { cn, getCurrencySymbol } from "@/lib/utils"
 import { DBBudget } from "@/types/supabase"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useCategories } from "@/app/contexts/CategoriesContext"
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 interface EditBudgetModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -36,40 +37,65 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { categories } = useCategories()
-  const [budgetName, setBudgetName] = useState("")
-  const [categoryId, setCategoryId] = useState("")
-  const [amount, setAmount] = useState("")
-  const [period, setPeriod] = useState("monthly")
-  const [startDate, setStartDate] = useState<Date>(new Date())
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
-  const [isIncome, setIsIncome] = useState(false)
+  const { userSettings } = useUserSettings()
+  const userCurrency = userSettings?.preferences?.currency as unknown as string || 'USD'
+
+  const [budgetData, setBudgetData] = useState({
+    id: budget.id,
+    budget_name: budget.budget_name,
+    amount: budget.amount,
+    category_id: budget.category_id,
+    period: budget.period,
+    start_date: budget.start_date,
+    end_date: budget.end_date,
+    is_income: budget.is_income,
+    icon: budget.icon,
+    user_id: budget.user_id,
+  })
+
+  useEffect(() => {
+    if (budget) {
+      setBudgetData({
+        id: budget.id,
+        budget_name: budget.budget_name,
+        amount: budget.amount,
+        category_id: budget.category_id,
+        period: budget.period,
+        start_date: budget.start_date,
+        end_date: budget.end_date,
+        is_income: budget.is_income,
+        icon: budget.icon,
+        user_id: budget.user_id,
+      })
+    }
+  }, [budget, open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
-      if (!amount || !categoryId) {
+      if (!budgetData.amount || !budgetData.category_id) {
         throw new Error("Please fill in all required fields")
       }
 
-      const selectedCategory = categories.find((c) => c.id === categoryId)
+      const selectedCategory = categories.find((c) => c.id === budgetData.category_id)
       
       await BudgetService.updateBudget({
         id: budget.id,
-        budget_name: budgetName || `${selectedCategory?.name || 'Unnamed'} Budget`,
-        amount: parseFloat(amount),
-        category_id: categoryId,
-        period,
-        start_date: format(startDate, 'yyyy-MM-dd'),
-        end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
+        budget_name: budgetData.budget_name || `${selectedCategory?.name || 'Unnamed'} Budget`,
+        amount: budgetData.amount,
+        category_id: budgetData.category_id,
+        period: budgetData.period,
+        start_date: format(budgetData.start_date, 'yyyy-MM-dd'),
+        end_date: budgetData.end_date ? format(budgetData.end_date, 'yyyy-MM-dd') : null,
         icon: selectedCategory?.icon || "📦",
-        is_income: isIncome
+        is_income: budgetData.is_income
       });
 
       toast({
         title: "Budget updated",
-        description: `The ${period} ${isIncome ? 'income' : 'expense'} budget "${budgetName || `${selectedCategory?.name || 'Unnamed'} Budget`}" has been updated.`,
+        description: `The ${budgetData.period} ${budgetData.is_income ? 'income' : 'expense'} budget "${budgetData.budget_name || `${selectedCategory?.name || 'Unnamed'} Budget`}" has been updated.`,
         variant: "success",
       })
 
@@ -103,8 +129,8 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
               </Label>
               <RadioGroup 
                 className="col-span-3 flex space-x-4" 
-                value={isIncome ? "income" : "expense"}
-                onValueChange={(value) => setIsIncome(value === "income")}
+                value={budgetData.is_income ? "income" : "expense"}
+                onValueChange={(value) => setBudgetData({ ...budgetData, is_income: value === "income" })}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="expense" id="expense" />
@@ -122,9 +148,9 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
               </Label>
               <Input
                 id="budget-name"
-                placeholder={isIncome ? "e.g., Monthly Salary" : "e.g., Monthly Groceries"}
-                value={budgetName}
-                onChange={(e) => setBudgetName(e.target.value)}
+                placeholder={budgetData.is_income ? "e.g., Monthly Salary" : "e.g., Monthly Groceries"}
+                value={budgetData.budget_name || ""}
+                onChange={(e) => setBudgetData({ ...budgetData, budget_name: e.target.value })}
                 className="col-span-3"
               />
             </div>
@@ -132,7 +158,7 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
               <Label htmlFor="budget-category" className="text-right">
                 Category*
               </Label>
-              <Select value={categoryId} onValueChange={setCategoryId} required>
+              <Select value={budgetData.category_id || ""} onValueChange={(value) => setBudgetData({ ...budgetData, category_id: value })} required>
                 <SelectTrigger id="budget-category" className="col-span-3">
                   <SelectValue placeholder={categories.length === 0 ? "Loading categories..." : "Select category"} />
                 </SelectTrigger>
@@ -153,7 +179,7 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
                 Amount*
               </Label>
               <div className="col-span-3 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{getCurrencySymbol(userCurrency)}</span>
                 <Input
                   id="budget-amount"
                   type="number"
@@ -161,8 +187,8 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
                   min="0"
                   placeholder="0.00"
                   className="pl-7"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  value={budgetData.amount}
+                  onChange={(e) => setBudgetData({ ...budgetData, amount: parseFloat(e.target.value) })}
                   required
                 />
               </div>
@@ -171,7 +197,7 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
               <Label htmlFor="budget-period" className="text-right">
                 Period
               </Label>
-              <Select value={period} onValueChange={setPeriod}>
+              <Select value={budgetData.period} onValueChange={(value) => setBudgetData({ ...budgetData, period: value })}>
                 <SelectTrigger id="budget-period" className="col-span-3">
                   <SelectValue placeholder="Select period" />
                 </SelectTrigger>
@@ -194,18 +220,18 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
                     variant={"outline"}
                     className={cn(
                       "col-span-3 justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
+                      !budgetData.start_date && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
+                    {budgetData.start_date ? format(budgetData.start_date, "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
-                    selected={startDate}
-                    onSelect={(date) => setStartDate(date as Date)}
+                    selected={budgetData.start_date ? new Date(budgetData.start_date) : undefined}
+                    onSelect={(date) => setBudgetData({ ...budgetData, start_date: date?.toISOString() || "" })}
                     initialFocus
                   />
                 </PopoverContent>
@@ -222,20 +248,20 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
                     variant={"outline"}
                     className={cn(
                       "col-span-3 justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground"
+                      !budgetData.end_date && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "PPP") : <span>Optional end date</span>}
+                    {budgetData.end_date ? format(budgetData.end_date, "PPP") : <span>Optional end date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
-                    selected={endDate}
-                    onSelect={(date) => setEndDate(date)}
+                    selected={budgetData.end_date ? new Date(budgetData.end_date) : undefined}
+                    onSelect={(date) => setBudgetData({ ...budgetData, end_date: date?.toISOString() || "" })}
                     initialFocus
-                    fromDate={startDate}
+                    fromDate={budgetData.start_date ? new Date(budgetData.start_date) : undefined}
                   />
                 </PopoverContent>
               </Popover>

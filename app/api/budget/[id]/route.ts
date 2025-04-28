@@ -5,11 +5,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 
 export async function PUT(request: NextRequest,
-    context: { params: Promise<{ budgetId: string }> }) {
+    context: { params: Promise<{ id: string }> }) {
     try {
-      const { budgetId } = await context.params;
+      const { id } = await context.params;
   
-      if (!budgetId) {
+      if (!id) {
         return NextResponse.json({ error: 'Budget ID is required' }, { status: 400 });
       }
   
@@ -22,7 +22,7 @@ export async function PUT(request: NextRequest,
 
       const body = await request.json();
   
-      const budget = await BudgetService.updateBudget(budgetId, body, supabase);    
+      const budget = await BudgetService.updateBudget(id, body, supabase);    
   
       return NextResponse.json(budget);
     } catch (error) {

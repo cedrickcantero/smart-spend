@@ -18,12 +18,12 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { cn } from "@/lib/utils"
+import { cn, getCurrencySymbol } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DBCalendarEvent, DBCategory } from "@/types/supabase"
 import { CalendarService } from "@/app/api/calendar/service"
-
+import { useUserSettings } from "@/app/contexts/UserSettingsContext"  
 interface EditEventModalProps {
   open: boolean
   event: DBCalendarEvent
@@ -46,6 +46,8 @@ export function EditEventModal({ open, onOpenChange, event, fetchEvents, categor
     notes: event?.notes || '',
     user_id: event?.user_id,
   })
+  const { userSettings } = useUserSettings()
+  const userCurrency = userSettings?.preferences?.currency as unknown as string || 'USD'
 
   useEffect(() => {
     if (event) {
@@ -141,7 +143,7 @@ export function EditEventModal({ open, onOpenChange, event, fetchEvents, categor
                 Amount
               </Label>
               <div className="col-span-3 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{getCurrencySymbol(userCurrency)}</span>
                 <Input
                   id="event-amount"
                   type="number"
