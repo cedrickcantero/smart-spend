@@ -10,7 +10,7 @@ import { useUserSettings } from "@/app/contexts/UserSettingsContext";
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-export function ExpenseChart() {
+export function ExpenseChart({ showValues = false }: { showValues?: boolean }) {
   const [chartData, setChartData] = useState<Array<{name: string, total: number}>>([]);
   const { userSettings } = useUserSettings();
 
@@ -65,14 +65,23 @@ export function ExpenseChart() {
 
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <LineChart data={chartData}>
-        <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+      <LineChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 50 }}>
+        <XAxis 
+          dataKey="name" 
+          stroke="#888888" 
+          fontSize={12} 
+          tickLine={false} 
+          axisLine={false}
+          angle={-45}
+          textAnchor="end"
+          height={60}
+        />
         <YAxis
           stroke="#888888"
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => formatMoney(value, userSettings?.preferences?.currency || "USD", true)}
+          tickFormatter={(value) => showValues ? formatMoney(value, userSettings?.preferences?.currency || "USD", true) : "***"}
         />
         <Tooltip
           content={({ active, payload }) => {
@@ -86,7 +95,7 @@ export function ExpenseChart() {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[0.70rem] uppercase text-muted-foreground">Total</span>
-                      <span className="font-bold">{formatMoney(payload[0].payload.total, userSettings?.preferences?.currency || "USD")}</span>
+                      <span className="font-bold">{showValues ? formatMoney(payload[0].payload.total, userSettings?.preferences?.currency || "USD") : "***"}</span>
                     </div>
                   </div>
                 </div>

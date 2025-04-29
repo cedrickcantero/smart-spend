@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Check, CreditCard, Edit, Plus, Trash2, TrendingDown, TrendingUp, Wallet } from "lucide-react"
+import { Check, CreditCard, Edit, Plus, Trash2, TrendingDown, TrendingUp, Wallet, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -26,6 +26,7 @@ export default function BudgetsPage() {
   const [expenses, setExpenses] = useState<DBExpense[]>([])
   const [income, setIncome] = useState<DBIncome[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [showValues, setShowValues] = useState(false)
   const { toast } = useToast()
   const { userSettings } = useUserSettings()
   const userCurrency = userSettings?.preferences?.currency || "USD"
@@ -243,14 +244,42 @@ export default function BudgetsPage() {
     return new Date(dateString).toLocaleDateString();
   }
 
+  const formatMoneyWithPrivacy = (amount: number, currency: string) => {
+    if (showValues) {
+      return formatMoney(amount, currency);
+    } else {
+      return "••••••";
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Budgets</h1>
-        <Button className="gap-1" onClick={() => setAddBudgetOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Create Budget
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowValues(!showValues)}
+            className="flex items-center gap-1"
+          >
+            {showValues ? (
+              <>
+                <EyeOff className="h-4 w-4" />
+                <span>Hide Values</span>
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4" />
+                <span>Show Values</span>
+              </>
+            )}
+          </Button>
+          <Button className="gap-1" onClick={() => setAddBudgetOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Create Budget
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -260,7 +289,7 @@ export default function BudgetsPage() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(totalExpenseBudget, userCurrency)}</div>
+            <div className="text-2xl font-bold">{formatMoneyWithPrivacy(totalExpenseBudget, userCurrency)}</div>
             <p className="text-xs text-muted-foreground">For current month</p>
           </CardContent>
         </Card>
@@ -271,11 +300,11 @@ export default function BudgetsPage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(totalExpenseSpent, userCurrency)}</div>
+            <div className="text-2xl font-bold">{formatMoneyWithPrivacy(totalExpenseSpent, userCurrency)}</div>
             <div className="mt-1 h-2 w-full rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-primary"
-                style={{ width: `${totalExpenseBudget > 0 ? (totalExpenseSpent / totalExpenseBudget) * 100 : 0}%` }}
+                style={{ width: `${Math.min(totalExpenseBudget > 0 ? (totalExpenseSpent / totalExpenseBudget) * 100 : 0, 100)}%` }}
               />
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -290,11 +319,11 @@ export default function BudgetsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(totalIncomeReceived, userCurrency)}</div>
+            <div className="text-2xl font-bold">{formatMoneyWithPrivacy(totalIncomeReceived, userCurrency)}</div>
             <div className="mt-1 h-2 w-full rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-blue-500"
-                style={{ width: `${totalIncomeBudget > 0 ? (totalIncomeReceived / totalIncomeBudget) * 100 : 0}%` }}
+                style={{ width: `${Math.min(totalIncomeBudget > 0 ? (totalIncomeReceived / totalIncomeBudget) * 100 : 0, 100)}%` }}
               />
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -310,7 +339,7 @@ export default function BudgetsPage() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${netCashflow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatMoney(netCashflow, userCurrency)}
+              {formatMoneyWithPrivacy(netCashflow, userCurrency)}
             </div>
             <p className="text-xs text-muted-foreground">
               Income minus expenses
@@ -324,7 +353,7 @@ export default function BudgetsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(dailyTarget, userCurrency)}</div>
+            <div className="text-2xl font-bold">{formatMoneyWithPrivacy(dailyTarget, userCurrency)}</div>
             <p className="text-xs text-muted-foreground">To stay within budget</p>
           </CardContent>
         </Card>
@@ -376,9 +405,9 @@ export default function BudgetsPage() {
                     </div>
                     <CardDescription>
                       {budget.is_income ? (
-                        <>Received {formatMoney(budget.spent || 0, userCurrency)} of {formatMoney(budget.amount, userCurrency)}</>
+                        <>Received {formatMoneyWithPrivacy(budget.spent || 0, userCurrency)} of {formatMoneyWithPrivacy(budget.amount, userCurrency)}</>
                       ) : (
-                        <>Spent {formatMoney(budget.spent || 0, userCurrency)} of {formatMoney(budget.amount, userCurrency)}</>
+                        <>Spent {formatMoneyWithPrivacy(budget.spent || 0, userCurrency)} of {formatMoneyWithPrivacy(budget.amount, userCurrency)}</>
                       )}
                     </CardDescription>
                     { budget.start_date && budget.end_date && (
@@ -394,18 +423,18 @@ export default function BudgetsPage() {
                         <span>{budget.amount > 0 ? Math.round(((budget.spent || 0) / budget.amount) * 100) : 0}%</span>
                       </div>
                       <Progress
-                        value={budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0}
+                        value={budget.amount > 0 ? Math.min(((budget.spent || 0) / budget.amount) * 100, 100) : 0}
                         className="h-2"
                         indicatorClassName={getProgressColor(
                           budget.status || 'default', 
                           budget.is_income || false, 
-                          budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0
+                          budget.amount > 0 ? Math.min(((budget.spent || 0) / budget.amount) * 100, 100) : 0
                         )}
                       />
                       <div className="flex items-center justify-between text-sm">
                         <span>{budget.is_income ? "Remaining Goal" : "Remaining"}</span>
                         <span className={(budget.remaining || 0) < 0 ? (budget.is_income ? "text-green-500 font-medium" : "text-red-500 font-medium") : ""}>
-                          {formatMoney(budget.remaining || 0, userCurrency)}
+                          {formatMoneyWithPrivacy(budget.remaining || 0, userCurrency)}
                         </span>
                       </div>
                     </div>
@@ -521,7 +550,7 @@ export default function BudgetsPage() {
                       </div>
                     </div>
                     <CardDescription>
-                      Spent {formatMoney(budget.spent || 0, userCurrency)} of {formatMoney(budget.amount, userCurrency)}
+                      Spent {formatMoneyWithPrivacy(budget.spent || 0, userCurrency)} of {formatMoneyWithPrivacy(budget.amount, userCurrency)}
                     </CardDescription>
                     { budget.start_date && budget.end_date && (
                       <CardDescription className="text-xs mt-1">
@@ -536,18 +565,18 @@ export default function BudgetsPage() {
                         <span>{budget.amount > 0 ? Math.round(((budget.spent || 0) / budget.amount) * 100) : 0}%</span>
                       </div>
                       <Progress
-                        value={budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0}
+                        value={budget.amount > 0 ? Math.min(((budget.spent || 0) / budget.amount) * 100, 100) : 0}
                         className="h-2"
                         indicatorClassName={getProgressColor(
                           budget.status || 'default', 
                           budget.is_income || false, 
-                          budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0
+                          budget.amount > 0 ? Math.min(((budget.spent || 0) / budget.amount) * 100, 100) : 0
                         )}
                       />
                       <div className="flex items-center justify-between text-sm">
                         <span>Remaining</span>
                         <span className={(budget.remaining || 0) < 0 ? "text-red-500 font-medium" : ""}>
-                          {formatMoney(budget.remaining || 0, userCurrency)}
+                          {formatMoneyWithPrivacy(budget.remaining || 0, userCurrency)}
                         </span>
                       </div>
                     </div>
@@ -633,7 +662,7 @@ export default function BudgetsPage() {
                       </div>
                     </div>
                     <CardDescription>
-                      Received {formatMoney(budget.spent || 0, userCurrency)} of {formatMoney(budget.amount, userCurrency)}
+                      Received {formatMoneyWithPrivacy(budget.spent || 0, userCurrency)} of {formatMoneyWithPrivacy(budget.amount, userCurrency)}
                     </CardDescription>
                     { budget.start_date && budget.end_date && (
                       <CardDescription className="text-xs mt-1">
@@ -648,18 +677,18 @@ export default function BudgetsPage() {
                         <span>{budget.amount > 0 ? Math.round(((budget.spent || 0) / budget.amount) * 100) : 0}%</span>
                       </div>
                       <Progress
-                        value={budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0}
+                        value={budget.amount > 0 ? Math.min(((budget.spent || 0) / budget.amount) * 100, 100) : 0}
                         className="h-2"
                         indicatorClassName={getProgressColor(
                           budget.status || 'default', 
                           budget.is_income || false, 
-                          budget.amount > 0 ? ((budget.spent || 0) / budget.amount) * 100 : 0
+                          budget.amount > 0 ? Math.min(((budget.spent || 0) / budget.amount) * 100, 100) : 0
                         )}
                       />
                       <div className="flex items-center justify-between text-sm">
                         <span>Remaining Goal</span>
                         <span className={(budget.remaining || 0) < 0 ? "text-green-500 font-medium" : ""}>
-                          {formatMoney(budget.amount == budget.remaining && 0|| 0, userCurrency)}
+                          {formatMoneyWithPrivacy(budget.remaining || 0, userCurrency)}
                         </span>
                       </div>
                     </div>
@@ -722,59 +751,6 @@ export default function BudgetsPage() {
               </div>
             </CardContent>
           </Card>
-          {/* <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {savingsGoals.map((goal) => (
-              <Card key={goal.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>{goal.name}</CardTitle>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <CardDescription>
-                    Target: {formatMoney(goal.target, userCurrency)} by {new Date(goal.deadline).toLocaleDateString()}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Progress</span>
-                      <span className="text-sm font-medium">
-                        {formatMoney(goal.current, userCurrency)} / {formatMoney(goal.target, userCurrency)}
-                      </span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-muted">
-                      <div
-                        className={`h-full rounded-full ${goal.color}`}
-                        style={{ width: `${(goal.current / goal.target) * 100}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Completion</span>
-                      <span>{Math.round((goal.current / goal.target) * 100)}%</span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button variant="outline" size="sm">
-                    Add Funds
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-1">
-                    Details
-                    <ArrowRight className="h-3 w-3" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-
-            <Card className="flex flex-col items-center justify-center p-6 border-dashed">
-              <Plus className="h-8 w-8 text-muted-foreground mb-2" />
-              <h3 className="font-medium text-center">Create New Savings Goal</h3>
-              <p className="text-sm text-muted-foreground text-center mt-1 mb-4">Set up a new savings target</p>
-              <Button variant="outline">Add Goal</Button>
-            </Card>
-          </div> */}
         </TabsContent>
       </Tabs>
       <AddBudgetModal 

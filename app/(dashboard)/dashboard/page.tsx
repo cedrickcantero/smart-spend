@@ -1,6 +1,6 @@
 "use client"
 
-import { DollarSign, TrendingUp } from "lucide-react"
+import { DollarSign, TrendingUp, Eye, EyeOff } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -13,12 +13,14 @@ import { formatMoney } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import { AIInsights } from "@/components/dashboard/ai-insights"
 import { useUserSettings } from "@/app/contexts/UserSettingsContext"
+import { Button } from "@/components/ui/button"
 
 export default function DashboardPage() {
   const { user } = useAuth()
   const { userSettings } = useUserSettings()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [showAiInsights, setShowAiInsights] = useState(false)
+  const [showValues, setShowValues] = useState(false)
 
   const fetchDashboardData = useCallback(async () => {
     if (user) {
@@ -50,11 +52,37 @@ export default function DashboardPage() {
     }
   }, [userSettings])
 
-
+  const formatMoneyWithPrivacy = (amount: number, currency: string) => {
+    if (showValues) {
+      return formatMoney(amount, currency);
+    } else {
+      return "••••••";
+    }
+  };
   
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setShowValues(!showValues)}
+          className="flex items-center gap-1"
+        >
+          {showValues ? (
+            <>
+              <EyeOff className="h-4 w-4" />
+              <span>Hide Values</span>
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4" />
+              <span>Show Values</span>
+            </>
+          )}
+        </Button>
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -62,7 +90,7 @@ export default function DashboardPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(dashboardData?.totalIncome?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
+            <div className="text-2xl font-bold">{formatMoneyWithPrivacy(dashboardData?.totalIncome?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
             <p className="text-xs text-muted-foreground">
               {!dashboardData?.totalIncome ? 'No data' :
                dashboardData.totalIncome.percentChange === 0 ? 'No change' : 
@@ -77,7 +105,7 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(dashboardData?.totalExpenses?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
+            <div className="text-2xl font-bold">{formatMoneyWithPrivacy(dashboardData?.totalExpenses?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
             <p className="text-xs text-muted-foreground">
               {!dashboardData?.totalExpenses ? 'No data' :
                dashboardData.totalExpenses.percentChange === 0 ? 'No change' : 
@@ -91,7 +119,7 @@ export default function DashboardPage() {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(dashboardData?.monthlyBudget?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
+            <div className="text-2xl font-bold">{formatMoneyWithPrivacy(dashboardData?.monthlyBudget?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
             <div className="mt-1 h-2 w-full rounded-full bg-muted">
               <div className="h-full w-[0%] rounded-full bg-primary" />
             </div>
@@ -108,7 +136,7 @@ export default function DashboardPage() {
             <Gift className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(dashboardData?.savingsGoal?.target || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
+            <div className="text-2xl font-bold">{formatMoneyWithPrivacy(dashboardData?.savingsGoal?.target || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
             <div className="mt-1 h-2 w-full rounded-full bg-muted">
               <div className="h-full w-[0%] rounded-full bg-green-500" />
             </div>
@@ -125,7 +153,7 @@ export default function DashboardPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(dashboardData?.taxDeductions?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
+            <div className="text-2xl font-bold">{formatMoneyWithPrivacy(dashboardData?.taxDeductions?.amount || 0, userSettings?.preferences?.currency as unknown as string || 'USD')}</div>
             <p className="text-xs text-muted-foreground">Potential tax savings this year</p>
           </CardContent>
         </Card> */}
@@ -143,7 +171,7 @@ export default function DashboardPage() {
               <CardTitle>Expense Overview</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              <ExpenseChart />
+              <ExpenseChart showValues={showValues} />
             </CardContent>
           </Card>
         </TabsContent>
