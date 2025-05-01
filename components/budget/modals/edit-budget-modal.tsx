@@ -26,6 +26,9 @@ import { DBBudget } from "@/types/supabase"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useCategories } from "@/app/contexts/CategoriesContext"
 import { useUserSettings } from "@/app/contexts/UserSettingsContext"
+import { Switch } from "@/components/ui/switch"
+import { BudgetSettings } from "@/types/budgetSettings"
+
 interface EditBudgetModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -51,6 +54,7 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
     is_income: budget.is_income,
     icon: budget.icon,
     user_id: budget.user_id,
+    settings: budget.settings,
   })
 
   useEffect(() => {
@@ -66,9 +70,31 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
         is_income: budget.is_income,
         icon: budget.icon,
         user_id: budget.user_id,
+        settings: budget.settings,
       })
     }
   }, [budget, open])
+
+  console.log("budgetData", budgetData)
+
+  const handleReoccurringChange = (checked: boolean) => {
+    if (!budgetData.settings) return;
+    
+    // Create a safe copy with proper casting
+    const currentSettings = budgetData.settings as any;
+    const tracking = currentSettings.tracking || {};
+    
+    setBudgetData({
+      ...budgetData,
+      settings: {
+        ...currentSettings,
+        tracking: {
+          ...tracking,
+          reoccurring: checked
+        }
+      }
+    });
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,7 +116,8 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
         start_date: format(budgetData.start_date, 'yyyy-MM-dd'),
         end_date: budgetData.end_date ? format(budgetData.end_date, 'yyyy-MM-dd') : null,
         icon: selectedCategory?.icon || "📦",
-        is_income: budgetData.is_income
+        is_income: budgetData.is_income,
+        settings: budgetData.settings
       });
 
       toast({
@@ -202,10 +229,7 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
                   <SelectValue placeholder="Select period" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -265,6 +289,27 @@ export function EditBudgetModal({ open, onOpenChange, onBudgetUpdated, budget }:
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="reoccurring" className="text-right">
+              Reoccurring
+            </Label>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="reoccurring" 
+                checked={
+                  // Handle any type of settings object safely
+                  typeof budgetData.settings === 'object' && 
+                  budgetData.settings !== null && 
+                  typeof (budgetData.settings as any).tracking === 'object' &&
+                  Boolean((budgetData.settings as any).tracking?.reoccurring)
+                } 
+                onCheckedChange={handleReoccurringChange} 
+              />
+              <span className="text-sm text-gray-500">
+                Automatically reset at the start of each {budgetData.period}
+              </span>
             </div>
           </div>
           <DialogFooter>

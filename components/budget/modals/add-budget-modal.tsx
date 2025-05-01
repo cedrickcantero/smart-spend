@@ -26,6 +26,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { getCurrencySymbol } from "@/lib/utils"
 import { useUserSettings } from "@/app/contexts/UserSettingsContext"
 import { useCategories } from "@/app/contexts/CategoriesContext"
+import { Switch } from "@/components/ui/switch"
 interface AddBudgetModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -46,6 +47,7 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [icon, setIcon] = useState("")
   const [isIncome, setIsIncome] = useState(false)
+  const [reoccurring, setReoccurring] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,7 +70,15 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
         start_date: format(startDate, 'yyyy-MM-dd'),
         end_date: endDate ? format(endDate, 'yyyy-MM-dd') : null,
         icon: icon || selectedCategory?.icon || "📦",
-        is_income: isIncome
+        is_income: isIncome,
+        settings: {
+          tracking: {
+            reoccurring: reoccurring,
+            resetDay: 0,
+            customPeriodDays: 0,
+            customPeriodMonths: 0,
+          },
+        },
       });
 
       toast({
@@ -193,10 +203,7 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
                   <SelectValue placeholder="Select period" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="weekly">Weekly</SelectItem>
                   <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -256,6 +263,12 @@ export function AddBudgetModal({ open, onOpenChange, onBudgetAdded }: AddBudgetM
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="reoccurring" className="text-right">
+                Reoccurring
+              </Label>
+              <Switch id="reoccurring" checked={reoccurring} onCheckedChange={setReoccurring} />
             </div>
           </div>
           <DialogFooter>

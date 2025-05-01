@@ -163,7 +163,6 @@ export default function DashboardPage() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="insights">AI Insights</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           <Card>
@@ -182,19 +181,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="h-[350px] flex items-center justify-center text-muted-foreground">
-                Detailed analytics will be displayed here
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="insights" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>AI-Powered Insights</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[350px] flex items-center justify-center text-muted-foreground">
-                AI-powered insights will be displayed here
+                Detailed analytics will be available soon
               </div>
             </CardContent>
           </Card>

@@ -21,6 +21,7 @@ export type Database = {
           is_income: boolean | null
           period: string
           remaining: number | null
+          settings: Json | null
           spent: number | null
           start_date: string
           status: string | null
@@ -38,6 +39,7 @@ export type Database = {
           is_income?: boolean | null
           period?: string
           remaining?: number | null
+          settings?: Json | null
           spent?: number | null
           start_date?: string
           status?: string | null
@@ -55,6 +57,7 @@ export type Database = {
           is_income?: boolean | null
           period?: string
           remaining?: number | null
+          settings?: Json | null
           spent?: number | null
           start_date?: string
           status?: string | null

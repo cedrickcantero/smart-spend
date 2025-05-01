@@ -144,14 +144,38 @@ export default function BudgetsPage() {
   }, [])
 
   const fetchExpenses = async () => {
-    const fetchedExpenses = await ExpenseService.getExpenses()
-    setExpenses(fetchedExpenses)
+    try {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      
+      const allExpenses = await ExpenseService.getExpenses();
+      const currentMonthExpenses = allExpenses.filter(expense => {
+        const expenseDate = new Date(expense.date);
+        return expenseDate.getMonth() + 1 === currentMonth;
+      });
+      
+      setExpenses(currentMonthExpenses);
+    } catch (error) {
+      console.error("Error fetching expenses:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load expense data. Please try again.",
+        variant: "destructive",
+      });
+    }
   }
 
   const fetchIncome = async () => {
     try {
-      const fetchedIncome = await IncomeService.getIncome()
-      setIncome(fetchedIncome)
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const allIncome = await IncomeService.getIncome();
+      const currentMonthIncome = allIncome.filter(income => {
+        const incomeDate = new Date(income.date);
+        return incomeDate.getMonth() + 1 === currentMonth;
+      });
+      
+      setIncome(currentMonthIncome);
     } catch (error) {
       console.error("Error fetching income:", error)
       toast({
